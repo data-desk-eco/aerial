@@ -14,7 +14,8 @@ export const SHOWN = "verified = 'confirmed' AND run_at >= '2026-10-04'";
 // joins are replaced separately, so the join cannot rely on one namespace
 let attribs = null;
 export const loadAttributions = () => attribs ??= from('attributions')
-  .then(f => sql(`SELECT id, source_label, attributed_ids, lat, lon,
+  .then(f => sql(`SELECT id, source_label, source_kind, operator,
+    attributed_ids, lat, lon,
     confidence, paragraph, evidence, verified, run_at FROM ${f}
     WHERE ${SHOWN}`, { lane: 'card' }))
   .then(rows => new Map(rows.map(r => [canon(r.id), r])))

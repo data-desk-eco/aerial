@@ -25,7 +25,7 @@ const by = (col, dir) => ({ [col]: x }, { [col]: y }) =>
     x == null ? 1 : y == null ? -1 : (x < y ? -1 : x > y ? 1 : 0) * dir;
 
 export function initTable(ctx) {
-    const tabs = ctx.config.table, cache = [];
+    const tabs = ctx.config.table;
     let width = 0, active = 0, sortCol = null, sortDir = 1, q = '';
     let selected = null, shown = [];
 
@@ -66,9 +66,7 @@ export function initTable(ctx) {
     async function render() {
         if (width < MIN) return;
         const t = tabs[active];
-        const src = cache[active] ?? t.rows(ctx);
-        if (src instanceof Promise) cache[active] = src;
-        let all = await src;
+        let all = await t.rows(ctx);
         if (t.filter !== false && ctx.preds?.length)
             all = all.filter(r => ctx.preds.every(p => p(r)));
         const cols = t.cols || Object.keys(all[0] || {});

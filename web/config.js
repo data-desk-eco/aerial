@@ -22,7 +22,7 @@ import { isPlume, label, readPlumes, availableQuartersPlumes,
 import { addCandidateLayers } from './methane/candidates.js';
 import { initProbabilityOverlay } from './methane/overlay.js';
 import { initMask } from './methane/mask.js';
-import { SHOWN } from './methane/attribution.js';
+import { loadAttributions } from './methane/attribution.js';
 import { SITE_LAYERS, SITE_ZOOM, holdSites, drawSites } from './sites.js';
 
 // legacy deep links: #vnf/123 -> #vnf=123, which resolveSite reads
@@ -315,15 +315,16 @@ mount({
 
     key: () => keySections(),
 
-    // a tab per family, each the rows its layer is drawing. attributions are
-    // ch4id's contract, not feature properties, so they sit out the filters
+    // a tab per family, each the rows its layer is drawing. an attribution
+    // is listed while its plume is: the plume carries the window and the
+    // filters, so the row is filtered as the plume and never as itself
     table: [
         {
             label: 'Attributions', filter: false,
-            rows: async ({ sql }) => sql(`SELECT id, source_label,
-                source_kind, operator, confidence, lat, lon
-                FROM ${await from('attributions')} WHERE ${SHOWN}
-                ORDER BY source_label`),
+            rows: ({ sources, preds = [] }) => loadAttributions().then(m =>
+                sources.plumes.features.map(f => f.properties)
+                    .filter(p => preds.every(f => f(p)))
+                    .flatMap(p => m.get(canon(p.id)) ?? [])),
             cols: ['id', 'source_label', 'source_kind', 'operator',
                    'confidence', 'lat', 'lon'],
             open: r => resolvePlume(r.id),
