@@ -13,6 +13,11 @@ const SEARCH = `<input type="search" class="fx-search" id="search"
 const QUARTERS = `<div><div class="fx-quarters" id="quarters"></div>
     <div class="fx-hint" id="quarters-hint"></div></div>`;
 
+// the subtitle says the first reads are still out, and the app takes it
+// down (ctx.loaded()) once they settle: on a slow line an empty map and a
+// loading one look the same, and the subtitle shows contracted too
+export const loaded = () => document.getElementById('loading')?.remove();
+
 export function buildShell(config) {
     const title = escapeHtml(config.title);
     // on the panel heading too, so it outlives the intro
@@ -24,7 +29,8 @@ export function buildShell(config) {
     <dd-panel class="fx-main" id="main-panel" collapsible${
         config.about ? ' info' : ''}>
         <span slot="title">${title}${badge}</span>
-        <span slot="subtitle">${escapeHtml(config.subtitle || '')}</span>
+        <span slot="subtitle">${escapeHtml(config.subtitle || '')}<span
+            class="fx-secondary" id="loading"> Loading…</span></span>
         <svg id="worldmap"></svg>
         ${config.search ? SEARCH : ''}
         ${config.quarters ? QUARTERS : ''}

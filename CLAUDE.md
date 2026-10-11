@@ -211,7 +211,12 @@ engine buffer (`prefetchData`, `shell/data.js`). what is past it stays on
 ranged reads, which is also every prefetch's fallback. a card series goes
 through `memoised()` (30 MB, least recently used): the rows are shared — read
 them, do not write them. do not put the first paint behind a ranged read again
-(`docs/cold-load.md`).
+(`docs/cold-load.md`). and nothing the first paint does not draw shares the
+line with it: eog/flares is prefetched only from a view that can draw vnf,
+the attributions and the terminals wait for the first paint, and the plume
+read leaves out `bounds` (nature trace's 7.6 MB of wkt), which a data desk
+card reads for its one plume. a phone on poor signal paid 17.7 MB of archive
+before its first plume; it pays about 4.3.
 
 **the engine is ~7 MB over the wire, and the first load after a deploy pays for
 it.** one cold-edge load took over two minutes to mount where a warm one takes

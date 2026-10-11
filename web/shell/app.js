@@ -5,7 +5,7 @@
 import { createMap, addSatellite, wireWorldmap } from './map.js';
 import { hover } from '../vendor/dd/dd.js';
 import { initData, read, sql, fc } from './data.js';
-import { buildShell, initKey } from './ui.js';
+import { buildShell, initKey, loaded } from './ui.js';
 import { initQuarters } from './quarters.js';
 import { initDetail, restorePermalink } from './detail.js';
 import { initTable } from './table.js';
@@ -55,7 +55,7 @@ export async function mount(config) {
     if (config.search) wireSearch(map);
     if (config.data) initData(config.data);
 
-    const ctx = { map, config, read, sql, fc, sources: {} };
+    const ctx = { map, config, read, sql, fc, loaded, sources: {} };
     if (config.quarters) ctx.quarters = initQuarters(
         document.getElementById('quarters'),
         () => config.quarters.onChange?.(ctx), config.quarters.years);

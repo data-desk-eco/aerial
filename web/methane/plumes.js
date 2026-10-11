@@ -5,12 +5,13 @@
 
 import { read, fc } from '../shell/data.js';
 import { objects } from '../shell/archive.js';
-import { canon, quarterOf } from '../shell/util.js';
-import { loadAttributions } from './attribution.js';
+import { quarterOf } from '../shell/util.js';
 
-// every column rides into the geojson, so the projection stays narrow
+// every column rides into the geojson, so the projection stays narrow.
+// not `bounds`: nature trace's wkt footprints are 7.6 of its 9.4 MB, and only
+// a data desk card's overlay needs one, so plumeBounds reads it on the card
 const COLS = ['id', 'kind', 'provider', 'date', 'lat', 'lon', 'rate_kg_h',
-    'rate_std_kg_h', 'satellite', 'sector', 'link', 'overlay', 'bounds'];
+    'rate_std_kg_h', 'satellite', 'sector', 'link', 'overlay'];
 // extension columns: nature trace's ppm·m enhancement (not a mass rate) and
 // grading, and the producer's wind at the plume. a provider without them
 // omits them, so they are only selected over the union, which fills null
@@ -57,12 +58,18 @@ async function readAll(where, columns = COLS) {
     return reads.flatMap(r => r.value ?? []);
 }
 
-// the display read, with ch4id's attributions stamped on
-export async function readPlumes(start, end) {
-    const rows = await readAll({ ...WHERE, date: [start, end] });
-    const attribs = await loadAttributions();
-    for (const p of rows) if (attribs.has(canon(p.id))) p.attr = 1;
-    return rows;
+// the display read. it does not wait on the attributions: the card reads
+// them, and nothing on the map does
+export const readPlumes = (start, end) =>
+    readAll({ ...WHERE, date: [start, end] });
+
+// one plume's footprint, off its own provider's object, on the card lane
+export async function plumeBounds({ id, provider }) {
+    const objs = await objects('detections', { provider });
+    if (!objs.length) return null;
+    const [row] = await read(objs, { lane: 'card', columns: ['bounds'],
+        where: { id: [String(id), String(id)] } });
+    return row?.bounds ?? null;
 }
 
 // availability has to answer for quarters outside the ticked window, so it is

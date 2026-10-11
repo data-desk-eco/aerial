@@ -3,7 +3,7 @@
 // cluster on card open. the index names both objects, and passing a cluster's
 // `cell` keeps this reader correct the day either partitions on it.
 
-import { read, memoised } from '../shell/data.js';
+import { read, memoised, prefetchData } from '../shell/data.js';
 import { objects } from '../shell/archive.js';
 import { quarterOf } from '../shell/util.js';
 
@@ -18,6 +18,8 @@ const flares = () => _flares ??= objects('flares', { provider: 'data-desk' })
     .then(([u]) => {
         if (!u) throw new Error('data-desk/flares names no object: it has '
             + 'partitioned, and this reader must address it by cell');
+        // whole, so through the one prefetch, whoever asks for it first
+        prefetchData(u);
         return read(u);
     })
     .catch(err => { _flares = null; throw err; });

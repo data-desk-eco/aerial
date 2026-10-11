@@ -40,15 +40,26 @@ initArchive(ARCHIVE);
 
 const ATTRIBUTIONS = `${ARCHIVE}/data-desk/attributions/data.parquet`;
 
-// every object small enough to hold is fetched whole at page parse, racing
-// the engine download (shell/data.js); what is past the cap stays ranged
-for (const t of ['flares', 'detections'])
-    objects(t).then(us => us.forEach(prefetchData)).catch(() => {});
-prefetchData(ATTRIBUTIONS);
-initS2Archive();
-
 // s2 is resident and cheap at z4; 20k+ dim vnf sites would drown it below z6
 const MIN_S2_ZOOM = 4, MIN_VNF_ZOOM = 6;
+const VIEW = { center: [52.8720, 25.1676], zoom: 12 };
+// the zoom the page opens at, off the hash the map will read
+const START_ZOOM = +(/(?:^#|&)map=([\d.]+)\//.exec(location.hash)?.[1]
+    ?? VIEW.zoom);
+
+// every object small enough to hold is fetched whole at page parse, racing
+// the engine download (shell/data.js); what is past the cap stays ranged.
+// only what the first paint draws from: eog/flares (3 MB) waits for a view
+// that can draw vnf, and the attributions (1.4 MB, a card's and the table's)
+// for the first paint, as on a phone line they were the paint's own wait
+const eogFlares = () => objects('flares', { provider: 'eog' });
+const prefetchAll = urls => urls.then(us => us.forEach(prefetchData))
+    .catch(() => {});
+prefetchAll(objects('flares').then(us => START_ZOOM >= MIN_VNF_ZOOM ? us
+    : eogFlares().then(eog => us.filter(u => !eog.includes(u)))));
+prefetchAll(objects('detections'));
+initS2Archive();
+
 // the span the quarter grid covers, which bounds the availability reads
 const YEAR = new Date().getFullYear();
 const GRID_START = `${YEAR - 3}-01-01`, GRID_END = `${YEAR}-12-31`;
@@ -80,7 +91,8 @@ function setSource(id, features) {
 // eog/flares opens on the first viewport that could draw from it, so a
 // zoomed-out session pays no footer read. a failed open retries next pan.
 let vnfOpen = null;
-const ensureVNF = () => vnfOpen ??= initVNF().then(() => scheduleDots())
+const ensureVNF = () => vnfOpen ??= prefetchAll(eogFlares()).then(initVNF)
+    .then(() => scheduleDots())
     .catch(err => {
         console.error('VNF init error:', err);
         vnfOpen = null;
@@ -201,7 +213,7 @@ mount({
     badge: 'Beta',
     search: true,
     audit: AUDIT,
-    map: { center: [52.8720, 25.1676], zoom: 12, minZoom: 1.5, maxZoom: 18 },
+    map: { ...VIEW, minZoom: 1.5, maxZoom: 18 },
     about: `
         <div class="region-row">
             <div class="fx-fine"><div class="fx-secondary">Regions covered:
@@ -355,20 +367,26 @@ mount({
             SCHEDULED.sites();
         });
 
-        // the dots wait for the first plume paint: their index is the one
-        // read here still on the network, and ahead of it it held the layers
-        REFRESH.detections();
-        REFRESH.vnf();
-        REFRESH.plumes().then(quarterDots);
         // an outline is drawn while a drawn detection is inside it: after
         // any layer is re-set, and after the key re-filters them
         const shown = id => (ctx.sources[id]?.features ?? [])
             .filter(f => (ctx.preds ?? []).every(p => p(f.properties)));
         addEventListener('fx-filters', () =>
             drawSites(ctx.map, ctx.sources.sites?.features ?? [], shown));
-        REFRESH.sites();
-        // a flare drawn before the terminals land is renamed by this
-        loadTerminals().then(() => { REFRESH.detections(); REFRESH.vnf(); });
+        // the dots wait for the first paint: their plume index is a read
+        // still on the network, and ahead of it it held the layers
+        const first = Promise.allSettled([REFRESH.detections(),
+            REFRESH.vnf(), REFRESH.plumes(), REFRESH.sites()]);
+        // what no first paint draws waits for it, rather than sharing a
+        // phone's line with it. a flare drawn before the terminals land is
+        // renamed by this
+        first.then(() => {
+            ctx.loaded();
+            quarterDots();
+            prefetchData(ATTRIBUTIONS);
+            loadTerminals().then(() => {
+                REFRESH.detections(); REFRESH.vnf(); });
+        });
         readyResolve();
     },
 });

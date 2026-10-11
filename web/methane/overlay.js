@@ -2,6 +2,8 @@
 // the png is viridis, the ramp the plume markings read on, and the plume's
 // footprint gives its four corners.
 
+import { plumeBounds } from './plumes.js';
+
 const LAYER = 'dd-plume-probability';   // and its source
 let map, epoch = 0, objectUrl = null;
 
@@ -40,11 +42,12 @@ function imageCorners(bounds) {
 
 export async function showProbabilityOverlay(properties, url) {
     clearProbabilityOverlay();
-    if (!map || properties.provider !== 'data-desk' || !url
-        || !properties.bounds) return;
+    if (!map || properties.provider !== 'data-desk' || !url) return;
     const now = epoch;
     try {
-        const coordinates = imageCorners(properties.bounds);
+        const bounds = await plumeBounds(properties);
+        if (!bounds || now !== epoch) return;
+        const coordinates = imageCorners(bounds);
         if (!coordinates) return;
         const blobUrl = await transparentize(url);
         if (now !== epoch) return URL.revokeObjectURL(blobUrl);   // superseded
