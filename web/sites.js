@@ -2,8 +2,9 @@
 // from (data-desk/sites), drawn as an area: a thin solid border and an
 // inset dash (pdf:67-68). the table holds 88,000 outlines, most of which no
 // detection sits in, so it is read for the viewport and an outline is drawn
-// only while a drawn detection is inside it. it claims nothing about the
-// detection; the reader sees what the flare or plume sits inside.
+// only while a drawn detection is inside it or within REACH of its edge. it
+// claims nothing about the detection; the reader sees what the flare or
+// plume sits inside.
 
 import { lines } from './vendor/dd/dd.js';
 import { objects } from './shell/archive.js';
@@ -69,11 +70,25 @@ const inRing = ([x, y], r) => r.reduce((c, [ax, ay], i) => {
     return (ay > y) !== (by > y) && x < (bx - ax) * (y - ay) / (by - ay) + ax
         ? !c : c;
 }, false);
-const holds = ({ geometry: g, properties: b }, [x, y]) =>
-    x >= b.xmin && x <= b.xmax && y >= b.ymin && y <= b.ymax
-    && (g.type === 'Polygon' ? [g.coordinates] : g.coordinates)
-        .some(poly => poly.reduce((c, r) => inRing([x, y], r) ? !c : c,
-                                  false));
+// a detection's position is a pixel's centre, so a flare on a site's edge
+// can land just outside it (darwin lng): reach is the slack, in metres
+const REACH = 100, D = REACH / 111320;
+// degrees from a point to a segment, x scaled by k = cos(lat)
+const gap = ([x, y], [ax, ay], [bx, by], k) => {
+    const [dx, dy, ex, ey] = [(bx - ax) * k, by - ay, (x - ax) * k, y - ay];
+    const t = Math.max(0, Math.min(1,
+        (ex * dx + ey * dy) / (dx * dx + dy * dy || 1)));
+    return Math.hypot(ex - t * dx, ey - t * dy);
+};
+const holds = ({ geometry: g, properties: b }, [x, y]) => {
+    const k = Math.cos(y * Math.PI / 180), polys = g.type === 'Polygon'
+        ? [g.coordinates] : g.coordinates;
+    return x >= b.xmin - D / k && x <= b.xmax + D / k
+        && y >= b.ymin - D && y <= b.ymax + D
+        && polys.some(poly => poly.reduce((c, r) => inRing([x, y], r)
+            ? !c : c, false) || poly.some(r => r.some((a, i) =>
+                gap([x, y], a, r.at(i - 1), k) < D)));
+};
 
 // the sites read for the viewport that hold a point the map is drawing:
 // `shown(id)` is a layer's features as drawn, after the key's filters
