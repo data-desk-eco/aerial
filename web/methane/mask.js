@@ -45,7 +45,7 @@ export async function showMask(p) {
                 coordinates: JSON.parse(row.corners) });
             map.addLayer({ id: `${ID}-image`, type: 'raster',
                 source: `${ID}-image`, paint: { 'raster-fade-duration': 0,
-                    'raster-resampling': 'nearest' } }, below);
+                    'raster-opacity': 0.7, 'raster-resampling': 'nearest' } }, below);
         } else map.addLayer({ id: `${ID}-fill`, type: 'fill', source: ID,
             paint: { 'fill-color': DD.white, 'fill-opacity': 0.2 } }, below);
         map.addLayer({ id: `${ID}-line`, type: 'line', source: ID,
