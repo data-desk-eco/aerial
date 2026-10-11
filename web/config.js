@@ -233,6 +233,8 @@ mount({
                     'https://arxiv.org/abs/2511.21777', 'arxiv.org/abs/2511.21777')}</p>
                 <p>Omara, M. et al. (2023). Developing a spatially explicit global oil and gas infrastructure database for characterizing methane emission sources at high resolution. <i>Earth System Science Data 15, 3761–3790</i>. ${link(
                     'https://doi.org/10.5194/essd-15-3761-2023', 'doi.org/10.5194/essd-15-3761-2023')}</p>
+                <p>Raasveldt, M. and Mühleisen, H. (2019). DuckDB: an embeddable analytical database. <i>Proceedings of the 2019 International Conference on Management of Data (SIGMOD), 1981–1984</i>. ${link(
+                    'https://doi.org/10.1145/3299869.3320212', 'doi.org/10.1145/3299869.3320212')}</p>
                 <p>Rose, K. et al. (2018). Development of an open global oil and gas infrastructure inventory and geodatabase. <i>NETL-TRS-6-2018, National Energy Technology Laboratory</i>. ${link(
                     'https://doi.org/10.18141/1427573', 'doi.org/10.18141/1427573')}</p>
                 <p>Schuit, B. J. et al. (2023). Automated detection and monitoring of methane super-emitters using satellite data. <i>Atmospheric Chemistry and Physics 23, 9071–9098</i>. ${link(
