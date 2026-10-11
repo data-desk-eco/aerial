@@ -57,35 +57,6 @@ const viaBuffer = async source => Array.isArray(source)
     ? Promise.all(source.map(viaBuffer))
     : (buffers.has(source) ? await buffers.get(source) : null) ?? source;
 
-// a reopened card asks for rows this session already parsed from an object
-// too big to prefetch. the promise is held, bounded at an estimated 30 MB and
-// evicting least recently used, so two askers share a read and a failed read
-// is not held. the rows are shared: read them, never write them.
-const MEMO_BUDGET = 30 << 20;
-const ROW_COST = 200;   // bytes, roughly, for a small flat row in v8
-const memo = new Map();
-let memoBytes = 0;
-export function memoised(key, run) {
-    const hit = memo.get(key);
-    if (hit) {   // touched, so newest last
-        memo.delete(key);
-        memo.set(key, hit);
-        return hit.rows;
-    }
-    const entry = { bytes: 0 };
-    entry.rows = run().then(rows => {
-        memoBytes += entry.bytes = rows.length * ROW_COST;
-        for (const [k, held] of memo) {   // insertion order: oldest first
-            if (memoBytes <= MEMO_BUDGET) break;
-            memoBytes -= held.bytes;
-            memo.delete(k);
-        }
-        return rows;
-    }, err => { memo.delete(key); throw err; });
-    memo.set(key, entry);
-    return entry.rows;
-}
-
 const ident = name => `"${String(name).replaceAll('"', '""')}"`;
 // canonical, so a prefetch and a later read key one object one way
 const url = name => {

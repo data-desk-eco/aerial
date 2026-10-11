@@ -24,10 +24,12 @@ else is browser built-ins.
 the archive: a reader builds one statement, the engine filters, windows,
 reduces, rates, names, joins and orders, and the rows come out as the map's
 properties (`fc()`). the lite build carries spatial (`ST_Distance_Sphere`,
-`ST_Contains`, `ST_Normalize`), so geometry is sql too. what the session holds,
-the engine holds, as a table, not a js array: `terminals`, `plume_index`,
-`site_view`. js keeps the dom, the map, and caches of ranged reads
-(`memoised`). a loop over rows in js is a statement not yet written.
+`ST_Contains`, `ST_Normalize`) and h3 (`h3_latlng_to_cell_string`,
+`h3_polygon_wkt_to_cells_experimental_string`), so geometry and the archive's
+cells are sql too. what the session holds, the engine holds, as a table, not
+a js array: `terminals`, `plume_index`, `site_view`; and the ranges it read,
+which a repeated read is answered from. js keeps the dom and the map. a loop
+over rows in js is a statement not yet written.
 
 ## the brand
 
@@ -69,7 +71,9 @@ reads the open plume's outline from its provider's `masks`.
 
 no module names an archive object. `<meta name="data-bucket">` gives the bucket
 and `index.json` says which object each table is and whether it is partitioned,
-so a table that starts partitioning does not break a reader.
+so a table that starts partitioning does not break a reader. its `sizes` say
+what each object weighs and which partitions a table holds (`bytes()`,
+`shell/archive.js`): a hint, listed as the archive publishes.
 
 ## layout
 
@@ -172,9 +176,11 @@ flares and underestimates bright ones. identifiers are VARCHAR in every table;
 never coerce with `Number()` (`card/index.js` compares `String(id)`), and never
 match on coordinates: an 11 m match handed two close sites each other's card.
 
-**no H3 in the browser.** nothing computes a cell; it only passes one on, which
-lets a card name one object without a bucket listing — so plumb `cell` through
-any new feature builder.
+**the cell is computed in sql, never in js.** a card that names a partitioned
+object asks the engine for the cell of the position it holds
+(`h3_latlng_to_cell_string(lat, lon, 1)`, as the etl's `cell()`), and a read
+around a rect asks for the cells the rect overlaps; nothing plumbs `cell`
+through a feature builder, and no js reimplements h3.
 
 **flux does not read `eog/observations`, deliberately.** the quarters list
 already carries the looks, windowed the same way as the numerator. a second
@@ -218,15 +224,16 @@ provider.
 
 **two read tiers, and size picks the tier.** every object under the 8 MB cap is
 fetched whole at page parse, racing the engine download, and registered as an
-engine buffer (`prefetchData`, `shell/data.js`). what is past it stays on
-ranged reads, which is also every prefetch's fallback. a card series goes
-through `memoised()` (30 MB, least recently used): the rows are shared — read
-them, do not write them. do not put the first paint behind a ranged read again
-(`docs/cold-load.md`). and nothing the first paint does not draw shares the
-line with it: eog/flares is prefetched only from a view that can draw vnf,
-the attributions and the terminals wait for the first paint, and the plume
-read leaves out `bounds` (nature trace's 7.6 MB of wkt), which a data desk
-card reads for its one plume. a phone on poor signal paid 17.7 MB of archive
+engine buffer (`prefetchData`, `shell/data.js`); the index's `sizes` say
+which, so nothing is asked twice. what is past it stays on ranged reads,
+which is also every prefetch's fallback, and the engine keeps every range it
+read (32 MB, least recently used): a reopened card is answered from memory,
+and js holds no copy of its rows. do not put the first paint behind a ranged
+read again (`docs/cold-load.md`). and nothing the first paint does not draw
+shares the line with it: eog/flares is prefetched only from a view that can
+draw vnf, the attributions and the terminals wait for the first paint, and
+the plume read leaves out `bounds` (nature trace's 7.6 MB of wkt, 6.5 MB as
+geometry), which a data desk card reads for its one plume. a phone on poor signal paid 17.7 MB of archive
 before its first plume; it pays about 4.3.
 
 **the engine is ~7 MB over the wire, and the first load after a deploy pays for
@@ -247,8 +254,9 @@ exactly what a reader may rely on.
 - `<provider>/detections` — methane plumes, `kind = 'plume'`, with `valid`
   false on a retrieval the producer does not trust, and `wind_ms`,
   `wind_from_deg` where the producer gives a wind.
-- `<provider>/infrastructure` — candidate sources, Hilbert-clustered on
-  lon/lat; gem's `lng_terminal` rows name the flares.
+- `<provider>/infrastructure` — candidate sources, one object per h3 res-1
+  `cell` and Hilbert-clustered on lon/lat inside it; gem's is one object,
+  as its `lng_terminal` rows name the flares the world over.
 - `data-desk/attributions` — ch4id's plume → source contract.
 - `data-desk/sites` — the osm outline of every industrial facility a flare
   or plume can come from (oil and gas, coal, steel, cement, power, waste),

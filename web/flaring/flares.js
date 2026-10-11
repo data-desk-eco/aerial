@@ -3,10 +3,10 @@
 // in `quarters`, each small enough to be held as an engine buffer
 // (shell/data.js), so a viewport is one statement: the window summed, the
 // site rated and named, and the rows out as the map's properties. the
-// per-date series is read per site on card open. no H3 here: a row's `cell`
-// is passed on, which names a card's detections object without a listing.
+// per-date series is read per site on card open, off the object its cell
+// names, which the engine computes from the site's position.
 
-import { sql, from, memoised } from '../shell/data.js';
+import { sql, from } from '../shell/data.js';
 import { objects } from '../shell/archive.js';
 import { quote, quarterKey } from '../shell/util.js';
 
@@ -45,7 +45,7 @@ const D = 'ST_Distance_Sphere(ST_Point(t.lon, t.lat), ST_Point(f.lon, f.lat))';
 // a site's window, named after the export lng terminal it sits on, where one
 // is within TERMINAL_M. `terminals` is empty until gem's read lands
 const site = (src, keys, where, cols) => `
-    SELECT f.id, f.cell, f.lat, f.lon, ${cols},
+    SELECT f.id, f.lat, f.lon, ${cols},
         (SELECT arg_min(t.name, ${D}) FROM terminals t
             WHERE abs(t.lat - f.lat) < ${TERMINAL_M / 111320}
               AND ${D} <= ${TERMINAL_M}) AS terminal, w.*
@@ -59,7 +59,7 @@ const site = (src, keys, where, cols) => `
 export const s2 = (src, keys, where = 'true') => `
     SELECT coalesce(terminal, detection_count::BIGINT || ' detection'
             || CASE detection_count WHEN 1 THEN '' ELSE 's' END) AS name,
-        'flare' AS kind, terminal, lat, lon, id, cell, max_b12,
+        'flare' AS kind, terminal, lat, lon, id, max_b12,
         detection_count, rate AS persistence,
         CASE WHEN n > 0 THEN observations END AS passes,
         clear AS observations, coalesce(rate, published) AS rank
@@ -79,7 +79,7 @@ export const s2 = (src, keys, where = 'true') => `
 // still burned
 export const vnf = (src, keys, where = 'true', lit = false) => `
     SELECT coalesce(terminal, nullif(detail, ''), 'Flare #' || id) AS name,
-        'vnf' AS kind, terminal, lat, lon, id, cell,
+        'vnf' AS kind, terminal, lat, lon, id,
         coalesce(detail, '') AS detail, coalesce(country, '') AS country,
         CASE WHEN detections > 0 THEN rh_sum / detections ELSE 0 END
             AS avg_rh,
@@ -153,24 +153,27 @@ export const loadTerminals = () => Promise.all([held(),
         { lane: 'card' }))
     .catch(err => console.warn('terminals unavailable:', err));
 
-// one site's per-date history, oldest first, off the object its `cell`
-// names. memoised on object and id, as the s2 one is a ranged read of 63 MB:
-// a reopened card is free, and the card windows it
+// one site's per-date history, oldest first, off the object its cell
+// names. the cell is the engine's, off the site's position, as the archive's
+// is: nothing carries it. a reopened card is read again from the ranges the
+// engine kept
 const series = (provider, cols, also = () => '') => async p => {
     if (!p.id) return [];
-    const [u] = await objects('detections', { provider, key: p.cell });
-    if (!u) return [];   // partitioned, and no cell to address it by
-    return memoised(`${u}#${p.id}`, async () => sql(`
-        SELECT left(date::VARCHAR, 10) AS date, ${cols} FROM ${await from(u)}
-        WHERE site_id = ${quote(String(p.id))}${also(p)} ORDER BY date`,
-        { lane: 'card' }));
+    const [{ cell }] = await sql(`SELECT
+        h3_latlng_to_cell_string(${+p.lat}, ${+p.lon}, 1) AS cell`,
+        { lane: 'card' });
+    const [u] = await objects('detections', { provider, key: cell });
+    if (!u) return [];
+    return sql(`SELECT left(date::VARCHAR, 10) AS date, ${cols}
+        FROM ${await from(u)} WHERE site_id = ${quote(String(p.id))}
+        ${also(cell)} ORDER BY date`, { lane: 'card' });
 };
 
-// rows are in (cell, site_id, date) order, so the cell and id prune row
-// groups off the footer; `kind` because plumes share the table
+// rows are in (kind, cell, site_id, date) order, so the cell and id prune
+// row groups off the footer; `kind` because plumes share the table
 export const s2Series = series('data-desk', `max_b12::DOUBLE AS max_b12,
     pixels::DOUBLE AS pixels, lon AS raw_lon, lat AS raw_lat`,
-    p => ` AND kind = 'flare'${p.cell ? ` AND cell = ${quote(p.cell)}` : ''}`);
+    cell => `AND kind = 'flare' AND cell = ${quote(cell)}`);
 
 // every row is a night the site was seen lit, so there is nothing to filter
 export const vnfSeries = series('eog', 'coalesce(rh_mw, 0)::DOUBLE AS rh_mw');
