@@ -225,14 +225,14 @@ mount({
                     'https://doi.org/10.5194/amt-18-6933-2025', 'doi.org/10.5194/amt-18-6933-2025')}</p>
                 <p>Elvidge, C. D. et al. (2013). VIIRS Nightfire: satellite pyrometry at night. <i>Remote Sensing 5, 4423–4449</i>. ${link(
                     'https://doi.org/10.3390/rs5094423', 'doi.org/10.3390/rs5094423')}</p>
-                <p>Global Energy Monitor (2026). Global Gas Infrastructure Tracker. <i>Dataset</i>. ${link(
-                    'https://globalenergymonitor.org/projects/global-gas-infrastructure-tracker/', 'globalenergymonitor.org/projects/global-gas-infrastructure-tracker/')}</p>
+                <p>Global Energy Monitor (2026). Global Energy Monitor trackers: oil and gas, LNG,
+                    pipelines, coal, steel, cement and power. <i>Datasets</i>.
+                    ${link('https://globalenergymonitor.org/',
+                    'globalenergymonitor.org')}</p>
                 <p>Haklay, M. and Weber, P. (2008). OpenStreetMap: user-generated street maps. <i>IEEE Pervasive Computing 7, 12–18</i>. ${link(
                     'https://doi.org/10.1109/MPRV.2008.80', 'doi.org/10.1109/MPRV.2008.80')}</p>
                 <p>Jervis, D. et al. (2025). Global energy sector methane emissions estimated by using facility-level satellite observations. <i>Science</i>. ${link(
                     'https://doi.org/10.1126/science.adv3183', 'doi.org/10.1126/science.adv3183')}</p>
-                <p>MapStand (2026). Energy infrastructure data. <i>MapStand</i>. ${link(
-                    'https://www.mapstand.com/', 'www.mapstand.com/')}</p>
                 <p>Marchese, F. et al. (2019). A multi-channel algorithm for mapping volcanic thermal anomalies by means of Sentinel-2 MSI and Landsat-8 OLI data. <i>Remote Sensing 11, 2876</i>. ${link(
                     'https://doi.org/10.3390/rs11232876', 'doi.org/10.3390/rs11232876')}</p>
                 <p>Mateo-García, G. et al. (2025). Artificial intelligence for methane detection: from continuous monitoring to verified mitigation. <i>arXiv:2511.21777</i>. ${link(
