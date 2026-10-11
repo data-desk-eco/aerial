@@ -10,7 +10,7 @@ import { canon, padBbox, escapeHtml, formatDate, debounce }
 import { initArchive, objects } from './shell/archive.js';
 import { prefetchData, fc, from } from './shell/data.js';
 import { MODE } from './flaring/render.js';
-import { MARKS, PIN, AUDIT, flareIcon, plumeIcon }
+import { DD, MARKS, PIN, RATE_LABEL, AUDIT, flareIcon, plumeIcon }
     from './layers.js';
 import { keySections } from './key.js';
 import { readS2, readVNF, readSite, quarters, coverage, loadTerminals }
@@ -56,15 +56,24 @@ const whenReady = new Promise(r => readyResolve = r);
 
 // ── the three layers ──
 
+// far out every family is one clustered source, `everything`: 60k markers
+// placed each frame made the globe crawl. from NEAR in, each family's own
+// layer draws every point. a cluster's label is a count, since a summed
+// value would mash t/hr, ppm·m, b12 and radiant heat
+const FAMILIES = ['detections', 'vnf', 'plumes'], NEAR = 5;
 
 // a source this app re-reads has to pass the key's live predicates itself:
 // the shell applies them when a row is toggled, not when the data changes.
 // ctx.sources holds the unfiltered set, which the shell and the card read.
-function setSource(id, features) {
+function put(id, features) {
     const all = CTX.sources[id] = { type: 'FeatureCollection', features };
     CTX.map.getSource(id)?.setData(CTX.preds.length ? { ...all,
         features: features.filter(f => CTX.preds.every(p => p(f.properties))) }
         : all);
+}
+function setSource(id, features) {
+    put(id, features);
+    put('everything', FAMILIES.flatMap(f => CTX.sources[f].features));
     dispatchEvent(new Event('fx-filters'));   // the table drawer re-renders
 }
 
@@ -210,10 +219,11 @@ mount({
         MARKS.forEach(id => ensureMark(ctx.map, id));
         return {
             sites: empty,
-            // every point at every zoom: a cluster hid what it counted
             detections: empty,
             vnf: empty,
             plumes: empty,
+            everything: { data: empty, cluster: true,
+                          clusterMaxZoom: NEAR - 1, clusterRadius: 40 },
         };
     },
 
@@ -222,21 +232,35 @@ mount({
         ...SITE_LAYERS,
         {
             id: 'detections', type: 'symbol', source: 'detections',
+            minzoom: NEAR,
             layout: { ...PIN, 'icon-image': flareIcon(MODE.s2) },
         },
         {
             // above s2, so the card's heat footprint stays under both
-            id: 'vnf', type: 'symbol', source: 'vnf',
+            id: 'vnf', type: 'symbol', source: 'vnf', minzoom: NEAR,
             layout: { ...PIN, 'icon-image': flareIcon(MODE.vnf) },
         },
         {
             // no value label: colour already says how much, and the card
             // carries the number
-            id: 'plumes', type: 'symbol', source: 'plumes',
+            id: 'plumes', type: 'symbol', source: 'plumes', minzoom: NEAR,
             hover: p => ({ heading: label(p.provider), text: [p.confidence
                 && `${p.confidence} confidence`, p.date && formatDate(p.date)]
                 .filter(Boolean).join(' · ') }),
             layout: { ...PIN, 'icon-image': plumeIcon },
+        },
+        {
+            // a cluster is a grouping, so it is off both ramps, and its
+            // label is a count, never dropped for a collision. a point no
+            // cluster took is a cluster of one, so far out is all clusters
+            id: 'clusters', type: 'symbol', source: 'everything',
+            maxzoom: NEAR,
+            layout: { ...PIN, ...RATE_LABEL,
+                'icon-image': `quantitative-${DD.white}`,
+                'text-field': ['to-string',
+                    ['coalesce', ['get', 'point_count'], 1]],
+                'text-allow-overlap': true },
+            paint: { 'text-color': DD.white },
         },
     ],
 
