@@ -139,11 +139,7 @@ async function quarterDots() {
         .filter(Boolean);
     const avail = flares.length && new Set([...flares.flatMap(s => [...s]),
         ...await availableQuartersPlumes(pad, GRID_START, GRID_END)]);
-    const btns = [...q.buttons()];
-    const ticked = b => b.hasAttribute('active');
-    q.hint(avail && !btns.some(b => ticked(b) && avail.has(q.key(b)))
-        ? 'No data for the selected quarters here' : '');
-    btns.forEach(b => b.toggleAttribute('unavailable',
+    [...q.buttons()].forEach(b => b.toggleAttribute('unavailable',
         !!avail && !avail.has(q.key(b))));
 }
 const scheduleDots = debounce(quarterDots, 300);
