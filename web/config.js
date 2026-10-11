@@ -277,15 +277,6 @@ mount({
     // a tab per family, each the rows its layer is drawing. attributions are
     // ch4id's contract, not feature properties, so they sit out the filters
     table: [
-        { label: 'Flares (S2)', rows: props('detections'),
-          cols: ['id', 'name', 'max_b12', 'detection_count', 'observations',
-                 'persistence', 'lat', 'lon'] },
-        { label: 'Flares (VNF)', rows: props('vnf'),
-          cols: ['id', 'name', 'country', 'max_rh', 'detection_count',
-                 'observations', 'persistence', 'lat', 'lon'] },
-        { label: 'Plumes', rows: props('plumes'),
-          cols: ['id', 'provider', 'date', 'rate_kg_h', 'satellite', 'sector',
-                 'lat', 'lon'] },
         {
             label: 'Attributions', filter: false,
             rows: async ({ sql }) => sql(`SELECT id, source_label,
@@ -295,6 +286,15 @@ mount({
             cols: ['id', 'source_label', 'source_kind', 'operator',
                    'confidence', 'lat', 'lon'],
         },
+        { label: 'Plumes', rows: props('plumes'),
+          cols: ['id', 'provider', 'date', 'rate_kg_h', 'satellite', 'sector',
+                 'lat', 'lon'] },
+        { label: 'Flares (VNF)', rows: props('vnf'),
+          cols: ['id', 'name', 'country', 'max_rh', 'detection_count',
+                 'observations', 'persistence', 'lat', 'lon'] },
+        { label: 'Flares (S2)', rows: props('detections'),
+          cols: ['id', 'name', 'max_b12', 'detection_count', 'observations',
+                 'persistence', 'lat', 'lon'] },
     ],
 
     detail: {
