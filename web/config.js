@@ -181,29 +181,78 @@ mount({
     map: { ...VIEW, minZoom: 1.5, maxZoom: 18 },
     about: `
         <div class="region-row">
-            <div class="fx-fine"><div class="fx-secondary">Regions covered:
+            <div class="fx-fine"><div class="fx-secondary">Sentinel-2 coverage:
                 </div><div>Data Desk archive</div></div>
             <svg id="modal-worldmap"></svg>
         </div>
+        <div class="fx-intro">
+            <p>Flux is a research tool designed for facility-level
+                attribution of satellite emissions observations. Use it to
+                research a specific facility or to browse point source
+                emissions globally.</p>
+            <p>The map aggregates methane plumes and flaring detections
+                published by ${link('https://methanedata.unep.org/',
+                'UN IMEO')}, ${link('https://data.carbonmapper.org/',
+                'Carbon Mapper')}, ${link(
+                'https://earth.sron.nl/methane-emissions/', 'SRON')} and
+                ${link('https://eogdata.mines.edu/products/vnf/', 'EOG')}
+                and overlays them on facility boundaries derived from
+                ${link('https://globalenergymonitor.org/projects/'
+                + 'global-gas-infrastructure-tracker/',
+                'Global Energy Monitor')}, ${link(
+                'https://doi.org/10.5281/zenodo.7466757', 'EDF')},
+                ${link('https://edx.netl.doe.gov/dataset/'
+                + 'global-oil-gas-features-database', 'NETL')} and
+                ${link('https://www.openstreetmap.org/copyright',
+                'OpenStreetMap')} data.</p>
+            <p>Firm attribution of an observation to a facility requires
+                further research. Experimentally, we use a system of
+                ${link('https://github.com/data-desk-eco/bricolage',
+                'research agents')} running DeepSeek-V4.1-Flash to attribute
+                all newly observed high-resolution methane plumes.</p>
+        </div>
         <details class="methods fx-fine">
             <summary class="fx-secondary"><svg viewBox="0 0 8 4"><path
-                d="M.5.5 4 3.5l3.5-3"/></svg>Methods &amp; data</summary>
+                d="M.5.5 4 3.5l3.5-3"/></svg>Citations</summary>
             <div class="methods-list fx-secondary">
-                <p>Faruolo et al. (2024) ${link(
-                    'https://doi.org/10.1088/1748-9326/ad82fb',
-                    'The DAFI v2 algorithm for gas flare detection')}</p>
-                <p>Elvidge et al. (2013) ${link(
-                    'https://doi.org/10.3390/rs5094423',
-                    'VIIRS Nightfire: Satellite pyrometry at night')}</p>
-                <p>Jacob et al. (2022) ${link(
-                    'https://doi.org/10.5194/acp-22-9617-2022',
-                    'Quantifying methane emissions from the global scale ' +
-                    'down to point sources')}</p>
-                <p>Global Energy Monitor ${link('https://globalenergymonitor'
-                    + '.org/projects/global-gas-infrastructure-tracker/',
-                    'Global Gas Infrastructure Tracker')}</p>
+                <h4>Literature</h4>
+                <p>Duren, R. M. et al. (2019). California’s methane super-emitters. <i>Nature 575, 180–184</i>. ${link(
+                    'https://doi.org/10.1038/s41586-019-1720-3', 'doi.org/10.1038/s41586-019-1720-3')}</p>
+                <p>Elvidge, C. D. et al. (2013). VIIRS Nightfire: satellite pyrometry at night. <i>Remote Sensing 5, 4423–4449</i>. ${link(
+                    'https://doi.org/10.3390/rs5094423', 'doi.org/10.3390/rs5094423')}</p>
+                <p>Elvidge, C. D. et al. (2016). Methods for global survey of natural gas flaring from Visible Infrared Imaging Radiometer Suite data. <i>Energies 9, 14</i>. ${link(
+                    'https://doi.org/10.3390/en9010014', 'doi.org/10.3390/en9010014')}</p>
+                <p>Faruolo, M. et al. (2024). The DAFI v2 algorithm for gas flare detection. <i>Environmental Research Letters</i>. ${link(
+                    'https://doi.org/10.1088/1748-9326/ad82fb', 'doi.org/10.1088/1748-9326/ad82fb')}</p>
+                <p>Gorroño, J. et al. (2023). Understanding the potential of Sentinel-2 for monitoring methane point emissions. <i>Atmospheric Measurement Techniques 16, 89–107</i>. ${link(
+                    'https://doi.org/10.5194/amt-16-89-2023', 'doi.org/10.5194/amt-16-89-2023')}</p>
+                <p>Jacob, D. J. et al. (2022). Quantifying methane emissions from the global scale down to point sources using satellite observations of atmospheric methane. <i>Atmospheric Chemistry and Physics 22, 9617–9646</i>. ${link(
+                    'https://doi.org/10.5194/acp-22-9617-2022', 'doi.org/10.5194/acp-22-9617-2022')}</p>
+                <p>Lauvaux, T. et al. (2022). Global assessment of oil and gas methane ultra-emitters. <i>Science 375, 557–561</i>. ${link(
+                    'https://doi.org/10.1126/science.abj4351', 'doi.org/10.1126/science.abj4351')}</p>
+                <p>Omara, M. et al. (2023). Developing a spatially explicit global oil and gas infrastructure database for characterizing methane emission sources at high resolution. <i>Earth System Science Data 15, 3761–3790</i>. ${link(
+                    'https://doi.org/10.5194/essd-15-3761-2023', 'doi.org/10.5194/essd-15-3761-2023')}</p>
+                <p>Schuit, B. J. et al. (2023). Automated detection and monitoring of methane super-emitters using satellite data. <i>Atmospheric Chemistry and Physics 23, 9071–9098</i>. ${link(
+                    'https://doi.org/10.5194/acp-23-9071-2023', 'doi.org/10.5194/acp-23-9071-2023')}</p>
+                <p>Varon, D. J. et al. (2018). Quantifying methane point sources from fine-scale satellite observations of atmospheric methane plumes. <i>Atmospheric Measurement Techniques 11, 5673–5686</i>. ${link(
+                    'https://doi.org/10.5194/amt-11-5673-2018', 'doi.org/10.5194/amt-11-5673-2018')}</p>
+                <h4>Data</h4>
+                <p>Carbon Mapper (2026). Carbon Mapper data portal. <i>Plume detections, Tanager-1 and EMIT</i>. ${link(
+                    'https://data.carbonmapper.org/', 'data.carbonmapper.org/')}</p>
+                <p>Earth Observation Group (2026). VIIRS Nightfire. <i>Colorado School of Mines</i>. ${link(
+                    'https://eogdata.mines.edu/products/vnf/', 'eogdata.mines.edu/products/vnf/')}</p>
+                <p>Global Energy Monitor (2026). Global Gas Infrastructure Tracker. <i>Dataset</i>. ${link(
+                    'https://globalenergymonitor.org/projects/global-gas-infrastructure-tracker/', 'globalenergymonitor.org/projects/global-gas-infrastructure-tracker/')}</p>
+                <p>National Energy Technology Laboratory (2023). Global Oil &amp; Gas Infrastructure Features Database. <i>NETL EDX</i>. ${link(
+                    'https://edx.netl.doe.gov/dataset/global-oil-gas-features-database', 'edx.netl.doe.gov/dataset/global-oil-gas-features-database')}</p>
+                <p>OpenStreetMap contributors (2026). OpenStreetMap. <i>Open Database License</i>. ${link(
+                    'https://www.openstreetmap.org/copyright', 'www.openstreetmap.org/copyright')}</p>
+                <p>SRON (2026). TROPOMI methane super-emitters. <i>SRON Earth</i>. ${link(
+                    'https://earth.sron.nl/methane-emissions/', 'earth.sron.nl/methane-emissions/')}</p>
+                <p>UNEP IMEO (2026). Methane Alert and Response System (MARS) data. <i>Eye on Methane</i>. ${link(
+                    'https://methanedata.unep.org/', 'methanedata.unep.org/')}</p>
                 <p>Design by ${link('https://mikaeldahlen.com/',
-                    'Mikael Dahlén')}</p>
+                    'Mikael Dahlén')}.</p>
             </div>
         </details>`,
 
