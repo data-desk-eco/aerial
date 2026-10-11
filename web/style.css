@@ -56,6 +56,10 @@ dd-dot[unavailable] { pointer-events: auto; }
 
 /* --- intro: the coverage worldmap and the sources under it (pdf:91) --- */
 
+/* the heading at datadesk.eco's title weight, 600, not the guidelines' 750,
+   which read heavy at 32px on a phone (ruling 2026-10-11; AUDIT skips it) */
+.fx-modal-content [slot=title] { font-weight: 600; }
+
 /* fine print, 11px under the 14px body (pdf:77) */
 .fx-fine { font-size: 11px; font-variation-settings: "opsz" 22; }
 .region-row { display: flex; justify-content: space-between;

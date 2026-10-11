@@ -70,9 +70,11 @@ export const MARK = {
 // vendor/dd/audit.js passes everything else (`make audit`): viridis, the
 // plume rasters' own ramp; gl text for cluster counts, which wants
 // inter glyphs the basemap does not serve; the heat halo and the probability
-// surface, which are data, not imagery
+// surface, which are data, not imagery; and the intro heading at 600, the
+// title weight of datadesk.eco, where the guidelines' 750 read heavy
 export const AUDIT = {
     colors: VIRIDIS,
+    skip: '.fx-modal-content [slot=title], .fx-modal-content [slot=title] *',
     glyphs: ['plumes-clusters'],
     graded: ['detection-footprint', 'dd-plume-probability',
         'plume-mask-image'],
