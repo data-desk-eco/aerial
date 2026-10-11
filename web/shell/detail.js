@@ -34,10 +34,17 @@ export const coordsOf = f => f.properties.lon != null
     ? [Number(f.properties.lon), Number(f.properties.lat)]
     : f.geometry.coordinates;
 
+// a card's position implies the view, so while one is open the hash carries
+// its id and not the map's own key, which comes back when it closes
+const view = () => map._hash?._hashName;
+const bare = h => view() ? writeHashKeys(h, [view()]) : h;
+
 function setHash(id, key) {
-    const target = writeHashKeys(location.hash, keys(), key, id);
+    let target = writeHashKeys(location.hash, keys(), key, id);
+    if (id != null) target = bare(target);
     if (location.hash !== target) history.replaceState(null, '',
         target || location.pathname + location.search);
+    if (id == null) map._hash?._updateHashUnthrottled();
 }
 
 // rendered features within 10px, nearest first: a click and a restored
@@ -151,6 +158,8 @@ export function initDetail(m, config, getFeatures) {
     cfg = config.detail;
     allFeatures = getFeatures;
     if (!cfg) return;
+    const h = map._hash, full = h?.getHashString.bind(h);
+    if (h) h.getHashString = f => shown ? bare(full(f)) : full(f);
 
     // the dd heavy-stroke box round the selection, from highlightZoom: below
     // it a selection is carried by its own marking
