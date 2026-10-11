@@ -210,6 +210,8 @@ mount({
                 ${link('https://github.com/data-desk-eco/bricolage',
                 'research agents')} running DeepSeek-V4.1-Flash to attribute
                 all newly observed high-resolution methane plumes.</p>
+            <p class="fx-fine fx-secondary">Design by ${link(
+                'https://mikaeldahlen.com/', 'Mikael Dahlén')}.</p>
         </div>
         <details class="methods fx-fine">
             <summary class="fx-secondary"><svg viewBox="0 0 8 4"><path
@@ -251,8 +253,6 @@ mount({
                     'https://earth.sron.nl/methane-emissions/', 'earth.sron.nl/methane-emissions/')}</p>
                 <p>UNEP IMEO (2026). Methane Alert and Response System (MARS) data. <i>Eye on Methane</i>. ${link(
                     'https://methanedata.unep.org/', 'methanedata.unep.org/')}</p>
-                <p>Design by ${link('https://mikaeldahlen.com/',
-                    'Mikael Dahlén')}.</p>
             </div>
         </details>`,
 
