@@ -104,20 +104,22 @@ const src = provider => Promise.all([held(),
     : Promise.reject(new Error(`${provider}/flares names no object: it has `
         + 'partitioned, and this reader must address it by cell')));
 
-const inView = ([w, s, e, n], { startDate, endDate }) =>
-    `f.lon BETWEEN ${+w} AND ${+e} AND f.lat BETWEEN ${+s} AND ${+n}
-    AND f.last_seen >= ${quote(startDate)}
-    AND f.first_seen <= ${quote(endDate)}`;
+// the whole world: a window's rates are the same wherever the map looks
+const inWindow = ({ startDate, endDate }) =>
+    `f.last_seen >= ${quote(startDate)} AND f.first_seen <= ${quote(endDate)}`;
 
 // `floor` is MODE.s2.floor, the published quality gate on a site's average
 // (render.js). the negation lets a cluster the table gives no intensity for
-// through
-export const readS2 = async (bbox, range, keys, floor) => sql(s2(await src(
-    'data-desk'), keys, `${inView(bbox, range)}
+// through. an unrated s2 site passes: its null persistence is no finding
+export const readS2 = async (range, keys, floor) => sql(s2(await src(
+    'data-desk'), keys, `${inWindow(range)}
     AND NOT coalesce(f.avg_b12 < ${+floor}, false)`));
 
-export const readVNF = async (bbox, range, keys) =>
-    sql(vnf(await src('eog'), keys, inView(bbox, range), true));
+// a vnf site with no rate is dropped: no clear night is a finding. here, not
+// in a layer filter, as a cluster counts what its source holds
+export const readVNF = async (range, keys) => sql(`SELECT * FROM (${vnf(
+    await src('eog'), keys, inWindow(range), true)})
+    WHERE persistence IS NOT NULL`);
 
 // #site= names a flare of either family. the two id spaces are disjoint by
 // accident, not contract, so both tables are asked rather than the id's shape

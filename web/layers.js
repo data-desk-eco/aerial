@@ -75,7 +75,7 @@ export const MARK = {
 export const AUDIT = {
     colors: VIRIDIS,
     skip: '.fx-modal-content [slot=title], .fx-modal-content [slot=title] *',
-    glyphs: ['plumes-clusters'],
+    glyphs: ['detections-clusters', 'vnf-clusters', 'plumes-clusters'],
     graded: ['detection-footprint', 'dd-plume-probability',
         'plume-mask-image'],
 };

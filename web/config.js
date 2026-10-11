@@ -36,23 +36,15 @@ initArchive(ARCHIVE);
 
 const ATTRIBUTIONS = `${ARCHIVE}/data-desk/attributions/data.parquet`;
 
-// s2 is resident and cheap at z4; 20k+ dim vnf sites would drown it below z6
-const MIN_S2_ZOOM = 4, MIN_VNF_ZOOM = 6;
 const VIEW = { center: [52.688, 26.989], zoom: 6.19 };
-// the zoom the page opens at, off the hash the map will read
-const START_ZOOM = +(/(?:^#|&)map=([\d.]+)\//.exec(location.hash)?.[1]
-    ?? VIEW.zoom);
 
 // every object small enough to hold is fetched whole at page parse, racing
 // the engine download (shell/data.js); what is past the cap stays ranged.
-// only what the first paint draws from: eog/flares (3 MB) waits for a view
-// that can draw vnf, and the attributions (1.4 MB, a card's and the table's)
-// for the first paint, as on a phone line they were the paint's own wait
-const eogFlares = () => objects('flares', { provider: 'eog' });
+// only what the first paint draws from: the attributions (1.4 MB, a card's
+// and the table's) wait for it, as on a phone line they were its own wait
 const prefetchAll = urls => urls.then(us => us.forEach(prefetchData))
     .catch(() => {});
-prefetchAll(objects('flares').then(us => START_ZOOM >= MIN_VNF_ZOOM ? us
-    : eogFlares().then(eog => us.filter(u => !eog.includes(u)))));
+prefetchAll(objects('flares'));
 prefetchAll(objects('detections'));
 
 // the span the quarter grid covers, which bounds the availability reads
@@ -62,15 +54,22 @@ const GRID_START = `${YEAR - 3}-01-01`, GRID_END = `${YEAR}-12-31`;
 let CTX, readyResolve;
 const whenReady = new Promise(r => readyResolve = r);
 
-// ── persistence ──
-
-// no persistence threshold: it only hid flares. what is left is where the
-// two null branches split — an unrated s2 site passes (0), a vnf site with
-// no clear night is dropped (-1). do not fold them into one.
-const persistenceFilter = unrated =>
-    ['>=', ['coalesce', ['get', 'rank'], ['get', 'persistence'], unrated], 0];
-
 // ── the three layers ──
+
+// clustered far out; the label is a count, since a summed rate would mash
+// t/hr with nature trace's ppm·m, or b12 with radiant heat
+const CLUSTER = { cluster: true, clusterMaxZoom: 4, clusterRadius: 30 };
+const POINT = ['!', ['has', 'point_count']];
+// a cluster is a grouping, so it is off the ramp, in its family's shape, and
+// its label is a count, never dropped for a collision
+const clusters = (source, mark) => ({
+    id: `${source}-clusters`, type: 'symbol', source,
+    filter: ['has', 'point_count'],
+    layout: { ...PIN, ...RATE_LABEL, 'icon-image': `${mark}-${DD.white}`,
+        'text-field': ['to-string', ['get', 'point_count']],
+        'text-allow-overlap': true },
+    paint: { 'text-color': DD.white },
+});
 
 // a source this app re-reads has to pass the key's live predicates itself:
 // the shell applies them when a row is toggled, not when the data changes.
@@ -83,31 +82,22 @@ function setSource(id, features) {
     dispatchEvent(new Event('fx-filters'));   // the table drawer re-renders
 }
 
-// eog/flares is fetched on the first viewport that could draw from it, so a
-// zoomed-out session pays for none of it
-let vnfOpen = null;
-const ensureVNF = () => vnfOpen ??= prefetchAll(eogFlares())
-    .then(() => scheduleDots());
-
-// a layer's read for the ticked window: features, or null to leave it as it is
+// a layer's read for the ticked window: features, or null to leave it as it
+// is. every family is read whole, as a window's rates are the same wherever
+// the map looks: a pan reads nothing, and maplibre draws what is in view
 const READS = {
-    detections: async range => CTX.map.getZoom() < MIN_S2_ZOOM ? []
-        : fc(await readS2(viewportBbox(CTX.map), range, CTX.quarters.keys(),
-            MODE.s2.floor)).features,
-    vnf: async range => {
-        if (CTX.map.getZoom() < MIN_VNF_ZOOM) return [];
-        await ensureVNF();
-        return fc(await readVNF(viewportBbox(CTX.map), range,
-            CTX.quarters.keys())).features;
-    },
+    detections: async range => fc(await readS2(range, CTX.quarters.keys(),
+        MODE.s2.floor)).features,
+    vnf: async range => fc(await readVNF(range, CTX.quarters.keys()))
+        .features,
     plumes: async ({ startDate, endDate }) =>
         CTX.fc(await readPlumes(startDate, endDate)).features,
-    // every outline in view, held in the engine; drawSites draws the ones
-    // a detection is in, so there is no source to set
+    // every outline around the view, held in the engine; drawSites draws
+    // the ones a detection holds, so there is no source to set
     sites: async () => {
         if (CTX.map.getZoom() < SITE_ZOOM) return null;
-        await holdSites(viewportBbox(CTX.map));
-        dispatchEvent(new Event('fx-filters'));
+        if (await holdSites(viewportBbox(CTX.map)))
+            dispatchEvent(new Event('fx-filters'));
         return null;
     },
 };
@@ -147,16 +137,11 @@ const SCHEDULED = Object.fromEntries(Object.entries(REFRESH)
 // (below its zoom floor, not read yet) answers null and greys nothing, and
 // each answers from the floor it draws at.
 async function quarterDots() {
-    const q = CTX.quarters, zoom = CTX.map.getZoom();
-    const pad = padBbox(viewportBbox(CTX.map));
-    const ask = (ok, fn) => ok ? fn().catch(err =>
-        (console.error('quarter availability:', err), null)) : null;
-    const flares = (await Promise.all([
-        ask(zoom >= MIN_S2_ZOOM,
-            () => quarters('data-desk', pad, GRID_START, GRID_END)),
-        ask(vnfOpen && zoom >= MIN_VNF_ZOOM,
-            () => quarters('eog', pad, GRID_START, GRID_END)),
-    ])).filter(Boolean);
+    const q = CTX.quarters, pad = padBbox(viewportBbox(CTX.map));
+    const flares = (await Promise.all(['data-desk', 'eog'].map(p =>
+        quarters(p, pad, GRID_START, GRID_END).catch(err =>
+            (console.error('quarter availability:', err), null)))))
+        .filter(Boolean);
     const avail = flares.length && new Set([...flares.flatMap(s => [...s]),
         ...await availableQuartersPlumes(pad, GRID_START, GRID_END)]);
     const btns = [...q.buttons()];
@@ -239,12 +224,11 @@ mount({
         MARKS.forEach(id => ensureMark(ctx.map, id));
         return {
             sites: empty,
-            detections: empty,
-            vnf: empty,
-            // clustered far out; the label is a count, since a summed rate
-            // would mash t/hr with nature trace's ppm·m
-            plumes: { data: empty, cluster: true, clusterMaxZoom: 4,
-                      clusterRadius: 30 },
+            // every family clusters far out, flares to the zoom vnf's dim
+            // sites stop drowning the map
+            detections: { data: empty, ...CLUSTER, clusterMaxZoom: 6 },
+            vnf: { data: empty, ...CLUSTER, clusterMaxZoom: 6 },
+            plumes: { data: empty, ...CLUSTER },
         };
     },
 
@@ -253,39 +237,27 @@ mount({
         ...SITE_LAYERS,
         {
             id: 'detections', type: 'symbol', source: 'detections',
-            filter: persistenceFilter(0),
+            filter: POINT,
             layout: { ...PIN, 'icon-image': flareIcon(MODE.s2) },
         },
         {
             // above s2, so the card's heat footprint stays under both
-            id: 'vnf', type: 'symbol', source: 'vnf',
-            filter: persistenceFilter(-1),
+            id: 'vnf', type: 'symbol', source: 'vnf', filter: POINT,
             layout: { ...PIN, 'icon-image': flareIcon(MODE.vnf) },
         },
         {
             // no value label: colour already says how much, and the card
             // carries the number
-            id: 'plumes', type: 'symbol', source: 'plumes',
-            filter: ['!', ['has', 'point_count']],
+            id: 'plumes', type: 'symbol', source: 'plumes', filter: POINT,
             hover: p => ({ heading: label(p.provider), text: [p.confidence
                 && `${p.confidence} confidence`, p.date && formatDate(p.date)]
                 .filter(Boolean).join(' · ') }),
             layout: { ...PIN, 'icon-image': plumeIcon },
             paint: { 'text-color': DD.white },
         },
-        {
-            // a cluster is a grouping, so it is off the ramp and its label
-            // is a count, never dropped for a collision
-            id: 'plumes-clusters', type: 'symbol', source: 'plumes',
-            filter: ['has', 'point_count'],
-            layout: {
-                ...PIN, ...RATE_LABEL,
-                'icon-image': `quantitative-${DD.white}`,
-                'text-field': ['to-string', ['get', 'point_count']],
-                'text-allow-overlap': true,
-            },
-            paint: { 'text-color': DD.white },
-        },
+        ...[['detections', 'flare'], ['vnf', 'flare'],
+            ['plumes', 'quantitative']].map(([source, mark]) =>
+            clusters(source, mark)),
     ],
 
     quarters: {
@@ -344,12 +316,7 @@ mount({
         boxesWorldmap(document.getElementById('modal-worldmap'),
             coverage, 0.06);
 
-        ctx.map.on('moveend', () => {
-            scheduleDots();
-            SCHEDULED.detections();
-            SCHEDULED.vnf();
-            SCHEDULED.sites();
-        });
+        ctx.map.on('moveend', () => { scheduleDots(); SCHEDULED.sites(); });
 
         // an outline is drawn while a drawn detection is inside it: after
         // any layer is re-set, and after the key re-filters them

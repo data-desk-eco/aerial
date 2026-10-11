@@ -40,20 +40,22 @@ repository compiles from mikael dahlén's guidelines: `dd-panel`, `dd-key`,
 markings and graded imagery. flux css places and sizes them and styles what
 it puts in them, in `--dd-*` tokens only. `make audit` runs
 `vendor/dd/audit.js` over the intro, the map and a card, and fails on any
-deviation not declared in `AUDIT` (`layers.js`): viridis, two gl text layers,
-the data rasters. a new deviation is a line there, argued in its comment.
+deviation not declared in `AUDIT` (`layers.js`): viridis, four gl text
+layers, the data rasters. a new deviation is a line there, argued in its comment.
 change the elements in the design repository, never in vendor/.
 
 ## the three families
 
-**flaring.** `flaring/flares.js` is both families: a statement per viewport
-over `data-desk/flares` (S2 clusters) or `eog/flares` (VNF sites), one row per
-site with its quarterly history nested in `quarters`, both held as engine
+**flaring.** `flaring/flares.js` is both families: a statement per window,
+the whole world, over `data-desk/flares` (S2 clusters) or `eog/flares` (VNF
+sites), one row per site with its quarterly history nested in `quarters`, both held as engine
 buffers. the per-date series, `data-desk/detections` and `eog/detections`, is
 read per site on card open. every eog detections row is a positive detection;
 the looks that found nothing are `eog/observations`, which flux does not read
 (see invariants). the S2 methodology is s2-flares, run in the etl; flux is a
-viewer.
+viewer. a pan reads nothing: every family is drawn whole, clustered far out
+like the plumes, and maplibre draws what is in view (S2 is 631 sites in
+47 ms, VNF 21k in 0.4 s; per viewport, flares lagged and churned the card).
 
 both are named after the export LNG terminal they sit on, where one is within
 7.5 km: `loadTerminals` fills the `terminals` table off `gem/infrastructure`
@@ -146,9 +148,10 @@ gate's `rank` fallback (`flares.js`), a different question.
 
 **the two null branches stay split.** in S2 a null persistence is unrated and
 passes the gate; in VNF it is a finding — no clear night — and the flare is
-dropped. the split is the last argument of `persistenceFilter` (`config.js`),
-`0` for S2 and `-1` for VNF; the gate is `>= 0`. the old slider at 0.25 sank
-the whole archive when S2 coalesced to 0.
+dropped. the split is in `readS2` and `readVNF` (`flares.js`): S2 has no
+persistence gate, VNF keeps `persistence IS NOT NULL`. it is sql, not a layer
+filter, because a cluster counts what its source holds. the old slider at
+0.25 sank the whole archive when S2 coalesced to 0.
 
 **intensity is the key's.** there is no persistence slider: it only hid
 flares. B12 reflectance and radiant heat
@@ -215,7 +218,8 @@ without touching each other's staged ranges. `sql()` and `read()` take a
 `lane`, and `.query()` is called in exactly one place (bar each connection's
 `SET geometry_always_xy`: the setting is per connection, and spatial's sphere
 functions otherwise take (lat, lon)). the map is the default
-lane and card opens (and the terminal read) are `lane: 'card'`: sharing one
+lane and card opens (the mask and the attributions among them, and the
+terminal read) are `lane: 'card'`: sharing one
 made a pan wait for a card, 6.1 s against 1.3 s. a held table is shared by
 every connection, so a statement that replaces one goes on the lane that reads
 it (`site_view` on the map lane), and a lane is otherwise only a parallelism
@@ -230,11 +234,11 @@ which is also every prefetch's fallback, and the engine keeps every range it
 read (32 MB, least recently used): a reopened card is answered from memory,
 and js holds no copy of its rows. do not put the first paint behind a ranged
 read again (`docs/cold-load.md`). and nothing the first paint does not draw
-shares the line with it: eog/flares is prefetched only from a view that can
-draw vnf, the attributions and the terminals wait for the first paint, and
-the plume read leaves out `bounds` (nature trace's 7.6 MB of wkt, 6.5 MB as
-geometry), which a data desk card reads for its one plume. a phone on poor signal paid 17.7 MB of archive
-before its first plume; it pays about 4.3.
+shares the line with it: the attributions and the terminals wait for the
+first paint, and the plume read leaves out `bounds` (nature trace's 7.6 MB of
+wkt, 6.5 MB as geometry), which a data desk card reads for its one plume. a
+phone on poor signal paid 17.7 MB of archive before its first plume; it pays
+about 4.3.
 
 **the engine is ~7 MB over the wire, and the first load after a deploy pays for
 it.** one cold-edge load took over two minutes to mount where a warm one takes
@@ -260,7 +264,10 @@ exactly what a reader may rely on.
 - `data-desk/attributions` — ch4id's plume → source contract.
 - `data-desk/sites` — the osm outline of every industrial facility a flare
   or plume can come from (oil and gas, coal, steel, cement, power, waste),
-  `outline` as geojson and a box. 88k rows, so read for the viewport from
-  z10, and an outline is drawn only while a drawn detection is inside it
-  (`drawSites`, on `fx-filters`). it names no detection, so a flare's
-  facility is what the reader sees it inside.
+  `outline` as geojson and a box. 88k rows, so read from z10 for the
+  viewport padded a viewport each way, and read again only when the view
+  leaves that box. an outline is drawn while a drawn detection is within
+  `REACH` of it (`drawSites`, on `fx-filters`), and only the detections in
+  the held box are asked: all 40k plumes made it 10 s against 5 ms, which
+  held the engine and every lane behind it. it names no detection, so a
+  flare's facility is what the reader sees it inside.

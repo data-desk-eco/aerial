@@ -29,13 +29,12 @@ export async function showMask(p) {
     clearMask();
     const now = epoch;
     try {
-        const objs = await objects('masks');
+        const objs = await objects('masks', { provider: p.provider });
         if (!map || !objs.length || !p.id) return;
         const where = { id: [p.id, p.id], lat: [+p.lat, +p.lat],
                         lon: [+p.lon, +p.lon] };
-        // one read per provider, so one missing object costs only its own masks
-        const [row] = (await Promise.allSettled(objs.map(o =>
-            read(o, { where })))).flatMap(r => r.value ?? []);
+        // its own provider's object, on the card lane, so no pan holds it
+        const [row] = await read(objs, { where, lane: 'card' });
         if (!row || now !== epoch) return;
         map.addSource(ID, { type: 'geojson', data: JSON.parse(row.mask) });
         const below = map.getLayer(under) ? under : undefined;

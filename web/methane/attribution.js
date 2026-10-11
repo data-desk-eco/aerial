@@ -15,7 +15,7 @@ let attribs = null;
 export const loadAttributions = () => attribs ??= from('attributions')
   .then(f => sql(`SELECT id, source_label, attributed_ids, lat, lon,
     confidence, paragraph, evidence, verified, run_at FROM ${f}
-    WHERE ${SHOWN}`))
+    WHERE ${SHOWN}`, { lane: 'card' }))
   .then(rows => new Map(rows.map(r => [canon(r.id), r])))
   .catch(err => (console.warn('attributions unavailable:', err), new Map()));
 
