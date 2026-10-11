@@ -8,8 +8,9 @@ import { objects } from '../shell/archive.js';
 import { quote, quarterKey } from '../shell/util.js';
 
 // every column rides into the geojson, so the projection stays narrow.
-// not `bounds`: nature trace's wkt footprints are 7.6 of its 9.4 MB, and only
-// a data desk card's overlay needs one, so plumeBounds reads it on the card
+// not `bounds`: nature trace's wkt footprints are 7.6 of its 9.4 MB (6.5 as
+// geometry), and only a data desk card's overlay needs one, so plumeBounds
+// reads it on the card
 const COLS = ['id', 'kind', 'provider', 'date', 'lat', 'lon', 'rate_kg_h',
     'rate_std_kg_h', 'satellite', 'sector', 'link', 'overlay'];
 // extension columns: nature trace's ppm·m enhancement (not a mass rate) and
