@@ -201,7 +201,8 @@ mount({
                 further research. Experimentally, we use a system of
                 ${link('https://github.com/data-desk-eco/bricolage',
                 'research agents')} running DeepSeek-V4.1-Flash to publish
-                attributions for all newly observed high-resolution methane plumes.</p>
+                attributions for all newly observed high-resolution methane
+                plumes.</p>
             <p class="fx-fine fx-secondary">Design by ${link(
                 'https://mikaeldahlen.com/', 'Mikael Dahlén')}.</p>
         </div>
