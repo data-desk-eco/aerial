@@ -17,10 +17,13 @@ const db = (async () => {
 
 // a connection per lane. the engine runs one connection's statements in turn
 // and overlaps different connections' reads, so a lane is "may wait behind
-// itself, never behind anything else": a card open cannot hold a pan.
+// itself, never behind anything else": a card open cannot hold a pan. every
+// connection reads geometry as (lon, lat): the setting is per connection, and
+// spatial's sphere functions otherwise assume (lat, lon)
 const lanes = new Map();
 const connect = (lane = 'map') => {
-    if (!lanes.has(lane)) lanes.set(lane, db.then(d => d.connect()));
+    if (!lanes.has(lane)) lanes.set(lane, db.then(d => d.connect())
+        .then(async c => (await c.query('SET geometry_always_xy = true'), c)));
     return lanes.get(lane);
 };
 

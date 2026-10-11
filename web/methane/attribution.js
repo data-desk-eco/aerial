@@ -1,21 +1,22 @@
 // plume source attribution: ch4id's claims, read whole from
 // data-desk/attributions and drawn into the plume card's analysis slot.
 
-import { read } from '../shell/data.js';
+import { sql, from } from '../shell/data.js';
 import { canon, escapeHtml } from '../shell/util.js';
 import { selectPlume } from './candidates.js';
 
 // a claim shows once a person confirms it at /review; those made before
 // review began on 2026-10-04 are grandfathered
-export const shown = r => ['confirmed', 'grandfathered'].includes(r.verified);
+export const SHOWN = "verified IN ('confirmed', 'grandfathered')";
 
 // ~2k records, keyed by the canonical id: this object and the detections it
 // joins are replaced separately, so the join cannot rely on one namespace
 let attribs = null;
-export const loadAttributions = () => attribs ??= read('attributions', {
-    columns: ['id', 'source_label', 'attributed_ids', 'lat', 'lon',
-              'confidence', 'paragraph', 'evidence', 'verified', 'run_at'],
-}).then(rows => new Map(rows.filter(shown).map(r => [canon(r.id), r])))
+export const loadAttributions = () => attribs ??= from('attributions')
+  .then(f => sql(`SELECT id, source_label, attributed_ids, lat, lon,
+    confidence, paragraph, evidence, verified, run_at FROM ${f}
+    WHERE ${SHOWN}`))
+  .then(rows => new Map(rows.map(r => [canon(r.id), r])))
   .catch(err => (console.warn('attributions unavailable:', err), new Map()));
 
 const OSM = { w: 'way', n: 'node', r: 'relation' };

@@ -3,7 +3,7 @@
 // a csv of the series the card is listing.
 
 import { MODE } from '../flaring/render.js';
-import { fetchS2Detections } from '../flaring/s2archive.js';
+import { s2Series } from '../flaring/flares.js';
 import { map, current, currentDets, selectedDetection, coords, siteTitle }
     from './index.js';
 import { heatFootprint } from './overlays.js';
@@ -59,7 +59,7 @@ export default {
     instrument: 'S2',
     passLabel: 'Passes',
     title: p => siteTitle(p, 'Unknown facility'),
-    fetch: fetchS2Detections,
+    fetch: s2Series,
     select: footprint,
     actions: `<dd-btn id="open-image-btn">Open image</dd-btn>
               <dd-btn id="download-btn">Download CSV</dd-btn>`,

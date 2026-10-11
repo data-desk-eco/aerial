@@ -18,8 +18,8 @@ review-deploy:
 	cd worker && npx wrangler d1 execute flux-review --remote \
 	  --file schema.sql && npx wrangler deploy
 
-# the reducer and the two feature builders, where every persistence incident
-# this repo records has happened
+# the reducer and the two families' statements, where every persistence
+# incident this repo records has happened, run in the duckdb cli
 test:
 	@node --test test/*.test.mjs
 

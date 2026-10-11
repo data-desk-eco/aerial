@@ -3,9 +3,9 @@
 // predicate, so row-group statistics keep a re-read cheap. it reads, and
 // knows nothing about the map.
 
-import { read, fc } from '../shell/data.js';
+import { read, sql, from, fc } from '../shell/data.js';
 import { objects } from '../shell/archive.js';
-import { quarterOf } from '../shell/util.js';
+import { quote, quarterKey } from '../shell/util.js';
 
 // every column rides into the geojson, so the projection stays narrow.
 // not `bounds`: nature trace's wkt footprints are 7.6 of its 9.4 MB, and only
@@ -19,11 +19,11 @@ const EXT = ['observed_enh', 'confidence', 'cluster_size',
     'wind_ms', 'wind_from_deg'];
 // `detections` holds flares too, and an untrusted retrieval rides along
 // with valid = false
-const WHERE = { kind: ['plume', 'plume'], valid: [true, true] };
+const PLUMES = "kind = 'plume' AND valid";
+// nature trace grades every plume high or medium; only high is shown. on the
+// union alone, which fills the null of the providers that do not grade
+const CONFIDENT = "coalesce(confidence, 'high') = 'high'";
 export const isPlume = p => p.kind === 'plume';
-// nature trace grades every plume high or medium; only high is shown. after
-// the read, as the shell's `where` would drop the null of other providers
-const confident = p => p.confidence == null || p.confidence === 'high';
 
 // colour never means provider here; the label is the only editorial part
 const LABEL = { 'carbon-mapper': 'Carbon Mapper', imeo: 'IMEO / MARS',
@@ -40,18 +40,22 @@ export const enhT = p => p.observed_enh == null ? null
 const plumeObjects = () => objects('detections')
         .catch(err => (console.warn('archive index:', err), []));
 
+const statement = async (objs, cols, where) =>
+    `SELECT ${cols.join(', ')} FROM ${await from(objs)} WHERE ${PLUMES}
+    AND ${where}`;
+
 // one unioned read; if it fails, each object on its own on the base columns,
 // so a missing provider costs only its own rows
-async function readAll(where, columns = COLS) {
+async function readAll(where) {
     const objs = await plumeObjects();
     try {
-        return (await read(objs, { where, columns: [...columns, ...EXT] }))
-            .filter(confident);
+        return await sql(await statement(objs, [...COLS, ...EXT],
+            `${CONFIDENT} AND ${where}`));
     } catch (err) {
         console.warn('plume union read failed, reading per object:', err);
     }
     const reads = await Promise.allSettled(
-        objs.map(u => read(u, { where, columns })));
+        objs.map(async u => sql(await statement(u, COLS, where))));
     for (const r of reads)
         if (r.status === 'rejected')
             console.warn('a detections source did not load:', r.reason);
@@ -61,7 +65,7 @@ async function readAll(where, columns = COLS) {
 // the display read. it does not wait on the attributions: the card reads
 // them, and nothing on the map does
 export const readPlumes = (start, end) =>
-    readAll({ ...WHERE, date: [start, end] });
+    readAll(`date BETWEEN ${quote(start)} AND ${quote(end)}`);
 
 // one plume's footprint, off its own provider's object, on the card lane
 export async function plumeBounds({ id, provider }) {
@@ -72,24 +76,26 @@ export async function plumeBounds({ id, provider }) {
     return row?.bounds ?? null;
 }
 
-// availability has to answer for quarters outside the ticked window, so it is
-// one read of three columns over the grid's span, held for the session
+// availability has to answer for quarters outside the ticked window, so the
+// grid's span of plumes is held in the engine for the session, three columns
+// of it, and every pan asks that
 let index = null;
-const plumeIndex = (start, end) => index ??=
-    readAll({ ...WHERE, date: [start, end] }, ['date', 'lat', 'lon'])
-        .catch(err => (console.warn('plume availability:', err), []));
+const plumeIndex = (start, end) => index ??= plumeObjects()
+    .then(async objs => sql(`CREATE TABLE plume_index AS ${await statement(
+        objs, ['date', 'lat', 'lon'], `${CONFIDENT} AND date BETWEEN ${quote(
+        start)} AND ${quote(end)}`)}`))
+    .catch(err => console.warn('plume availability:', err));
 
 export async function availableQuartersPlumes([w, s, e, n], start, end) {
-    const qs = new Set();
-    for (const p of await plumeIndex(start, end))
-        if (p.lon >= w && p.lon <= e && p.lat >= s && p.lat <= n)
-            qs.add(quarterOf(p.date));
-    return qs;
+    await plumeIndex(start, end);
+    return new Set((await sql(`SELECT DISTINCT ${quarterKey('date')} AS k
+        FROM plume_index WHERE lon BETWEEN ${+w} AND ${+e}
+        AND lat BETWEEN ${+s} AND ${+n}`).catch(() => [])).map(r => r.k));
 }
 
 // a link naming a plume outside the window: one row, on an id equality the
 // engine pushes down
 export async function readPlume(id) {
-    const [row] = await readAll({ ...WHERE, id: [id, id] });
+    const [row] = await readAll(`id = ${quote(String(id))}`);
     return row ? fc([row]).features[0] : null;
 }

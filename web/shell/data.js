@@ -1,3 +1,5 @@
+import { quote } from './util.js';
+
 // one lazy duckdb-wasm engine serves every parquet read and raw statement.
 // its client runs in engine.js, a worker, so a read costs the main thread
 // only the structured clone of its rows.
@@ -85,13 +87,6 @@ export function memoised(key, run) {
     return entry.rows;
 }
 
-const quote = v => {
-    if (v instanceof Date) v = v.toISOString();
-    if (typeof v === 'string') return `'${v.replaceAll("'", "''")}'`;
-    if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
-    if (typeof v === 'bigint' || Number.isFinite(v)) return String(v);
-    throw new TypeError(`Unsupported SQL value: ${v}`);
-};
 const ident = name => `"${String(name).replaceAll('"', '""')}"`;
 // canonical, so a prefetch and a later read key one object one way
 const url = name => {
@@ -101,7 +96,14 @@ const url = name => {
         : new URL(value, globalThis.location?.href).href;
 };
 const list = s => Array.isArray(s) ? `[${s.map(quote).join(', ')}]` : quote(s);
-export const parquetInput = name => list(url(name));
+
+// what a statement reads `name` from: its engine buffer where it was
+// prefetched, else its url, ranged. several objects are one union by name
+export async function from(name) {
+    const source = await viaBuffer(url(name));
+    return `read_parquet(${list(source)}${Array.isArray(source)
+        ? ', union_by_name = true' : ''})`;
+}
 
 // a connection per lane (engine.js): a lane may wait behind itself, never
 // behind anything else, so a card open cannot hold a pan
@@ -117,11 +119,9 @@ export async function read(name, { columns, where, lane } = {}) {
             ...(lo == null ? [] : [`${col} >= ${quote(lo)}`]),
             ...(hi == null ? [] : [`${col} <= ${quote(hi)}`])];
     });
-    const source = await viaBuffer(url(name));
-    const union = Array.isArray(source) ? ', union_by_name = true' : '';
     const filter = tests.length ? ` WHERE ${tests.join(' AND ')}` : '';
-    return sql(`SELECT ${select} FROM read_parquet(${list(source)}${union})`
-        + filter, { lane });
+    return sql(`SELECT ${select} FROM ${await from(name)}${filter}`,
+        { lane });
 }
 
 export const fc = rows => ({ type: 'FeatureCollection',

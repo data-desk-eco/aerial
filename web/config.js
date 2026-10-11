@@ -8,17 +8,13 @@ import { viewportBbox, boxesWorldmap, ensureMark } from './shell/map.js';
 import { canon, padBbox, escapeHtml, formatDate, debounce }
     from './shell/util.js';
 import { initArchive, objects } from './shell/archive.js';
-import { prefetchData } from './shell/data.js';
+import { prefetchData, fc, from } from './shell/data.js';
 import { MODE } from './flaring/render.js';
 import { DD, MARKS, PIN, RATE_LABEL, AUDIT, flareIcon, plumeIcon }
     from './layers.js';
 import { keySections } from './key.js';
-import { initVNF, resetVNF, queryVNF, queryVNFFlare, availableQuartersVNF,
-    isReady as vnfReady } from './flaring/vnf.js';
-import { initS2Archive, queryS2Archive, queryS2Flare, availableQuartersS2,
-    coverage } from './flaring/s2archive.js';
-import { archiveFeature, enrichVNFFeatures } from './flaring/clustering.js';
-import { loadTerminals } from './flaring/terminals.js';
+import { readS2, readVNF, readSite, quarters, coverage, loadTerminals }
+    from './flaring/flares.js';
 import { initCard, cardTitle, cardStats, cardHtml, onCardShow, onCardClose,
     refreshCard, reselectCurrentFeature } from './card/index.js';
 import { isPlume, label, readPlumes, availableQuartersPlumes,
@@ -26,8 +22,8 @@ import { isPlume, label, readPlumes, availableQuartersPlumes,
 import { addCandidateLayers } from './methane/candidates.js';
 import { initProbabilityOverlay } from './methane/overlay.js';
 import { initMask } from './methane/mask.js';
-import { shown } from './methane/attribution.js';
-import { SITE_LAYERS, SITE_ZOOM, readSites, drawSites } from './sites.js';
+import { SHOWN } from './methane/attribution.js';
+import { SITE_LAYERS, SITE_ZOOM, holdSites, drawSites } from './sites.js';
 
 // legacy deep links: #vnf/123 -> #vnf=123, which resolveSite reads
 if (/^#vnf\/[^/=&]+$/.test(location.hash))
@@ -58,7 +54,6 @@ const prefetchAll = urls => urls.then(us => us.forEach(prefetchData))
 prefetchAll(objects('flares').then(us => START_ZOOM >= MIN_VNF_ZOOM ? us
     : eogFlares().then(eog => us.filter(u => !eog.includes(u)))));
 prefetchAll(objects('detections'));
-initS2Archive();
 
 // the span the quarter grid covers, which bounds the availability reads
 const YEAR = new Date().getFullYear();
@@ -88,38 +83,33 @@ function setSource(id, features) {
     dispatchEvent(new Event('fx-filters'));   // the table drawer re-renders
 }
 
-// eog/flares opens on the first viewport that could draw from it, so a
-// zoomed-out session pays no footer read. a failed open retries next pan.
+// eog/flares is fetched on the first viewport that could draw from it, so a
+// zoomed-out session pays for none of it
 let vnfOpen = null;
-const ensureVNF = () => vnfOpen ??= prefetchAll(eogFlares()).then(initVNF)
-    .then(() => scheduleDots())
-    .catch(err => {
-        console.error('VNF init error:', err);
-        vnfOpen = null;
-        resetVNF();
-        CTX.quarters.hint('VNF unavailable');
-    });
+const ensureVNF = () => vnfOpen ??= prefetchAll(eogFlares())
+    .then(() => scheduleDots());
 
 // a layer's read for the ticked window: features, or null to leave it as it is
 const READS = {
-    // the negation lets a cluster the table gives no intensity for through:
-    // `undefined >= floor` is false for every row
-    detections: async ({ startDate, endDate }) =>
-        CTX.map.getZoom() < MIN_S2_ZOOM ? [] : (await queryS2Archive(
-            viewportBbox(CTX.map), startDate, endDate))
-            .filter(c => !(c.avg_b12 < MODE.s2.floor))
-            .map(c => archiveFeature(c, CTX.quarters.keys())),
-    vnf: async ({ startDate, endDate }) => {
+    detections: async range => CTX.map.getZoom() < MIN_S2_ZOOM ? []
+        : fc(await readS2(viewportBbox(CTX.map), range, CTX.quarters.keys(),
+            MODE.s2.floor)).features,
+    vnf: async range => {
         if (CTX.map.getZoom() < MIN_VNF_ZOOM) return [];
         await ensureVNF();
-        return vnfReady() ? enrichVNFFeatures((await queryVNF(
-            viewportBbox(CTX.map), startDate, endDate)).features) : null;
+        return fc(await readVNF(viewportBbox(CTX.map), range,
+            CTX.quarters.keys())).features;
     },
     plumes: async ({ startDate, endDate }) =>
         CTX.fc(await readPlumes(startDate, endDate)).features,
-    // every outline in view; drawSites keeps the ones a detection is in
-    sites: async () => CTX.map.getZoom() < SITE_ZOOM ? []
-        : readSites(viewportBbox(CTX.map)),
+    // every outline in view, held in the engine; drawSites draws the ones
+    // a detection is in, so there is no source to set
+    sites: async () => {
+        if (CTX.map.getZoom() < SITE_ZOOM) return null;
+        await holdSites(viewportBbox(CTX.map));
+        dispatchEvent(new Event('fx-filters'));
+        return null;
+    },
 };
 const FAILED = { detections: 'Flare archive unavailable',
                  vnf: 'VNF read failed', plumes: 'Plume read failed',
@@ -162,9 +152,10 @@ async function quarterDots() {
     const ask = (ok, fn) => ok ? fn().catch(err =>
         (console.error('quarter availability:', err), null)) : null;
     const flares = (await Promise.all([
-        ask(zoom >= MIN_S2_ZOOM, () => availableQuartersS2(pad)),
-        ask(vnfReady() && zoom >= MIN_VNF_ZOOM,
-            () => availableQuartersVNF(pad, GRID_START, GRID_END)),
+        ask(zoom >= MIN_S2_ZOOM,
+            () => quarters('data-desk', pad, GRID_START, GRID_END)),
+        ask(vnfOpen && zoom >= MIN_VNF_ZOOM,
+            () => quarters('eog', pad, GRID_START, GRID_END)),
     ])).filter(Boolean);
     const avail = flares.length && new Set([...flares.flatMap(s => [...s]),
         ...await availableQuartersPlumes(pad, GRID_START, GRID_END)]);
@@ -179,17 +170,11 @@ const scheduleDots = debounce(quarterDots, 300);
 
 // ── deep links ──
 
-// #site= names a flare of either family. the two id spaces are disjoint by
-// accident, not contract, so both tables are asked rather than the id's shape
+// #site= names a flare of either family (flares.js asks both)
 async function resolveSite(id) {
     await whenReady;
-    const cluster = await queryS2Flare(id).catch(() => null);
-    if (cluster) return archiveFeature(cluster, CTX.quarters.keys());
-    await ensureVNF();
-    const range = CTX.quarters.range();
-    if (!vnfReady() || !range) return null;
-    const fc = await queryVNFFlare(id, range.startDate, range.endDate);
-    return enrichVNFFeatures(fc.features.slice(0, 1))[0] ?? null;
+    const row = await readSite(id, CTX.quarters.keys());
+    return row && fc([row]).features[0];
 }
 
 // #plume=, off the loaded features (on the canonical id, so a link from
@@ -327,11 +312,10 @@ mount({
                  'lat', 'lon'] },
         {
             label: 'Attributions', filter: false,
-            rows: async ({ read }) => (await read('attributions', { columns: [
-                'id', 'source_label', 'source_kind', 'operator', 'confidence',
-                'lat', 'lon', 'verified'] })).filter(shown)
-                .sort((a, b) => String(a.source_label)
-                    .localeCompare(String(b.source_label))),
+            rows: async ({ sql }) => sql(`SELECT id, source_label,
+                source_kind, operator, confidence, lat, lon
+                FROM ${await from('attributions')} WHERE ${SHOWN}
+                ORDER BY source_label`),
             cols: ['id', 'source_label', 'source_kind', 'operator',
                    'confidence', 'lat', 'lon'],
         },
@@ -356,7 +340,7 @@ mount({
                    quarterKeys: () => ctx.quarters.keys() });
         initProbabilityOverlay(ctx.map);
         initMask(ctx.map, ARCHIVE);
-        addCandidateLayers(ctx.map, ctx.sql);
+        addCandidateLayers(ctx.map);
         boxesWorldmap(document.getElementById('modal-worldmap'),
             coverage, 0.06);
 
@@ -371,8 +355,8 @@ mount({
         // any layer is re-set, and after the key re-filters them
         const shown = id => (ctx.sources[id]?.features ?? [])
             .filter(f => (ctx.preds ?? []).every(p => p(f.properties)));
-        addEventListener('fx-filters', () =>
-            drawSites(ctx.map, ctx.sources.sites?.features ?? [], shown));
+        addEventListener('fx-filters', debounce(() => drawSites(ctx.map, shown),
+            100));
         // the dots wait for the first paint: their plume index is a read
         // still on the network, and ahead of it it held the layers
         const first = Promise.allSettled([REFRESH.detections(),

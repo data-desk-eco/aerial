@@ -162,8 +162,8 @@ function renderEvents(el, detections, b) {
     currentDets = detections;
     const list = el.querySelector('#events-list');
     list.innerHTML = '';
-    const sorted = [...detections]
-        .sort((a, b) => new Date(b.date) - new Date(a.date));
+    // the series comes oldest first; the list reads newest first
+    const sorted = detections.toReversed();
     const dateToItem = new Map();
     let firstItem = null;
 

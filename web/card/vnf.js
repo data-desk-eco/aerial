@@ -3,7 +3,7 @@
 // heat halo alone; no image, and no csv (the series is eog's to publish).
 
 import { MODE } from '../flaring/render.js';
-import { fetchVNFDetections } from '../flaring/vnf.js';
+import { vnfSeries } from '../flaring/flares.js';
 import { current, coords, siteTitle } from './index.js';
 import { heatFootprint } from './overlays.js';
 
@@ -21,6 +21,6 @@ export default {
     instrument: 'VNF',
     passLabel: 'Nights read',
     title: p => siteTitle(p, `Flare #${p.id}`),
-    fetch: fetchVNFDetections,
+    fetch: vnfSeries,
     select: footprint,
 };

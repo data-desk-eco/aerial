@@ -20,6 +20,15 @@ and delete what only a second consumer would have wanted.
 zero npm dependencies. MapLibre GL and DuckDB-Wasm lite are vendored; everything
 else is browser built-ins.
 
+**the engine does the work.** flux's js is a thin layer between maplibre and
+the archive: a reader builds one statement, the engine filters, windows,
+reduces, rates, names, joins and orders, and the rows come out as the map's
+properties (`fc()`). the lite build carries spatial (`ST_Distance_Sphere`,
+`ST_Contains`, `ST_Normalize`), so geometry is sql too. what the session holds,
+the engine holds, as a table, not a js array: `terminals`, `plume_index`,
+`site_view`. js keeps the dom, the map, and caches of ranged reads
+(`memoised`). a loop over rows in js is a statement not yet written.
+
 ## the brand
 
 the ui is built on `vendor/dd/dd.js`, the kernel the data desk `design`
@@ -35,20 +44,19 @@ change the elements in the design repository, never in vendor/.
 
 ## the three families
 
-**S2 flaring.** `flaring/s2archive.js` reads `data-desk/flares` (one row per
-cluster, its quarterly history nested in `quarters`) once and answers every
-viewport, and the intro map's `coverage()`, from those rows.
-`data-desk/detections` holds the per-date series, read per cluster on card
-open. the methodology is s2-flares, run in the etl; flux is a viewer.
-
-**VNF flaring.** `flaring/vnf.js` reads `eog/flares` for the viewport and
-`eog/detections` per site on card open. every detections row is a positive
-detection; the looks that found nothing are `eog/observations`, which flux does
-not read (see invariants).
+**flaring.** `flaring/flares.js` is both families: a statement per viewport
+over `data-desk/flares` (S2 clusters) or `eog/flares` (VNF sites), one row per
+site with its quarterly history nested in `quarters`, both held as engine
+buffers. the per-date series, `data-desk/detections` and `eog/detections`, is
+read per site on card open. every eog detections row is a positive detection;
+the looks that found nothing are `eog/observations`, which flux does not read
+(see invariants). the S2 methodology is s2-flares, run in the etl; flux is a
+viewer.
 
 both are named after the export LNG terminal they sit on, where one is within
-7.5 km: `flaring/terminals.js` reads them off `gem/infrastructure` on the card
-lane, and a site drawn before they land is renamed on the next refresh.
+7.5 km: `loadTerminals` fills the `terminals` table off `gem/infrastructure`
+on the card lane, and a site drawn before it lands is renamed on the next
+refresh.
 
 **methane.** `methane/plumes.js` reads every provider's plume detections for
 the ticked window, the wind at the plume among them (`wind_ms`,
@@ -81,10 +89,8 @@ web/
     flare.js vnf.js plume.js   the bodies
   flaring/
     render.js        MODE: the scale each instrument reads on, the S2 floor
-    clustering.js    sumQuarters, the feature builders, the terminal lookup
-    terminals.js     gem's export lng terminals
-    s2archive.js     data-desk/flares + detections, coverage()
-    vnf.js           eog/flares + eog/detections
+    flares.js        both families in sql: the reducer, s2() and vnf(),
+                     the terminals, availability, coverage(), the series
   methane/           plumes.js reader, attribution.js, candidates.js,
                      overlay.js, mask.js
   shell/             app.js mount, map.js, ui.js, detail.js, table.js,
@@ -95,14 +101,14 @@ web/
                      maplibre, inter (300-800, italic)
 worker/              the review api and its d1 schema
 scripts/             vendor.sh, dist.sh, serve.py
-test/                the rate rules, in node:test
+test/                the rate rules: flares.js's sql, in the duckdb cli
 ```
 
 ## commands
 
 ```bash
 make serve     # static server on :8000
-make test      # the rate rules (node --test)
+make test      # the rate rules (node --test, needs duckdb with spatial)
 make audit     # the ui against the brand, headless (needs ~/data-desk browse)
 make vendor    # re-vendor maplibre, duckdb, the dd kernel, inter
 make dist      # the pages artifact, assertions and all
@@ -123,15 +129,16 @@ divides by; `observations` is every look. the only numerator that pairs with
 broke `lng-flaring` — and reading `observations` where `clear` belongs
 silently redefines persistence.
 
-**one reducer.** both families go through `sumQuarters` in
-`flaring/clustering.js`. it returns null, not 0, for any field absent from any
-quarter in the window: summing that as zero turns "we never counted the
-passes" into "no pass was ever made". keep it the single path.
+**one reducer.** both families go through `reduce` in `flaring/flares.js`, a
+subquery over `unnest(quarters)`. it returns null, not 0, for any field absent
+from any quarter in the window (`count(q.x) = count(*)`): summing that as zero
+turns "we never counted the passes" into "no pass was ever made". keep it the
+single path.
 
 **do not wire through the published `persistence` column** for the card's
 rate: the app recomputes over exactly the ticked quarters, and the published
 value would stop the quarter picker affecting the number. its use is as the
-gate's `rank` fallback (`clustering.js`), a different question.
+gate's `rank` fallback (`flares.js`), a different question.
 
 **the two null branches stay split.** in S2 a null persistence is unrated and
 passes the gate; in VNF it is a finding — no clear night — and the flare is
@@ -149,7 +156,7 @@ about (`p.kind !== kind || …`, `key.js`), so switching a group off drops that
 family and nothing else.
 
 **floors:** `MIN_LOOKS = 10` for S2, `COVERAGE_MIN = 0.8` for VNF, both in
-`clustering.js`. below them, publish no rate; the card shows an em dash.
+`flares.js`. below them, publish no rate; the card shows an em dash.
 
 **`reselectCurrentFeature()` is load-bearing.** every dot carries the numbers
 for the ticked quarters alone, and an open card holds a copy. every layer
@@ -178,9 +185,9 @@ averaging, always check `n_sats`, and read a day with files but no detections
 as cloud, not as zero activity (`docs/ras-laffan-monitoring.md`).
 
 **the negation in the S2 intensity gate is deliberate.**
-`!(c.avg_b12 < MODE.s2.floor)` (`config.js`) lets a cluster the
-table gives no intensity for through: `undefined >= 0.85` is false for every
-row.
+`NOT coalesce(f.avg_b12 < floor, false)` (`readS2`) lets a cluster the table
+gives no intensity for through: `avg_b12 >= 0.85` is null for such a row, and
+a null WHERE drops it.
 
 **VNF has no intensity floor.** a 3 MW floor on the average hid every dim
 flare — most onshore gas plants, and the LNG trains at Darwin and Ichthys.
@@ -199,11 +206,15 @@ is shape's job.
 **a lane is a connection, and the engine serialises each one.** statements on
 one connection run one after another; on different connections they overlap
 without touching each other's staged ranges. `sql()` and `read()` take a
-`lane`, and `.query()` is called in exactly one place. the map is the default
+`lane`, and `.query()` is called in exactly one place (bar each connection's
+`SET geometry_always_xy`: the setting is per connection, and spatial's sphere
+functions otherwise take (lat, lon)). the map is the default
 lane and card opens (and the terminal read) are `lane: 'card'`: sharing one
-made a pan wait for a card, 6.1 s against 1.3 s. flux issues no `CREATE`, so a
-lane is only a parallelism choice. add one when work must not wait behind
-other work, never one per provider.
+made a pan wait for a card, 6.1 s against 1.3 s. a held table is shared by
+every connection, so a statement that replaces one goes on the lane that reads
+it (`site_view` on the map lane), and a lane is otherwise only a parallelism
+choice. add one when work must not wait behind other work, never one per
+provider.
 
 **two read tiers, and size picks the tier.** every object under the 8 MB cap is
 fetched whole at page parse, racing the engine download, and registered as an

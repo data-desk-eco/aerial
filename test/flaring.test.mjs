@@ -1,15 +1,29 @@
-// the rules a rate is computed under, held in place. clustering.js is pure,
-// and every case below is one a CLAUDE.md incident is written against.
+// the rules a rate is computed under, held in place: flares.js builds the
+// statements, and every case below is one a CLAUDE.md incident is written
+// against.
 //
 //   node --test test/
 
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
 
-import { sumQuarters, archiveFeature, enrichVNFFeatures, setTerminals }
-    from '../web/flaring/clustering.js';
+import { execFileSync } from 'node:child_process';
 
-setTerminals([]);   // no terminal is near anything here, so names stay derived
+import { s2, vnf } from '../web/flaring/flares.js';
+import { quote } from '../web/shell/util.js';
+
+// the statements run in the duckdb cli, as the engine runs them: spatial
+// loaded, geometry (lon, lat), and no terminal near anything, so names stay
+// derived
+const run = q => JSON.parse(execFileSync('duckdb', ['-json', '-c',
+    `LOAD spatial; SET geometry_always_xy = true;
+     CREATE TABLE terminals (name VARCHAR, lat DOUBLE, lon DOUBLE); ${q}`])
+    .toString() || '[]');
+const lit = v => v == null ? 'NULL' : Array.isArray(v) ? `[${v.map(lit)}]`
+    : typeof v === 'object' ? `{${Object.entries(v)
+        .map(([k, x]) => `'${k}': ${lit(x)}`)}}`
+    : /^\d{4}-\d\d-\d\d$/.test(v) ? `DATE ${quote(v)}` : quote(v);
+const src = row => `(SELECT unnest(r) FROM (SELECT unnest([${lit(row)}]) r))`;
 
 const KEYS = new Set(['2026_1', '2026_2']);
 // a quarter key is a date inside its own quarter, which is how the reducer's
@@ -18,50 +32,58 @@ const Q = (quarter, o = {}) => ({
     quarter, days: 90, observations: 80, clear: 40,
     detections: 20, detections_clear: 10, rh_sum: 100, rh_max: 5, ...o,
 });
-const all = () => true;
 const thin = { clear: 4, detections_clear: 2 };
 
-describe('sumQuarters', () => {
-    it('sums the kept quarters and counts them', () => {
-        const t = sumQuarters([Q('2026-01-01'), Q('2026-04-01')], all);
-        assert.equal(t.n, 2);
-        assert.equal(t.clear, 80);
-        assert.equal(t.detections_clear, 20);
-        assert.equal(t.rh_max, 5);
+const S2 = { id: 'a1', cell: '81013ffffffffff', lat: 25, lon: 52,
+             first_seen: '2020-01-01', last_seen: '2026-12-31',
+             max_b12: 1, avg_b12: 1, persistence: null };
+const site = (quarters, o = {}, keys = KEYS) =>
+    run(s2(src({ ...S2, quarters, ...o }), keys))[0];
+const VNF = { ...S2, id: 'v1', detail: '', country: '' };
+const night = (quarters, keys = KEYS) =>
+    run(vnf(src({ ...VNF, quarters }), keys));
+
+// the reducer, read through vnf, whose columns are its sums: `passes` is
+// every look, `observations` the clear ones
+describe('the reducer', () => {
+    it('sums the kept quarters', () => {
+        const [p] = night([Q('2026-01-01'), Q('2026-04-01')]);
+        assert.equal(p.observations, 80);
+        assert.equal(p.detection_count, 20);
+        assert.equal(p.max_rh, 5);
     });
 
-    it('keeps only the quarters the window admits', () => {
-        const t = sumQuarters([Q('2026-01-01'), Q('2025-01-01')],
-            q => q.startsWith('2026'));
-        assert.equal(t.n, 1);
-        assert.equal(t.clear, 40);
+    it('keeps only the quarters the window ticks', () => {
+        const [p] = night([Q('2026-01-01'), Q('2025-01-01')]);
+        assert.equal(p.observations, 40);
     });
 
     // summing a null as zero turns "we never counted the passes" into "no pass
     // was ever made", which a caller then reads as a measurement
     it('returns null for a field any kept quarter is missing', () => {
-        const t = sumQuarters(
-            [Q('2026-01-01'), Q('2026-04-01', { clear: null })], all);
-        assert.equal(t.clear, null);
-        assert.equal(t.detections, 40);
+        const [p] = night([Q('2026-01-01'), Q('2026-04-01', { clear: null })]);
+        assert.equal(p.observations, null);
+        assert.equal(p.passes, 160);
     });
 
     it('an empty window measures nothing rather than zero', () => {
-        assert.equal(sumQuarters([Q('2026-01-01')], () => false).n, 0);
+        assert.equal(night([Q('2025-01-01')]).length, 0);
+        assert.equal(site([Q('2025-01-01')]).passes, null);
+    });
+
+    it('no ticked quarter is no window, and admits them all', () => {
+        assert.equal(night([Q('2025-01-01')], new Set())[0].observations, 40);
     });
 });
 
-describe('archiveFeature', () => {
-    const site = (quarters, o = {}) => archiveFeature({ id: 'a1',
-        cell: '81013ffffffffff', lat: 25, lon: 52, quarters, ...o },
-        KEYS).properties;
-
+describe('s2', () => {
     // the only numerator that pairs with `clear` is `detections_clear`
     it('divides clear-sky detections by clear-sky looks', () => {
         const p = site([Q('2026-01-01'), Q('2026-04-01')]);
         assert.equal(p.detection_count, 20);
         assert.equal(p.observations, 80);
         assert.equal(p.persistence, 20 / 80);
+        assert.equal(p.name, '20 detections');
     });
 
     // below MIN_LOOKS a rate is noise: report the count and no rate
@@ -98,30 +120,24 @@ describe('archiveFeature', () => {
     });
 });
 
-describe('enrichVNFFeatures', () => {
-    const look = (o = {}) => ({
-        type: 'Feature', geometry: { type: 'Point', coordinates: [52, 25] },
-        properties: { id: 'v1', cell: '81013ffffffffff', avg_rh: 10, max_rh: 20,
-                      detection_dates: 30, observations: 60, passes: 80,
-                      coverage: 0.95, ...o },
-    });
-    const one = o => enrichVNFFeatures([look(o)]);
+describe('vnf', () => {
+    const one = o => night([Q('2026-01-01', o)])[0];
 
     it('divides clear nights lit by clear nights read', () => {
-        assert.equal(one()[0].properties.persistence, 0.5);
+        assert.equal(one().persistence, 10 / 40);
     });
 
     // never seen is not unlit: under the coverage floor, or with no clear
     // night at all, vnf publishes no rate, and the layer filter drops it
     it('publishes no rate under the coverage floor', () => {
-        assert.equal(one({ coverage: 0.5 })[0].properties.persistence, null);
+        assert.equal(one({ observations: 45 }).persistence, null);
     });
 
     it('publishes no rate for a window holding no clear night', () => {
-        assert.equal(one({ observations: 0 })[0].properties.persistence, null);
+        assert.equal(one({ clear: 0, detections_clear: 0 }).persistence, null);
     });
 
     it('keeps a dim site: there is no intensity floor', () => {
-        assert.equal(one({ avg_rh: 1 }).length, 1);
+        assert.equal(one({ rh_sum: 1, rh_max: 0.1 }).avg_rh, 0.05);
     });
 });

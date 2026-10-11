@@ -11,12 +11,19 @@ export const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ENTITY[c]);
 export const canon = id => String(id).toLowerCase().replace(/_/g, ':')
     .replace(/^[a-z]+:/, '');
 
+// a value as a sql literal: every statement flux issues is built as text
+export const quote = v => {
+    if (v instanceof Date) v = v.toISOString();
+    if (typeof v === 'string') return `'${v.replaceAll("'", "''")}'`;
+    if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
+    if (typeof v === 'bigint' || Number.isFinite(v)) return String(v);
+    throw new TypeError(`Unsupported SQL value: ${v}`);
+};
+
+// the sql quarter key, "2025_3", of a date expression
+export const quarterKey = d => `year(${d}) || '_' || quarter(${d})`;
+
 const rad = d => d * Math.PI / 180;
-export function haversineM(lat1, lon1, lat2, lon2) {
-    const a = Math.sin(rad(lat2 - lat1) / 2) ** 2 + Math.cos(rad(lat1))
-        * Math.cos(rad(lat2)) * Math.sin(rad(lon2 - lon1) / 2) ** 2;
-    return 6371000 * 2 * Math.asin(Math.sqrt(a));
-}
 
 // metres -> degrees; the cos floor keeps a span finite at the poles
 export const degLat = m => m / 111320;

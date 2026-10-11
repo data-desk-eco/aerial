@@ -8,7 +8,7 @@
 
 import { lines } from './vendor/dd/dd.js';
 import { objects } from './shell/archive.js';
-import { read } from './shell/data.js';
+import { sql, from } from './shell/data.js';
 
 const KIND = { refinery: 'Refinery', lng_terminal: 'LNG terminal',
     processing_plant: 'Gas processing plant', gas_terminal: 'Gas terminal',
@@ -38,63 +38,33 @@ export const SITE_LAYERS = [
                              ...l })),
 ];
 
-// the inset dash sits right of the stroke's direction, so inside a
-// clockwise ring: each outer ring is wound clockwise, each hole the other way
-const cw = r => r.reduce((a, [x, y], i) => {
-    const [px, py] = r.at(i - 1);
-    return a + (x - px) * (y + py);
-}, 0) > 0 ? r : [...r].reverse();
-const wind = rings => rings.map((r, i) => i ? cw(r).reverse() : cw(r));
-const orient = g => ({ ...g, coordinates: g.type === 'Polygon'
-    ? wind(g.coordinates) : g.coordinates.map(wind) });
+// the outlines that touch the viewport, held in the engine as `site_view`
+// until the next pan: the table is hilbert-ordered, so the box prunes to the
+// row groups around it
+export const holdSites = async ([w, s, e, n]) => sql(`
+    CREATE OR REPLACE TABLE site_view AS SELECT id, kind, name, operator,
+        geometry FROM ${await from(await objects('sites'))}
+    WHERE xmin <= ${+e} AND xmax >= ${+w} AND ymin <= ${+n} AND ymax >= ${+s}`);
 
-// the outlines that touch the viewport: the table is hilbert-ordered, so the
-// box prunes to the row groups around it. parsed once per site
-const parsed = new Map();
-export async function readSites([w, s, e, n]) {
-    const rows = await Promise.all((await objects('sites')).map(u => read(u, {
-        columns: ['id', 'kind', 'name', 'operator', 'xmin', 'ymin', 'xmax',
-                  'ymax', 'outline'],
-        where: { xmin: [null, e], xmax: [w, null], ymin: [null, n],
-                 ymax: [s, null] } })));
-    return rows.flat().map(({ outline, ...p }) => {
-        if (!parsed.has(p.id)) parsed.set(p.id, { type: 'Feature',
-            properties: p, geometry: orient(JSON.parse(outline)) });
-        return parsed.get(p.id);
-    });
-}
-
-// even-odd over every ring, so a hole holds nothing
-const inRing = ([x, y], r) => r.reduce((c, [ax, ay], i) => {
-    const [bx, by] = r.at(i - 1);
-    return (ay > y) !== (by > y) && x < (bx - ax) * (y - ay) / (by - ay) + ax
-        ? !c : c;
-}, false);
-// a detection's position is a pixel's centre, so a flare on a site's edge
-// can land just outside it (darwin lng): reach is the slack, in metres
-const REACH = 100, D = REACH / 111320;
-// degrees from a point to a segment, x scaled by k = cos(lat)
-const gap = ([x, y], [ax, ay], [bx, by], k) => {
-    const [dx, dy, ex, ey] = [(bx - ax) * k, by - ay, (x - ax) * k, y - ay];
-    const t = Math.max(0, Math.min(1,
-        (ex * dx + ey * dy) / (dx * dx + dy * dy || 1)));
-    return Math.hypot(ex - t * dx, ey - t * dy);
-};
-const holds = ({ geometry: g, properties: b }, [x, y]) => {
-    const k = Math.cos(y * Math.PI / 180), polys = g.type === 'Polygon'
-        ? [g.coordinates] : g.coordinates;
-    return x >= b.xmin - D / k && x <= b.xmax + D / k
-        && y >= b.ymin - D && y <= b.ymax + D
-        && polys.some(poly => poly.reduce((c, r) => inRing([x, y], r)
-            ? !c : c, false) || poly.some(r => r.some((a, i) =>
-                gap([x, y], a, r.at(i - 1), k) < D)));
-};
-
-// the sites read for the viewport that hold a point the map is drawing:
-// `shown(id)` is a layer's features as drawn, after the key's filters
-export function drawSites(map, sites, shown) {
+// the held outlines that hold a point the map is drawing: `shown(id)` is a
+// layer's features as drawn, after the key's filters. the inset dash sits
+// right of the stroke's direction, so inside a clockwise ring, which is how
+// ST_Normalize winds an outer ring (and each hole the other way)
+let epoch = 0;
+export async function drawSites(map, shown) {
+    if (map.getZoom() < SITE_ZOOM) return;
     const points = HELD_BY.flatMap(id => shown(id))
         .map(f => f.geometry?.coordinates).filter(Boolean);
-    map.getSource('sites')?.setData({ type: 'FeatureCollection',
-        features: sites.filter(s => points.some(p => holds(s, p))) });
+    const e = ++epoch;
+    const rows = points.length ? await sql(`
+        SELECT id, kind, name, operator,
+            ST_AsGeoJSON(ST_Normalize(geometry)) AS outline
+        FROM site_view s WHERE EXISTS (SELECT 1 FROM (VALUES ${points.map(
+            ([x, y]) => `(${+x}, ${+y})`)}) AS p(x, y)
+            WHERE ST_Contains(s.geometry, ST_Point(p.x, p.y)))`)
+        .catch(() => []) : [];   // no site_view yet: nothing to draw
+    if (e === epoch) map.getSource('sites')?.setData({
+        type: 'FeatureCollection', features: rows.map(
+            ({ outline, ...properties }) => ({ type: 'Feature', properties,
+                geometry: JSON.parse(outline) })) });
 }

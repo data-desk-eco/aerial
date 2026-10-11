@@ -174,7 +174,7 @@ MARKS.forEach(id => ensureMark(map, id));
 map.addSource('rv', { type: 'geojson', data: empty });
 // the structures around the plume: the attributed ones, and those the
 // reviewer might have picked instead
-addCandidateLayers(map, sql, null);
+addCandidateLayers(map, null);
 initMask(map, BUCKET, 'candidates-hit');
 map.addLayer({ id: 'rv-link', type: 'line', source: 'rv',
     filter: ['==', '$type', 'LineString'],

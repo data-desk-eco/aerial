@@ -5,12 +5,11 @@
 
 import { hover } from '../vendor/dd/dd.js';
 import { objects } from '../shell/archive.js';
-import { parquetInput } from '../shell/data.js';
-import { degLat, degLon, fmtMetres, haversineM }
-    from '../shell/util.js';
+import { sql, from, fc } from '../shell/data.js';
+import { quote, fmtMetres } from '../shell/util.js';
 import { MARK, PIN } from '../layers.js';
 
-const MAX_SCAN = 4000, MAX_SHOW = 300;
+const MAX_SHOW = 300;
 const AREAS = ['pipeline', 'field', 'oilfield', 'gas_field', 'offshore_field',
                'licence_area', 'licence_block'];
 
@@ -18,56 +17,41 @@ const AREAS = ['pipeline', 'field', 'oilfield', 'gas_field', 'offshore_field',
 const normId = id =>
     id.replace(/^OSM:(way|node|relation)\//, (_, t) => `OSM:${t[0]}`);
 
-let map, query, shown = [], epoch = 0;
-
-// one read per object, so a provider that has not published costs only its
-// own rows. the tables are hilbert-clustered on lon/lat, so the bounds prune
-async function fetchRect({ minX, minY, maxX, maxY }) {
-    const tables = await objects('infrastructure').catch(() => []);
-    const settled = await Promise.allSettled(tables.map(t => query(`
-        select * exclude (geometry, cell)
-        from read_parquet(${parquetInput(t)})
-        where lon between ${+minX} and ${+maxX}
-          and lat between ${+minY} and ${+maxY}
-          and kind not in (${AREAS.map(k => `'${k}'`).join(', ')})
-        limit ${MAX_SCAN}`)));
-    for (const r of settled)
-        if (r.status === 'rejected')
-            console.warn('a candidate source did not load:', r.reason);
-    return settled.flatMap(r => r.value ?? []).map(p => ({
-        type: 'Feature', properties: p,
-        geometry: { type: 'Point', coordinates: [p.lon, p.lat] },
-    }));
-}
+let map, shown = [], epoch = 0;
 
 const render = features => map.getSource('candidates')
     ?.setData({ type: 'FeatureCollection', features: shown = features });
 
-// the rect stretches to the attribution's assessed source point, so a distant
-// attributed feature still loads, and attributed ids survive both the radius
-// cut and the display cap. resolves to what it drew, or nothing if stale
+// the nearest MAX_SHOW within the radius, and the attributed ids wherever
+// they are, nearest first: one statement over every provider's table, the
+// columns they share. the tables are hilbert-clustered on lon/lat, so the
+// rect prunes, and it stretches to the attribution's assessed source point
+// so a distant attributed feature still loads. every bound folds to a
+// constant, which is what lets it push down. resolves to what it drew, or
+// nothing if stale
 export async function selectPlume(lon, lat, radiusKm, rec) {
-    const hl = new Set((rec?.attributed_ids || []).map(normId));
-    const r = radiusKm * 1000, dLat = degLat(r), dLon = degLon(r, lat);
-    const rect = { minX: lon - dLon, minY: lat - dLat,
-                   maxX: lon + dLon, maxY: lat + dLat };
-    if (rec?.lat != null) {
-        rect.minX = Math.min(rect.minX, rec.lon - 0.02);
-        rect.maxX = Math.max(rect.maxX, rec.lon + 0.02);
-        rect.minY = Math.min(rect.minY, rec.lat - 0.02);
-        rect.maxY = Math.max(rect.maxY, rec.lat + 0.02);
-    }
-    const now = ++epoch;
-    const feats = await fetchRect(rect);
+    const r = radiusKm * 1000, now = ++epoch;
+    const hl = (rec?.attributed_ids || []).map(id => quote(normId(id)));
+    const [ax, ay] = rec?.lat != null ? [+rec.lon, +rec.lat] : [lon, lat];
+    const dLat = `${r} / 111320`;
+    const dLon = `${r} / (111320 * greatest(0.05, cos(radians(${lat}))))`;
+    const rows = await sql(`
+        SELECT id, kind, name, operator, status, fuel, detail, lon, lat,
+            ST_Distance_Sphere(ST_Point(lon, lat), ST_Point(${lon}, ${lat}))
+                AS dist,
+            list_contains([${hl}]::VARCHAR[], id) AS hl
+        FROM ${await from(await objects('infrastructure'))}
+        WHERE lon BETWEEN least(${lon} - ${dLon}, ${ax} - 0.02)
+                      AND greatest(${lon} + ${dLon}, ${ax} + 0.02)
+          AND lat BETWEEN least(${lat} - ${dLat}, ${ay} - 0.02)
+                      AND greatest(${lat} + ${dLat}, ${ay} + 0.02)
+          AND kind NOT IN (${AREAS.map(quote).join(', ')})
+        QUALIFY hl OR (dist <= ${r}
+            AND row_number() OVER (ORDER BY dist) <= ${MAX_SHOW})
+        ORDER BY dist`, { lane: 'card' })
+        .catch(err => (console.warn('candidates unavailable:', err), []));
     if (now !== epoch) return;
-    for (const { geometry: { coordinates: [flon, flat] }, properties: p }
-         of feats) {
-        p.dist = haversineM(lat, lon, flat, flon);
-        p.hl = hl.has(p.id);
-    }
-    feats.sort((a, b) => a.properties.dist - b.properties.dist);
-    render(feats.filter((f, i) =>
-        (i < MAX_SHOW && f.properties.dist <= r) || f.properties.hl));
+    render(fc(rows).features);
     return shown;
 }
 
@@ -77,8 +61,8 @@ export function clearSelection() {
     render([]);
 }
 
-export function addCandidateLayers(m, sql, before = 'plumes') {
-    map = m; query = sql;
+export function addCandidateLayers(m, before = 'plumes') {
+    map = m;
     map.addSource('candidates', { type: 'geojson',
         data: { type: 'FeatureCollection', features: [] } });
     map.addLayer({
