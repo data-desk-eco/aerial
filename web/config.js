@@ -96,14 +96,11 @@ const READS = {
         return null;
     },
 };
-const FAILED = { detections: 'Flare archive unavailable',
-                 vnf: 'VNF read failed', plumes: 'Plume read failed',
-                 sites: 'Site outlines unavailable' };
 
 // every path ends in reselectCurrentFeature: an open card holds a copy of the
 // numbers for the window it was opened in, so it is re-opened from the new
-// features. a read overtaken by a newer one draws nothing. a failure is said
-// on the panel, as an empty map says nothing.
+// features. a read overtaken by a newer one draws nothing. a failure goes to
+// the console.
 const refresh = id => {
     let epoch = 0;
     return async () => {
@@ -116,7 +113,6 @@ const refresh = id => {
             reselectCurrentFeature(id);
         } catch (err) {
             console.error(`${id} read failed:`, err);
-            CTX.quarters.hint(FAILED[id]);
         }
     };
 };

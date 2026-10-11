@@ -10,8 +10,7 @@ export const logo = '<dd-logo class="fx-logo" '
 
 const SEARCH = `<input type="search" class="fx-search" id="search"
     placeholder="Address or lat, lon" spellcheck="false" autocomplete="off">`;
-const QUARTERS = `<div><div class="fx-quarters" id="quarters"></div>
-    <div class="fx-hint" id="quarters-hint"></div></div>`;
+const QUARTERS = `<div class="fx-quarters" id="quarters"></div>`;
 
 // the subtitle says the first reads are still out, and the app takes it
 // down (ctx.loaded()) once they settle: on a slow line an empty map and a

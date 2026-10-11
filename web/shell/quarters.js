@@ -38,9 +38,6 @@ export function initQuarters(el, onChange, years = 4) {
             .map(b => b.dataset.q)),
         // {startDate, endDate} spanning them, or null
         range: () => quarterRange(api.keys()),
-        hint: text => {
-            document.getElementById('quarters-hint').textContent = text;
-        },
     };
     return api;
 }
