@@ -42,7 +42,7 @@ const ATTRIBUTIONS = `${ARCHIVE}/data-desk/attributions/data.parquet`;
 
 // s2 is resident and cheap at z4; 20k+ dim vnf sites would drown it below z6
 const MIN_S2_ZOOM = 4, MIN_VNF_ZOOM = 6;
-const VIEW = { center: [52.8720, 25.1676], zoom: 12 };
+const VIEW = { center: [52.688, 26.989], zoom: 6.19 };
 // the zoom the page opens at, off the hash the map will read
 const START_ZOOM = +(/(?:^#|&)map=([\d.]+)\//.exec(location.hash)?.[1]
     ?? VIEW.zoom);
