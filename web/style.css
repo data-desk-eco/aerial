@@ -77,10 +77,7 @@ dd-dot[unavailable] { pointer-events: auto; }
 
 @media (max-width: 768px) {
     .intensity-chart, .panel-actions { display: none; }
-    /* side by side at the top, the contracted panel (title and subtitle)
-       is 1.8px shorter than the contracted key (its three family labels):
-       it takes the key's height, its padding, labels and their gaps, borders
-       and all, the extra under the subtitle */
-    .fx-main[collapsed] { min-height: calc(2 * var(--dd-key-pad-y)
-        + 3lh + 2 * var(--dd-key-label-margin-bottom) + 2px); }
+    /* the key's box stretches to a height evenTops (shell/ui.js) sets on
+       it, as the panel's flex box already does */
+    .fx-key[collapsed] { display: grid; }
 }

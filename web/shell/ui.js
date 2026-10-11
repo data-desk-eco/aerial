@@ -51,6 +51,26 @@ export function buildShell(config) {
         </dd-panel>
     </div>` : ''}`);
     if (config.about) wireIntro(config.title || '');
+    evenTops();
+}
+
+// on a phone the main panel and the key sit side by side at the top, and
+// contracted they come out a pixel or two apart, the taller one depending on
+// how the engine rounds a line. measured, not computed: both take the taller
+const PHONE = matchMedia('(max-width: 768px)');
+function evenTops() {
+    const els = ['main-panel', 'key-panel'].map(id =>
+        document.getElementById(id));
+    const even = () => {
+        for (const e of els) e.style.height = '';
+        if (!PHONE.matches || !els.every(e => e.hasAttribute('collapsed')))
+            return;
+        const h = Math.max(...els.map(e => e.getBoundingClientRect().height));
+        for (const e of els) e.style.height = `${h}px`;
+    };
+    for (const e of els) e.addEventListener('toggle', even);
+    PHONE.addEventListener('change', even);
+    document.fonts.ready.then(even);
 }
 
 // enter or the overlay dismisses it, remembered per title (one origin serves
