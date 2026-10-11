@@ -131,7 +131,7 @@ export function closeDetail() {
 // open the hash's selection, resolving an id no loaded feature carries, then
 // regroup its overlaps once the camera settles. mount() runs it after ready,
 // whose handles onShow may use
-export async function restorePermalink() {
+export async function restorePermalink(jump) {
     if (!cfg) return;
     const [key, id] = readHashKeys(location.hash, keys());
     if (!id) return;
@@ -140,7 +140,6 @@ export async function restorePermalink() {
     if (!match) return;
     showDetail(match, true);
     const [lon, lat] = coordsOf(match);
-    flyTo([lon, lat]);
     map.once('moveend', () => {
         const features = featuresAt(map.project([lon, lat]), { lng: lon, lat });
         // the resolved feature's id, not the link's: an old link may name
@@ -151,6 +150,8 @@ export async function restorePermalink() {
             ...features.filter((_, i) => i !== idx)]);
         showDetail(overlapping[0], true);
     });
+    jump ? map.jumpTo({ center: [lon, lat], zoom: cfg.flyZoom ?? 15 })
+        : flyTo([lon, lat]);
 }
 
 export function initDetail(m, config, getFeatures) {

@@ -9,6 +9,7 @@ import { buildShell, initKey, loaded } from './ui.js';
 import { initQuarters } from './quarters.js';
 import { initDetail, restorePermalink } from './detail.js';
 import { initTable } from './table.js';
+import { readHashKeys } from './util.js';
 
 // "lat, lon" flies there; anything else is geocoded by nominatim
 const NOMINATIM = 'https://nominatim.openstreetmap.org/search?format=jsonv2'
@@ -50,7 +51,12 @@ function wireFilters(map, sources, keyPreds, ctx) {
 
 export async function mount(config) {
     buildShell(config);
-    const map = createMap({ hash: 'map', ...config.map });
+    // a card link with no view starts on the world, not the default view,
+    // and jumps to the card once it resolves
+    const cold = !/[#&]map=/.test(location.hash) && readHashKeys(
+        location.hash, Object.keys(config.detail?.hashKeys ?? {}))[1];
+    const map = createMap({ hash: 'map', ...config.map,
+        ...cold && { center: [0, 20], zoom: config.map.minZoom } });
     wireWorldmap(map, document.getElementById('worldmap'));
     if (config.search) wireSearch(map);
     if (config.data) initData(config.data);
@@ -90,7 +96,7 @@ export async function mount(config) {
 
     await config.ready?.(ctx);
     // after ready: onShow hooks use handles wired there
-    restorePermalink();
+    restorePermalink(cold);
     window.flux = ctx;   // console handle
     return ctx;
 }
