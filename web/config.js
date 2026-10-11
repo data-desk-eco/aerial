@@ -180,7 +180,7 @@ mount({
         <div class="fx-intro">
             <p>Flux is a research tool designed for facility-level
                 attribution of satellite emissions observations. Use it to
-                research a specific facility or to browse point source
+                investigate a specific facility or to browse point source
                 emissions globally.</p>
             <p>The map aggregates methane plumes and flaring detections
                 published by ${link('https://methanedata.unep.org/',
@@ -200,14 +200,14 @@ mount({
             <p>Firm attribution of an observation to a facility requires
                 further research. Experimentally, we use a system of
                 ${link('https://github.com/data-desk-eco/bricolage',
-                'research agents')} running DeepSeek-V4.1-Flash to attribute
-                all newly observed high-resolution methane plumes.</p>
+                'research agents')} running DeepSeek-V4.1-Flash to publish
+                attributions for all newly observed high-resolution methane plumes.</p>
             <p class="fx-fine fx-secondary">Design by ${link(
                 'https://mikaeldahlen.com/', 'Mikael Dahlén')}.</p>
         </div>
         <details class="methods fx-fine">
             <summary class="fx-secondary"><svg viewBox="0 0 8 4"><path
-                d="M.5.5 4 3.5l3.5-3"/></svg>Citations</summary>
+                d="M.5.5 4 3.5l3.5-3"/></svg>Sources</summary>
             <div class="methods-list fx-secondary">
                 <p>Aybar, C. et al. (2022). CloudSEN12, a global dataset for semantic understanding of cloud and cloud shadow in Sentinel-2. <i>Scientific Data 9, 782</i>. ${link(
                     'https://doi.org/10.1038/s41597-022-01878-2', 'doi.org/10.1038/s41597-022-01878-2')}</p>
