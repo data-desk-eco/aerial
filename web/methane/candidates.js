@@ -103,12 +103,3 @@ export function addCandidateLayers(m, before = 'plumes') {
     });
 }
 
-// the attribution label's fly-to links (data-fly, delegated)
-document.addEventListener('click', e => {
-    const a = e.target.closest('[data-fly]');
-    if (!a) return;
-    e.preventDefault();
-    const f = shown.find(f => f.properties.id === a.dataset.fly);
-    if (f) map?.flyTo({ center: f.geometry.coordinates,
-                        zoom: Math.max(map.getZoom(), 16) });
-});

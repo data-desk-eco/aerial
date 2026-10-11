@@ -20,24 +20,9 @@ export const loadAttributions = () => attribs ??= from('attributions')
   .then(rows => new Map(rows.map(r => [canon(r.id), r])))
   .catch(err => (console.warn('attributions unavailable:', err), new Map()));
 
-const OSM = { w: 'way', n: 'node', r: 'relation' };
 const out = (href, title, text) => `<a href="${escapeHtml(href)}"`
     + ` target="_blank" rel="noopener" title="${escapeHtml(title)}">`
     + `${text}</a>`;
-
-// an osm id links to osm.org; anything else flies to the candidate
-// (candidates.js handles data-fly)
-function labelHtml(rec) {
-    const safe = escapeHtml(rec.source_label || '');
-    const id = rec.attributed_ids?.[0];
-    if (!id) return safe;
-    const ids = rec.attributed_ids.join(' ');
-    const osm = id.match(/^OSM:(?:(w|n|r)|(way|node|relation)\/)(\d+)$/);
-    if (osm) return out(`https://www.openstreetmap.org/${osm[2]
-        || OSM[osm[1]]}/${osm[3]}`, ids, safe);
-    return `<a href="#" data-fly="${escapeHtml(id)}"`
-        + ` title="${escapeHtml(ids)}">${safe}</a>`;
-}
 
 function recordHtml(rec) {
     const evidence = rec.evidence?.length ? `<div class="plume-evidence">${
@@ -47,7 +32,7 @@ function recordHtml(rec) {
         + `(confidence: ${escapeHtml(rec.confidence)})</span>` : '';
     const para = rec.paragraph
         ? `<p class="plume-para">${escapeHtml(rec.paragraph)}</p>` : '';
-    return `<div class="plume-attrib">${labelHtml(rec)} ${confidence}</div>
+    return `<div class="plume-attrib">${escapeHtml(rec.source_label || '')} ${confidence}</div>
         ${para}${evidence}`;
 }
 
