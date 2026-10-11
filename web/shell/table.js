@@ -93,10 +93,12 @@ export function initTable(ctx) {
     }
 
     // open the source feature carrying the row's id
-    const pick = r => {
-        const idp = ctx.config.detail?.idProp || 'id';
-        const f = Object.values(ctx.sources).flatMap(s => s.features)
-            .find(f => f.properties[idp] === r[idp]);
+    // or what the tab's open() resolves it to: a row that is no feature
+    const pick = async r => {
+        const idp = ctx.config.detail?.idProp || 'id', t = tabs[active];
+        const f = t.open ? await t.open(r)
+            : Object.values(ctx.sources).flatMap(s => s.features)
+                .find(f => f.properties[idp] === r[idp]);
         if (f) showDetail(f);
     };
 

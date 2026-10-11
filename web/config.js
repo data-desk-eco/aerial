@@ -326,6 +326,7 @@ mount({
                 ORDER BY source_label`),
             cols: ['id', 'source_label', 'source_kind', 'operator',
                    'confidence', 'lat', 'lon'],
+            open: r => resolvePlume(r.id),
         },
         { label: 'Plumes', rows: props('plumes'),
           cols: ['id', 'provider', 'date', 'rate_kg_h', 'satellite', 'sector',

@@ -5,7 +5,7 @@
 
 import { read, sql, from, fc } from '../shell/data.js';
 import { objects } from '../shell/archive.js';
-import { quote, quarterKey } from '../shell/util.js';
+import { quote, quarterKey, canon } from '../shell/util.js';
 
 // every column rides into the geojson, so the projection stays narrow.
 // not `bounds`: nature trace's wkt footprints are 7.6 of its 9.4 MB (6.5 as
@@ -97,6 +97,8 @@ export async function availableQuartersPlumes([w, s, e, n], start, end) {
 // a link naming a plume outside the window: one row, on an id equality the
 // engine pushes down
 export async function readPlume(id) {
-    const [row] = await readAll(`id = ${quote(String(id))}`);
+    // canon(), in sql: an attribution spells the id its own way
+    const [row] = await readAll(`regexp_replace(lower(replace(id, '_', ':')),
+        '^[a-z]+:', '') = ${quote(canon(id))}`);
     return row ? fc([row]).features[0] : null;
 }
