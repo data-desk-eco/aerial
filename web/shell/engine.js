@@ -4,7 +4,7 @@
 // archive). here it is nobody's: data.js posts a statement and gets rows.
 // messages are [seq, op, ...args] in and [seq, value, error] out.
 const DDB = new URL('../vendor/duckdb/', import.meta.url).href;
-const DUCKDB_RELEASE = 'v2.0.0-alpha1-lite.5';
+const DUCKDB_RELEASE = 'v2.0.0-alpha1-lite.6';
 const duckdbAsset = name => `${DDB}${name}?v=${DUCKDB_RELEASE}`;
 
 const db = (async () => {

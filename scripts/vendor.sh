@@ -5,8 +5,8 @@ set -euo pipefail
 
 VENDOR=web/vendor
 DD_DIST="${DD_DIST:-$HOME/Tools/design/dist}"
-DUCKDB_TAG="v2.0.0-alpha1-lite.5"   # DuckDB data engine release
-grep -q "DUCKDB_RELEASE = '$DUCKDB_TAG'" web/shell/data.js
+DUCKDB_TAG="v2.0.0-alpha1-lite.6"   # DuckDB data engine release
+grep -q "DUCKDB_RELEASE = '$DUCKDB_TAG'" web/shell/engine.js
 
 rm -rf "$VENDOR"
 mkdir -p "$VENDOR/fonts"
@@ -23,7 +23,7 @@ gh release download "$DUCKDB_TAG" -R data-desk-eco/duckdb-wasm-lite \
     -p 'duckdb-browser-eh.worker.js' \
     -D "$VENDOR/duckdb" --clobber
 # the guard is for the category error: a build that linked gdal and proj, or
-# the stock npm wasm (35.96 MB). the lite build is 24.17 MB
+# the stock npm wasm (35.96 MB). the lite build is 24.40 MB
 [ "$(wc -c < "$VENDOR/duckdb/duckdb-eh.wasm")" -lt 30000000 ] || {
     echo "duckdb-wasm-lite: WASM exceeds 30 MB" >&2
     exit 1
