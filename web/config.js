@@ -178,8 +178,8 @@ mount({
                 attribution of satellite emissions observations. Use it to
                 investigate a specific facility or to browse point source
                 emissions globally.</p>
-            <p>The map aggregates methane plumes and flaring detections
-                published by ${link('https://methanedata.unep.org/',
+            <p>In addition to our own Sentinel-2 flaring detections, the map
+                aggregates methane plumes and detections published by ${link('https://methanedata.unep.org/',
                 'UN IMEO')}, ${link('https://data.carbonmapper.org/',
                 'Carbon Mapper')}, ${link(
                 'https://earth.sron.nl/methane-emissions/', 'SRON')} and
