@@ -79,8 +79,6 @@ dd-dot[unavailable] { pointer-events: auto; }
 }
 /* academic references: a hanging indent, the doi after */
 .methods-list p { margin: 0; padding-left: 1.5em; text-indent: -1.5em; }
-.methods-list h4 { margin: var(--dd-pair-gap) 0 0; font: inherit;
-    color: var(--dd-ui-text); }
 .fx-intro p { margin: var(--dd-pair-gap) 0; }
 
 /* --- mobile --- */
