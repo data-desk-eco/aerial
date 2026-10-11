@@ -121,7 +121,7 @@ export const readVNF = async (range, keys) => sql(`SELECT * FROM (${vnf(
     await src('eog'), keys, inWindow(range), true)})
     WHERE persistence IS NOT NULL`);
 
-// #site= names a flare of either family. the two id spaces are disjoint by
+// #flare= names a flare of either family. the two id spaces are disjoint by
 // accident, not contract, so both tables are asked rather than the id's shape
 export async function readSite(id, keys) {
     const where = `f.id = ${quote(String(id))}`;

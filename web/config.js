@@ -25,10 +25,6 @@ import { initMask } from './methane/mask.js';
 import { loadAttributions } from './methane/attribution.js';
 import { SITE_LAYERS, SITE_ZOOM, holdSites, drawSites } from './sites.js';
 
-// legacy deep links: #vnf/123 -> #vnf=123, which resolveSite reads
-if (/^#vnf\/[^/=&]+$/.test(location.hash))
-    history.replaceState(null, '', location.hash.replace('/', '='));
-
 // the bucket every layer reads. index.json names each table's objects, so no
 // module names one
 const ARCHIVE = document.querySelector('meta[name="data-bucket"]').content;
@@ -142,8 +138,8 @@ const scheduleDots = debounce(quarterDots, 300);
 
 // ── deep links ──
 
-// #site= names a flare of either family (flares.js asks both)
-async function resolveSite(id) {
+// #flare= names a flare of either family (flares.js asks both)
+async function resolveFlare(id) {
     await whenReady;
     const row = await readSite(id, CTX.quarters.keys());
     return row && fc([row]).features[0];
@@ -342,9 +338,8 @@ mount({
 
     detail: {
         layers: ['detections', 'vnf', 'plumes'],
-        // #vnf= is a legacy spelling of #site=; a hash with both takes #site=
-        hashKeys: { site: resolveSite, vnf: resolveSite, plume: resolvePlume },
-        hashKey: p => isPlume(p) ? 'plume' : 'site',
+        hashKeys: { flare: resolveFlare, plume: resolvePlume },
+        hashKey: p => isPlume(p) ? 'plume' : 'flare',
         idProp: 'id',
         flyZoom: 15, highlightZoom: 10,
         title: cardTitle,
