@@ -1,4 +1,5 @@
 import { quote } from './util.js';
+import { bytes } from './archive.js';
 
 // one lazy duckdb-wasm engine serves every parquet read and raw statement.
 // its client runs in engine.js, a worker, so a read costs the main thread
@@ -29,28 +30,26 @@ export function initData({ files: f = {}, prefetch = [] } = {}) {
     for (const name of prefetch) prefetchData(name);
 }
 
-// an object small enough to hold is fetched whole, racing the engine
-// download, and registered as an engine buffer, so every statement over it
-// runs at memory speed (cold first points ~4.7 s -> ~2.2 s). past the cap, a
-// failed fetch, or no stated size, and it falls back to its url and the
-// ranged read it would have had anyway.
+// an object the index says is small enough to hold is fetched whole, racing
+// the engine download, and registered as an engine buffer, so every
+// statement over it runs at memory speed (cold first points ~4.7 s to ~2.2).
+// past the cap, with no size stated, or on a failed fetch, it falls back to
+// its url and the ranged read it would have had anyway, whose ranges the
+// engine keeps
 const PREFETCH_CAP = 8 << 20;
 const buffers = new Map();
 let bufSeq = 0;
 export function prefetchData(name) {
     const u = url(name);
-    if (!buffers.has(u)) buffers.set(u, (async () => {
+    if (!buffers.has(u)) buffers.set(u, bytes(u).then(async n => {
+        if (!(n <= PREFETCH_CAP)) return null;
         const res = await fetch(u);
-        const size = +res.headers.get('content-length');
-        if (!res.ok || !(size <= PREFETCH_CAP)) {
-            res.body?.cancel();
-            return null;
-        }
-        const bytes = new Uint8Array(await res.arrayBuffer());
+        if (!res.ok) return null;
+        const data = new Uint8Array(await res.arrayBuffer());
         const buf = `prefetch${bufSeq++}.parquet`;
-        await call('register', [buf, bytes], [bytes.buffer]);
+        await call('register', [buf, data], [data.buffer]);
         return buf;
-    })().catch(() => null));
+    }).catch(() => null));
     return buffers.get(u);
 }
 // a read of a prefetched object waits for its buffer, not the network
