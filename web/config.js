@@ -225,7 +225,8 @@ mount({
                     'https://doi.org/10.5194/amt-18-6933-2025', 'doi.org/10.5194/amt-18-6933-2025')}</p>
                 <p>Elvidge, C. D. et al. (2013). VIIRS Nightfire: satellite pyrometry at night. <i>Remote Sensing 5, 4423–4449</i>. ${link(
                     'https://doi.org/10.3390/rs5094423', 'doi.org/10.3390/rs5094423')}</p>
-                <p>Global Energy Monitor (2026). Global Energy Monitor trackers: oil and gas, LNG,
+                <p>Global Energy Monitor (2026).
+                    Global Energy Monitor trackers: oil and gas, LNG,
                     pipelines, coal, steel, cement and power. <i>Datasets</i>.
                     ${link('https://globalenergymonitor.org/',
                     'globalenergymonitor.org')}</p>
