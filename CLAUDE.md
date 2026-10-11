@@ -40,8 +40,8 @@ repository compiles from mikael dahlén's guidelines: `dd-panel`, `dd-key`,
 markings and graded imagery. flux css places and sizes them and styles what
 it puts in them, in `--dd-*` tokens only. `make audit` runs
 `vendor/dd/audit.js` over the intro, the map and a card, and fails on any
-deviation not declared in `AUDIT` (`layers.js`): viridis, four gl text
-layers, the data rasters. a new deviation is a line there, argued in its comment.
+deviation not declared in `AUDIT` (`layers.js`): viridis and the data
+rasters. a new deviation is a line there, argued in its comment.
 change the elements in the design repository, never in vendor/.
 
 ## the three families
@@ -53,9 +53,10 @@ buffers. the per-date series, `data-desk/detections` and `eog/detections`, is
 read per site on card open. every eog detections row is a positive detection;
 the looks that found nothing are `eog/observations`, which flux does not read
 (see invariants). the S2 methodology is s2-flares, run in the etl; flux is a
-viewer. a pan reads nothing: every family is drawn whole, clustered far out
-like the plumes, and maplibre draws what is in view (S2 is 631 sites in
-47 ms, VNF 21k in 0.4 s; per viewport, flares lagged and churned the card).
+viewer. a pan reads nothing: every family is drawn whole, every point at
+every zoom (clusters hid what they counted), and maplibre draws what is in
+view (S2 is 631 sites in 47 ms, VNF 21k in 0.4 s; per viewport, flares
+lagged and churned the card).
 
 both are named after the export LNG terminal they sit on, where one is within
 7.5 km: `loadTerminals` fills the `terminals` table off `gem/infrastructure`

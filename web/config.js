@@ -10,7 +10,7 @@ import { canon, padBbox, escapeHtml, formatDate, debounce }
 import { initArchive, objects } from './shell/archive.js';
 import { prefetchData, fc, from } from './shell/data.js';
 import { MODE } from './flaring/render.js';
-import { DD, MARKS, PIN, RATE_LABEL, AUDIT, flareIcon, plumeIcon }
+import { MARKS, PIN, AUDIT, flareIcon, plumeIcon }
     from './layers.js';
 import { keySections } from './key.js';
 import { readS2, readVNF, readSite, quarters, coverage, loadTerminals }
@@ -56,20 +56,6 @@ const whenReady = new Promise(r => readyResolve = r);
 
 // ── the three layers ──
 
-// clustered far out; the label is a count, since a summed rate would mash
-// t/hr with nature trace's ppm·m, or b12 with radiant heat
-const CLUSTER = { cluster: true, clusterMaxZoom: 4, clusterRadius: 30 };
-const POINT = ['!', ['has', 'point_count']];
-// a cluster is a grouping, so it is off the ramp, in its family's shape, and
-// its label is a count, never dropped for a collision
-const clusters = (source, mark) => ({
-    id: `${source}-clusters`, type: 'symbol', source,
-    filter: ['has', 'point_count'],
-    layout: { ...PIN, ...RATE_LABEL, 'icon-image': `${mark}-${DD.white}`,
-        'text-field': ['to-string', ['get', 'point_count']],
-        'text-allow-overlap': true },
-    paint: { 'text-color': DD.white },
-});
 
 // a source this app re-reads has to pass the key's live predicates itself:
 // the shell applies them when a row is toggled, not when the data changes.
@@ -224,11 +210,10 @@ mount({
         MARKS.forEach(id => ensureMark(ctx.map, id));
         return {
             sites: empty,
-            // every family clusters far out, flares to the zoom vnf's dim
-            // sites stop drowning the map
-            detections: { data: empty, ...CLUSTER, clusterMaxZoom: 6 },
-            vnf: { data: empty, ...CLUSTER, clusterMaxZoom: 6 },
-            plumes: { data: empty, ...CLUSTER },
+            // every point at every zoom: a cluster hid what it counted
+            detections: empty,
+            vnf: empty,
+            plumes: empty,
         };
     },
 
@@ -237,27 +222,22 @@ mount({
         ...SITE_LAYERS,
         {
             id: 'detections', type: 'symbol', source: 'detections',
-            filter: POINT,
             layout: { ...PIN, 'icon-image': flareIcon(MODE.s2) },
         },
         {
             // above s2, so the card's heat footprint stays under both
-            id: 'vnf', type: 'symbol', source: 'vnf', filter: POINT,
+            id: 'vnf', type: 'symbol', source: 'vnf',
             layout: { ...PIN, 'icon-image': flareIcon(MODE.vnf) },
         },
         {
             // no value label: colour already says how much, and the card
             // carries the number
-            id: 'plumes', type: 'symbol', source: 'plumes', filter: POINT,
+            id: 'plumes', type: 'symbol', source: 'plumes',
             hover: p => ({ heading: label(p.provider), text: [p.confidence
                 && `${p.confidence} confidence`, p.date && formatDate(p.date)]
                 .filter(Boolean).join(' · ') }),
             layout: { ...PIN, 'icon-image': plumeIcon },
-            paint: { 'text-color': DD.white },
         },
-        ...[['detections', 'flare'], ['vnf', 'flare'],
-            ['plumes', 'quantitative']].map(([source, mark]) =>
-            clusters(source, mark)),
     ],
 
     quarters: {
