@@ -201,7 +201,7 @@ d='M0 0 8 8M8 0 0 8' stroke='%23000' stroke-width='1.4'/%3E%3C/svg%3E")
 .fx-modal-content {
     width: 459px;
     max-width: calc(100vw - 4 * var(--dd-margin));
-    max-height: calc(100vh - 4 * var(--dd-margin));
+    max-height: calc(100vh - 2 * var(--dd-margin));
 }
 
 /* --- mobile --- */

@@ -76,7 +76,7 @@ dd-dot[unavailable] { pointer-events: auto; }
 .methods[open] summary svg { transform: rotate(180deg); }
 .methods-list { margin-top: var(--dd-pair-gap); display: flex;
     flex-direction: column; gap: var(--dd-info-gap);
-    max-height: 40vh; overflow-y: auto; }
+}
 /* academic references: a hanging indent, the doi after */
 .methods-list p { margin: 0; padding-left: 1.5em; text-indent: -1.5em; }
 .methods-list h4 { margin: var(--dd-pair-gap) 0 0; font: inherit;
