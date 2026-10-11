@@ -5,9 +5,10 @@ import { sql, from } from '../shell/data.js';
 import { canon, escapeHtml } from '../shell/util.js';
 import { selectPlume } from './candidates.js';
 
-// a claim shows once a person confirms it at /review; those made before
-// review began on 2026-10-04 are grandfathered
-export const SHOWN = "verified IN ('confirmed', 'grandfathered')";
+// a claim shows once a person confirms it at /review. those made before
+// review began on 2026-10-04, by an earlier method, are not production: not
+// shown, grandfathered or confirmed
+export const SHOWN = "verified = 'confirmed' AND run_at >= '2026-10-04'";
 
 // ~2k records, keyed by the canonical id: this object and the detections it
 // joins are replaced separately, so the join cannot rely on one namespace

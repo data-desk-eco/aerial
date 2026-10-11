@@ -1,0 +1,524 @@
+{"id": "CM:tan20250419t033623c00s4001-Q", "verdict": "confirmed", "issues": ["dup-site"], "note": "cmm plant compound at baiyangling; consistent with sister claims"}
+{"id": "CM:tan20260205t041203c45s4001-L", "verdict": "confirmed", "issues": ["dup-site", "date-slip"], "note": "same compound; says feb 2026 was an earlier pass though it is this pass"}
+{"id": "CM:tan20260219t041607c90s4001-AX", "verdict": "confirmed", "issues": ["dup-site"], "note": "same compound, consistent"}
+{"id": "CM:tan20260620t083638c93s4001-BR", "verdict": "confirmed", "issues": ["no-ids", "operator-uncertain"], "note": "imagery shows a stained well pad at the point; operator hedged correctly"}
+{"id": "CM:tan20260903t063255c89s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260903t064114c63s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260903t143606c07s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260903t190242c40s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260904t043251c94s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260904t043251c94s4001-B", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260904t072456c50s4001-A", "verdict": "confirmed", "issues": ["gem-subpoint-not-in-archive"], "note": "gem wiki point M1436.P2 degas station sits on the plume; archive id is the parent mine 1.8 km off"}
+{"id": "CM:tan20260904t072456c50s4001-B", "verdict": "unclear", "issues": ["low", "diffuse", "gem-parent-id-far"], "note": "broad diffuse mask, reported point on an unrelated yard; low confidence is honest but names no source"}
+{"id": "CM:tan20260904t072456c50s4001-C", "verdict": "unclear", "issues": ["id-not-found", "no-operator"], "note": "attributed OSM:w1422508048 not found in the plume cell; shaft owner unknown"}
+{"id": "CM:tan20260904t072456c50s4001-D", "verdict": "unclear", "issues": ["no-mapped-source", "operator-guess", "gem-parent-id-far"], "note": "no mine at the spot; operator inferred from mines 1.3-2.4 km away"}
+{"id": "CM:tan20260904t072456c50s4001-E", "verdict": "confirmed", "issues": ["gem-subpoint-not-in-archive", "gem-parent-id-far"], "note": "kostenko shaft per gem sub-point; parent id 1.2 km away"}
+{"id": "CM:tan20260904t090405c52s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260904t090405c52s4001-B", "verdict": "unclear", "issues": ["ids-far", "vague"], "note": "generic koc complex; four of five attributed tanks are 1.1-1.2 km from the plume"}
+{"id": "CM:tan20260904t090405c52s4001-E", "verdict": "unclear", "issues": ["low", "no-equipment"], "note": "no emitter visible, honest low"}
+{"id": "CM:tan20260904t090445c16s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260904t090445c16s4001-B", "verdict": "confirmed", "issues": ["dup-site", "no-operator"], "note": "same al sulay landfill as A and C but leaves operator blank"}
+{"id": "CM:tan20260904t090445c16s4001-C", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260904t090702c95s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260904t103317c28s4001-B", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260904t120654c24s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260904t120820c19s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260904t152829c44s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260904t153056c15s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260904t153056c15s4001-B", "verdict": "confirmed", "issues": ["edge-of-polygon"], "note": "cateura landfill 200 m from mapped boundary; plausible"}
+{"id": "CM:tan20260904t153248c54s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260904t153248c54s4001-B", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260904t153434c66s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260904t182207c11s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260904t195538c69s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260904t195538c69s4001-B", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t035218c27s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t051413c68s4001-A", "verdict": "unclear", "issues": ["edge-of-site", "overreach"], "note": "point on solar arrays/substation at the edge of the coking complex; source unit not shown"}
+{"id": "CM:tan20260905t051413c68s4001-AC", "verdict": "unclear", "issues": ["no-ids", "no-operator"], "note": "tanks visible but plant and operator unknown"}
+{"id": "CM:tan20260905t051413c68s4001-C", "verdict": "unclear", "issues": ["low", "no-ids", "no-operator"], "note": "dense chemical base, no plant named"}
+{"id": "CM:tan20260905t064332c70s4001-A", "verdict": "unclear", "issues": ["no-ids", "operator-guess"], "note": "unmapped pad 85 m off; yalevsky drainage well is an inference"}
+{"id": "CM:tan20260905t064332c70s4001-C", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t064332c70s4001-D", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t064332c70s4001-E", "verdict": "confirmed", "issues": ["gem-subpoint-not-in-archive", "gem-parent-id-far"], "note": "gem drainage station sub-point; parent id 2.5 km away"}
+{"id": "CM:tan20260905t064332c70s4001-F", "verdict": "unclear", "issues": ["operator-guess", "gem-parent-id-far"], "note": "pad visible; mine vs cbm operator open"}
+{"id": "CM:tan20260905t064332c70s4001-G", "verdict": "unclear", "issues": ["operator-guess", "gem-parent-id-far"], "note": "high confidence while the paragraph names two possible operators"}
+{"id": "CM:tan20260905t064332c70s4001-H", "verdict": "unclear", "issues": ["no-ids", "operator-guess"], "note": "pad visible; operator open between mine and gazprom"}
+{"id": "CM:tan20260905t064332c70s4001-I", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t064332c70s4001-J", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t064332c70s4001-K", "verdict": "unclear", "issues": ["no-ids", "operator-guess"], "note": "unmapped degassing pad; ownership undocumented"}
+{"id": "CM:tan20260905t064332c70s4001-L", "verdict": "unclear", "issues": ["no-ids", "operator-guess"], "note": "unmapped pond compound; owner probable only"}
+{"id": "CM:tan20260905t064332c70s4001-M", "verdict": "unclear", "issues": ["low", "nothing-visible", "gem-parent-id-far"], "note": "imagery shows grass only; source unidentified"}
+{"id": "CM:tan20260905t064332c70s4001-N", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t064332c70s4001-O", "verdict": "unclear", "issues": ["operator-uncertain", "gem-parent-id-far"], "note": "open-pit ground on an allotment boundary; operator open"}
+{"id": "CM:tan20260905t064332c70s4001-P", "verdict": "unclear", "issues": ["no-ids", "no-operator"], "note": "unnamed coal yard"}
+{"id": "CM:tan20260905t064332c70s4001-Q", "verdict": "unclear", "issues": ["offset", "gem-parent-id-far"], "note": "compound 400 m from plume, mine 1.9 km; inferred"}
+{"id": "CM:tan20260905t064332c70s4001-R", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t064332c70s4001-S", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t064332c70s4001-T", "verdict": "unclear", "issues": ["no-ids", "no-operator"], "note": "unnamed yard"}
+{"id": "CM:tan20260905t064332c70s4001-V", "verdict": "unclear", "issues": ["no-ids", "nothing-visible"], "note": "open farmland, no equipment seen; inferred drainage vent"}
+{"id": "CM:tan20260905t064332c70s4001-W", "verdict": "unclear", "issues": ["no-ids", "no-operator"], "note": "pad visible, owner unknown"}
+{"id": "CM:tan20260905t064332c70s4001-X", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t082409c81s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t082409c81s4001-B", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t082409c81s4001-D", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t095401c26s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t112734c82s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t130103c14s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t161514c05s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t161514c05s4001-C", "verdict": "unclear", "issues": ["no-ids", "no-operator"], "note": "pad visible, operator unknown"}
+{"id": "CM:tan20260905t161613c35s4001-A", "verdict": "unclear", "issues": ["no-ids", "no-operator"], "note": "pad visible, operator unknown"}
+{"id": "CM:tan20260905t161613c35s4001-B", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t162532c49s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t191359c90s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t191545c93s4001-A", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t191545c93s4001-AA", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t191545c93s4001-AB", "verdict": "confirmed", "issues": ["no-operator"], "note": "facility visible on the point, operator unknown"}
+{"id": "CM:tan20260905t191545c93s4001-AC", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t191545c93s4001-B", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t191545c93s4001-D", "verdict": "confirmed", "issues": ["no-operator"], "note": "pad with units at the point, matches imagery; operator unknown"}
+{"id": "CM:tan20260905t191545c93s4001-E", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t191545c93s4001-F", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t191545c93s4001-G", "verdict": "confirmed", "issues": ["no-operator"], "note": "compressor/production pad, unnamed"}
+{"id": "CM:tan20260905t191545c93s4001-H", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t191545c93s4001-I", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t191545c93s4001-K", "verdict": "unclear", "issues": ["name-guess"], "note": "site name is a guess with no permit record"}
+{"id": "CM:tan20260905t191545c93s4001-L", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t191545c93s4001-M", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t191545c93s4001-N", "verdict": "confirmed", "issues": [], "note": "source sits on the attributed feature; claims consistent"}
+{"id": "CM:tan20260905t191545c93s4001-O", "verdict": "confirmed", "issues": ["no-operator"], "note": "tank pad, owner unknown"}
+{"id":"CM:tan20260905t191545c93s4001-P","verdict":"confirmed","issues":null,"note":"pad, wells and operator consistent; hedges on component"}
+{"id":"CM:tan20260905t191545c93s4001-Q","verdict":"confirmed","issues":["no-operator"],"note":"tank battery under plume, persistent; operator honestly unknown"}
+{"id":"CM:tan20260905t191545c93s4001-R","verdict":"confirmed","issues":["no-operator"],"note":"small oil pad, osm-tagged; operator unknown"}
+{"id":"CM:tan20260905t191545c93s4001-S","verdict":"confirmed","issues":["no-operator"],"note":"osm yard and tank under plume; operator unknown"}
+{"id":"CM:tan20260905t191545c93s4001-T","verdict":"confirmed","issues":null,"note":"well pad 50 m from peak, operator from register"}
+{"id":"CM:tan20260905t191545c93s4001-U","verdict":"unclear","issues":["source-off-feature","label-overclaims"],"note":"origin on open ground between pads (imagery agrees); label names one battery though text says several pads plausible"}
+{"id":"CM:tan20260905t191545c93s4001-V","verdict":"confirmed","issues":null,"note":"pad within 40 m; alternative battery noted"}
+{"id":"CM:tan20260905t191545c93s4001-W","verdict":"confirmed","issues":null,"note":"named compressor station, ids within 50 m, operator from permits"}
+{"id":"CM:tan20260905t191545c93s4001-X","verdict":"confirmed","issues":null,"note":"mapped battery under plume, repeat detection"}
+{"id":"CM:tan20260905t191545c93s4001-Y","verdict":"confirmed","issues":["no-operator"],"note":"equipment pad, operator unknown; persistent"}
+{"id":"CM:tan20260905t191545c93s4001-Z","verdict":"confirmed","issues":["no-operator"],"note":"fenced pad under mask"}
+{"id":"CM:tan20260905t204444c45s4001-A","verdict":"confirmed","issues":null,"note":"vancouver landfill, osm polygon contains point"}
+{"id":"CM:tan20260906t014338c26s4001-A","verdict":"confirmed","issues":null,"note":"oaky creek cmm power station, persistent"}
+{"id":"CM:tan20260906t014338c26s4001-B","verdict":"unclear","issues":["id-far"],"note":"only id is a gem mine point 8.9 km away; pad unmapped, vent vs drainage unresolved"}
+{"id":"CM:tan20260906t014338c26s4001-C","verdict":"unclear","issues":["confidence-high-vs-text","no-ids","operator-ambiguous"],"note":"high confidence yet text says mine drainage vs csg facility unconfirmed and two lease holders named"}
+{"id":"CM:tan20260906t014338c26s4001-D","verdict":"confirmed","issues":null,"note":"pad inside carborough downs; 15 emit repeats"}
+{"id":"CM:tan20260906t025658c61s4001-A","verdict":"confirmed","issues":null,"note":"tungor tank farm, osm tanks within 250 m"}
+{"id":"CM:tan20260906t043415c84s4001-A","verdict":"unclear","issues":["operator-mismatch","unmapped"],"note":"operator_name wajinwan but text says jinneng's hulonggou; compound 1.6 km from mine unmapped"}
+{"id":"CM:tan20260906t043415c84s4001-B","verdict":"unclear","issues":["no-ids","no-operator"],"note":"unmapped coal surface plant, owner unknown"}
+{"id":"CM:tan20260906t043415c84s4001-D","verdict":"unclear","issues":["no-ids","no-operator"],"note":"unmapped ridge compound, mine unknown"}
+{"id":"CM:tan20260906t043415c84s4001-H","verdict":"confirmed","issues":["id-far"],"note":"gem reviewers recorded the shaft; gem point 2.4 km"}
+{"id":"CM:tan20260906t043415c84s4001-I","verdict":"confirmed","issues":["unsourced-claim"],"note":"walled shaft compound in mine area; 'neighbours identify it' unsourced"}
+{"id":"CM:tan20260906t043415c84s4001-N","verdict":"unclear","issues":["kind-guess"],"note":"text says mine, washery or coal yard; imagery shows terraced spoil"}
+{"id":"CM:tan20260906t043415c84s4001-P","verdict":"unclear","issues":["operator-mismatch","unmapped"],"note":"operator_name wajinwan though inferred hulonggou/jinneng; no record"}
+{"id":"CM:tan20260906t043532c88s4001-A","verdict":"unclear","issues":["no-ids","no-operator"],"note":"unmapped compound, cmm from workings equally possible"}
+{"id":"CM:tan20260906t043532c88s4001-B","verdict":"unclear","issues":["label-overclaims"],"note":"label says cbm well pad but text says no wellhead resolved"}
+{"id":"CM:tan20260906t043532c88s4001-C","verdict":"confirmed","issues":["id-far"],"note":"no.12 mine beishan drainage site, mine records cited"}
+{"id":"CM:tan20260906t043532c88s4001-F","verdict":"confirmed","issues":["duplicate-site"],"note":"shoushan coking plant, osm polygon contains point; same site as -N at different confidence"}
+{"id":"CM:tan20260906t043532c88s4001-G","verdict":"confirmed","issues":null,"note":"shoushan no.1 shaft compound with cmm power"}
+{"id":"CM:tan20260906t043532c88s4001-I","verdict":"unclear","issues":["no-ids","no-operator"],"note":"unnamed compound, operator and equipment unknown"}
+{"id":"CM:tan20260906t043532c88s4001-J","verdict":"unclear","issues":["kind-guess"],"note":"'landfill' inferred from imagery; tile shows greenhouses and fields"}
+{"id":"CM:tan20260906t043532c88s4001-L","verdict":"unclear","issues":["no-source"],"note":"unknown compound, unknown equipment; no attribution really made"}
+{"id":"CM:tan20260906t043532c88s4001-M","verdict":"unclear","issues":["no-source"],"note":"low, no facility identified"}
+{"id":"CM:tan20260906t043532c88s4001-N","verdict":"confirmed","issues":["duplicate-site","confidence-inconsistent"],"note":"same coking complex as -F; high here, medium there"}
+{"id":"CM:tan20260906t044138c88s4001-A","verdict":"confirmed","issues":null,"note":"da phuoc landfill"}
+{"id":"CM:tan20260906t044642c48s4001-A","verdict":"confirmed","issues":null,"note":"cilowong landfill"}
+{"id":"CM:tan20260906t073738c21s4001-A","verdict":"confirmed","issues":null,"note":"astana landfill"}
+{"id":"CM:tan20260906t073738c21s4001-B","verdict":"confirmed","issues":["duplicate-site"],"note":"astana landfill, same as -A"}
+{"id":"CM:tan20260906t074005c24s4001-A","verdict":"confirmed","issues":null,"note":"shymkent landfill"}
+{"id":"CM:tan20260906t091424c99s4001-A","verdict":"confirmed","issues":null,"note":"tabriz landfill"}
+{"id":"CM:tan20260906t091848c47s4001-A","verdict":"refuted","issues":["inconsistent-with-sibling"],"note":"same osm ids as -C (wadi aslaa landfill) but labelled quarry, operator unknown; imagery shows landfill cells"}
+{"id":"CM:tan20260906t091848c47s4001-C","verdict":"confirmed","issues":null,"note":"jeddah wadi aslaa landfill"}
+{"id":"CM:tan20260906t092436c06s4001-A","verdict":"confirmed","issues":null,"note":"dandora dumpsite"}
+{"id":"CM:tan20260906t092436c06s4001-C","verdict":"confirmed","issues":["source-off-feature"],"note":"kware dump just west of plume; medium apt"}
+{"id":"CM:tan20260906t122103c19s4001-A","verdict":"confirmed","issues":null,"note":"cañada hermosa landfill"}
+{"id":"CM:tan20260906t170617c82s4001-A","verdict":"confirmed","issues":["no-ids"],"note":"riverton landfill, no ids attached"}
+{"id":"CM:tan20260906t183716c36s4001-A","verdict":"confirmed","issues":null,"note":"webb county pad, wells within 35 m"}
+{"id":"CM:tan20260906t183716c36s4001-B","verdict":"unclear","issues":["attrib-point-off-plume","two-candidates"],"note":"claim point 0.55 km from plume; larger plant 400 m nw under same plume"}
+{"id":"CM:tan20260906t183716c36s4001-C","verdict":"unclear","issues":["no-equipment"],"note":"low; no equipment at origin, pipeline guess"}
+{"id":"CM:tan20260906t183716c36s4001-D","verdict":"confirmed","issues":["operator-ambiguous"],"note":"pad with tanks; two operators named"}
+{"id":"CM:tan20260906t183716c36s4001-E","verdict":"confirmed","issues":null,"note":"pad within 100 m, operator transfer cited"}
+{"id":"CM:tan20260907t040637c25s4001-A","verdict":"confirmed","issues":null,"note":"suwung landfill"}
+{"id":"CM:tan20260907t040637c25s4001-B","verdict":"unclear","issues":["alternatives"],"note":"gas-engine plant beside fuel depot and landfill; sibling plumes A/C on landfill"}
+{"id":"CM:tan20260907t040637c25s4001-C","verdict":"confirmed","issues":["duplicate-site"],"note":"suwung landfill, same as -A"}
+{"id":"CM:tan20260907t065606c49s4001-A","verdict":"confirmed","issues":["id-far"],"note":"chernigovsky pit; ids 3-5.5 km (big polygon/point)"}
+{"id":"CM:tan20260907t065643c63s4001-A","verdict":"confirmed","issues":null,"note":"kyrgayskaya surface site"}
+{"id":"CM:tan20260907t065643c63s4001-B","verdict":"unclear","issues":["label-overclaims"],"note":"label names flank shafts site, text admits not confirmed"}
+{"id":"CM:tan20260907t065643c63s4001-C","verdict":"confirmed","issues":["operator-inferred"],"note":"stockpile site in taldinskaya-yuzhnaya blocks"}
+{"id":"CM:tan20260907t065643c63s4001-E","verdict":"confirmed","issues":["duplicate-site"],"note":"uskovskaya drainage pad; same as -F"}
+{"id":"CM:tan20260907t065643c63s4001-F","verdict":"confirmed","issues":["duplicate-site"],"note":"uskovskaya drainage pad, gem survey cited"}
+{"id":"CM:tan20260907t065643c63s4001-G","verdict":"confirmed","issues":["operator-ambiguous"],"note":"degasification pad; raspadskaya vs gazprom licence"}
+{"id":"CM:tan20260907t065643c63s4001-H","verdict":"confirmed","issues":null,"note":"taldinskaya yuzhnaya surface complex"}
+{"id":"CM:tan20260907t065643c63s4001-K","verdict":"unclear","issues":["unsourced-claim","source-off-feature"],"note":"containers 250 m from plume; flank shafts claim unsourced; tile shows forest"}
+{"id":"CM:tan20260907t065643c63s4001-L","verdict":"confirmed","issues":["confidence-high-vs-text"],"note":"pad solid but operator ambiguous at high"}
+{"id":"CM:tan20260907t065643c63s4001-M","verdict":"confirmed","issues":["confidence-high-vs-text","no-ids"],"note":"unmapped pad, operator unconfirmed at high"}
+{"id":"CM:tan20260907t065643c63s4001-N","verdict":"confirmed","issues":null,"note":"degasification modules, gem stations nearby"}
+{"id":"CM:tan20260907t065643c63s4001-O","verdict":"confirmed","issues":null,"note":"drainage pad in licence"}
+{"id":"CM:tan20260907t065730c49s4001-A","verdict":"confirmed","issues":null,"note":"vostochny pit benches"}
+{"id":"CM:tan20260907t065730c49s4001-B","verdict":"unclear","issues":["unmapped","id-far"],"note":"pad 1.3 km west of pit; ids are the pit"}
+{"id":"CM:tan20260907t065730c49s4001-D","verdict":"confirmed","issues":null,"note":"kolyvansky northern section"}
+{"id":"CM:tan20260907t065954c51s4001-B","verdict":"confirmed","issues":["duplicate-site"],"note":"aitey landfill"}
+{"id":"CM:tan20260907t065954c51s4001-C","verdict":"confirmed","issues":["duplicate-site"],"note":"aitey landfill"}
+{"id":"CM:tan20260907t065954c51s4001-D","verdict":"confirmed","issues":["duplicate-site"],"note":"aitey landfill"}
+{"id":"CM:tan20260907t070613c88s4001-A","verdict":"confirmed","issues":null,"note":"turbhe dumping ground"}
+{"id":"CM:tan20260907t070613c88s4001-B","verdict":"confirmed","issues":null,"note":"taloja ghot-chal dump"}
+{"id":"CM:tan20260907t070613c88s4001-C","verdict":"confirmed","issues":null,"note":"kanjurmarg landfill"}
+{"id":"CM:tan20260907t100803c22s4001-A","verdict":"confirmed","issues":null,"note":"kızıllı landfill"}
+{"id":"CM:tan20260907t102625c45s4001-A","verdict":"confirmed","issues":["duplicate-site","first-person"],"note":"vissershok; 'we cannot say'"}
+{"id":"CM:tan20260907t102625c45s4001-B","verdict":"confirmed","issues":["duplicate-site"],"note":"vissershok"}
+{"id":"CM:tan20260907t114132c43s4001-A","verdict":"unclear","issues":["no-source"],"note":"dump vs sludge lagoon unresolved, low"}
+{"id":"CM:tan20260907t150020c35s4001-A","verdict":"confirmed","issues":["no-ids","duplicate-site"],"note":"palmas landfill"}
+{"id":"CM:tan20260907t150020c35s4001-B","verdict":"confirmed","issues":["no-ids","duplicate-site"],"note":"palmas landfill"}
+{"id":"CM:tan20260907t162816c91s4001-A","verdict":"confirmed","issues":["duplicate-site"],"note":"la bonanza"}
+{"id":"CM:tan20260907t162816c91s4001-B","verdict":"confirmed","issues":["duplicate-site"],"note":"la bonanza"}
+{"id":"CM:tan20260907t175416c48s4001-A","verdict":"confirmed","issues":["wrong-ids"],"note":"liberty landfill right, but ids are its gas power plants, which the text rules out"}
+{"id":"CM:tan20260907t175557c99s4001-A","verdict":"confirmed","issues":null,"note":"stone's throw landfill"}
+{"id":"CM:tan20260907t180053c65s4001-A","verdict":"confirmed","issues":["duplicate-site"],"note":"nejapa"}
+{"id":"CM:tan20260907t180053c65s4001-D","verdict":"confirmed","issues":["duplicate-site","first-person"],"note":"nejapa; 'i could not see'"}
+{"id":"CM:tan20260908t105754c28s4001-A","verdict":"refuted","issues":["wrong-source-class","self-contradicting"],"note":"plume centre is village houses beside a small SBR sewage works with no digesters; the paragraph itself says 2 t/h x40 detections is too large for it, likely coal-mine gas in the JSW district."}
+{"id":"CM:tan20260908t105754c28s4001-B","verdict":"unclear","issues":["no-equipment-at-point","nearest-candidate-far"],"note":"imagery at the plume shows fields and a hamlet, the claimed mine yard is ~300 m off and the shaft 2.2 km away."}
+{"id":"CM:tan20260908t075515c78s4001-A","verdict":"unclear","issues":["no-equipment-at-point","no-ids","medium-overclaim"],"note":"imagery shows nothing at the point and the paragraph says so, yet confidence is medium."}
+{"id":"CM:tan20260908t075515c78s4001-B","verdict":"unclear","issues":["no-ids","source-offset-1km"],"note":"the claimed installation is ~1 km from the plume point and unmapped; operator only assumed."}
+{"id":"CM:tan20260908t075515c78s4001-E","verdict":"unclear","issues":["no-ids","operator-assumed"],"note":"unmapped disturbed site, operator inferred from the field only."}
+{"id":"CM:tan20260908t075515c78s4001-F","verdict":"unclear","issues":["no-equipment-at-point","no-ids","medium-overclaim"],"note":"no pad at the point, natural seep not excluded, yet medium."}
+{"id":"CM:tan20260908t075515c78s4001-G","verdict":"unclear","issues":["no-ids","operator-assumed"],"note":"a 4 m 'pad' with no mapped feature for 7 km; operator assumed from the field."}
+{"id":"CM:tan20260908t075046c93s4001-C","verdict":"unclear","issues":["speculative","no-ids"],"note":"low-confidence guess at an unlicensed dump from press reports, location unconfirmed."}
+{"id":"CM:tan20260909t084807c34s4001-E","verdict":"unclear","issues":["speculative","no-ids"],"note":"two candidates (waste site, oil-field pits), neither placed."}
+{"id":"CM:tan20260909t180815c01s4001-A","verdict":"unclear","issues":["no-source"],"note":"no candidate at all; not an attribution."}
+{"id":"CM:tan20260908t184900c04s4001-F","verdict":"unclear","issues":["no-equipment-at-point","pipeline-by-proximity"],"note":"road crossing on a gathering corridor, line 175 m off and a pad 300 m west; nothing visible at the upwind end."}
+{"id":"CM:tan20260910t063055c07s4001-J","verdict":"unclear","issues":["unmapped","single-detection","id-far"],"note":"unmapped compound 1.3 km off the pit, attributed GEM mine centroid 2.5 km away."}
+{"id":"CM:tan20260910t190232c84s4001-G","verdict":"unclear","issues":["id-distance-mismatch"],"note":"paragraph says 150 m from the Barstow 14-1 battery but every attributed id lies ~560 m from the plume."}
+{"id":"CM:tan20260910t190232c84s4001-F","verdict":"unclear","issues":["multiple-candidates"],"note":"several wells, tanks and a pipeline within 200 m; low confidence, no single source."}
+{"id":"CM:tan20260909t011809c67s4001-B","verdict":"unclear","issues":["adjacent-candidates"],"note":"composting windrows vs the adjoining Remondis landfill cannot be separated; duplicates the -A scene."}
+{"id":"CM:tan20260909t041933c72s4001-B","verdict":"unclear","issues":["kind-mislabel"],"note":"Lusi is a mud volcano; location right but source_kind 'well' and an operator would count a geological seep as oil and gas."}
+{"id":"CM:tan20260910t063055c07s4001-A","verdict":"unclear","issues":["operator-ambiguous"],"note":"bench may lie in the Mezhdurechensky licence of another company, as the paragraph says."}
+{"id":"CM:tan20260909t194038c42s4001-A","verdict":"confirmed","issues":["high-overclaim","operator-unconfirmed"],"note":"compound visible at the point, but high confidence with no mapped facility or operator."}
+{"id":"CM:tan20260910t190232c84s4001-I","verdict":"confirmed","issues":["duplicate-inconsistent"],"note":"same plant as -J, county given as Reeves here and Pecos there, operator differs."}
+{"id":"CM:tan20260910t190232c84s4001-J","verdict":"confirmed","issues":["duplicate-inconsistent"],"note":"same plant as -I, county and operator wording differ."}
+{"id":"CM:tan20260908t184900c04s4001-D","verdict":"confirmed","issues":["no-operator"],"note":"unmapped facility visible, operator unknown."}
+{"id":"CM:tan20260910t063055c07s4001-C","verdict":"confirmed","issues":["point-offset-1km"],"note":"mine attribution sound; reported point ~1 km from the plume core."}
+{"id":"CM:tan20260907t192643c49s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260907t192643c49s4001-B","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t015647c57s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t015647c57s4001-B","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t015647c57s4001-C","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t015647c57s4001-D","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t015647c57s4001-E","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t015647c57s4001-F","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t045450c85s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t061743c59s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t061743c59s4001-B","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t062015c53s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t075046c93s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t105754c28s4001-C","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t105754c28s4001-D","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t105754c28s4001-E","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t105754c28s4001-F","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t105754c28s4001-G","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t105754c28s4001-H","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t105754c28s4001-I","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t123513c23s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t123622c40s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t123622c40s4001-B","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t155755c59s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t155906c48s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t160030c69s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t160030c69s4001-B","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t160236c17s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t171440c98s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t172158c91s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t184900c04s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t184900c04s4001-B","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t184900c04s4001-C","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t184900c04s4001-E","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t184900c04s4001-G","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260908t184900c04s4001-H","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260909t011809c67s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260909t041933c72s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260909t053734c39s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260909t071310c93s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260909t071506c34s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260909t071607c16s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260909t084807c34s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260909t084807c34s4001-B","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260909t164719c71s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260909t164719c71s4001-C","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260909t180917c55s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260909t180917c55s4001-B","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260909t180917c55s4001-C","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260910t063055c07s4001-B","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260910t063055c07s4001-F","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260910t063055c07s4001-G","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260910t063055c07s4001-H","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260910t063055c07s4001-I","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260910t063055c07s4001-K","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260910t063245c81s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260910t063245c81s4001-B","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260910t094131c74s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260910t143546c72s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260910t172957c50s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260910t190232c84s4001-A","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260910t190232c84s4001-B","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260910t190232c84s4001-C","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260910t190232c84s4001-D","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260910t190232c84s4001-E","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id":"CM:tan20260910t190232c84s4001-H","verdict":"confirmed","issues":[],"note":"source matches the attributed feature at the plume; nothing contradicts the claim."}
+{"id": "CM:tan20260910t190232c84s4001-K", "verdict": "confirmed", "issues": ["overconfident", "evidence_api_urls"], "note": "pad and ids sit on the plume; naming the specific 2H/2HR wellheads at high confidence is more than a tanager point supports."}
+{"id": "CM:tan20260910t190232c84s4001-L", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "CM:tan20260910t190232c84s4001-M", "verdict": "confirmed", "issues": ["operator_inferred", "evidence_api_urls"], "note": "tank battery on the plume; operator inferred from adjacent lease, neighbouring pad not excluded."}
+{"id": "CM:tan20260910t190232c84s4001-N", "verdict": "unclear", "issues": ["no_source"], "note": "low confidence, no operator, provider footprint 0.5 km off the compound; honest but not an attribution."}
+{"id": "CM:tan20260910t190232c84s4001-O", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "CM:tan20260910t190232c84s4001-P", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "CM:tan20260910t190232c84s4001-R", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "CM:tan20260910t190232c84s4001-S", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "CM:tan20260911t042513c39s4001-A", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "CM:tan20260911t042513c39s4001-B", "verdict": "confirmed", "issues": ["same_site_dupe", "confidence_drift", "evidence_api_urls"], "note": "same landfill as -A (high) and -C, here medium; operator string differs across the three."}
+{"id": "CM:tan20260911t042513c39s4001-C", "verdict": "confirmed", "issues": ["same_site_dupe", "confidence_drift"], "note": "same landfill, different operator text and confidence than -A."}
+{"id": "CM:tan20260911t043234c99s4001-A", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "CM:tan20260911t043234c99s4001-B", "verdict": "confirmed", "issues": ["same_site_dupe"], "note": "bantar gebang; consistent with -A/-D but operator string differs."}
+{"id": "CM:tan20260911t043234c99s4001-C", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "CM:tan20260911t043234c99s4001-D", "verdict": "confirmed", "issues": ["same_site_dupe"], "note": "bantar gebang; third claim on one landfill from one scene."}
+{"id": "CM:tan20260911t055755c49s4001-A", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "CM:tan20260911t073105c29s4001-A", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "CM:tan20260911t073105c29s4001-B", "verdict": "confirmed", "issues": ["same_site_dupe", "evidence_api_urls"], "note": "jam chakro, consistent."}
+{"id": "CM:tan20260911t073105c29s4001-C", "verdict": "confirmed", "issues": ["same_site_dupe", "evidence_api_urls"], "note": "jam chakro, consistent."}
+{"id": "CM:tan20260911t073105c29s4001-D", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "CM:tan20260911t074259c59s4001-A", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "CM:tan20260911t085543c90s4001-A", "verdict": "confirmed", "issues": ["same_site_dupe", "operator_inconsistent", "evidence_api_urls"], "note": "ordinskaya cs; operator given as parent pao gazprom where -B..-D name the transgaz subsidiary."}
+{"id": "CM:tan20260911t085543c90s4001-B", "verdict": "confirmed", "issues": ["same_site_dupe", "confidence_drift", "evidence_api_urls"], "note": "ordinskaya; high here, medium in -A/-C for the same scene."}
+{"id": "CM:tan20260911t085543c90s4001-C", "verdict": "confirmed", "issues": ["same_site_dupe", "evidence_api_urls"], "note": "ordinskaya; notes a neighbouring source, fine."}
+{"id": "CM:tan20260911t085543c90s4001-D", "verdict": "confirmed", "issues": ["same_site_dupe", "evidence_api_urls"], "note": "ordinskaya; consistent."}
+{"id": "CM:tan20260911t090128c23s4001-A", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "CM:tan20260911t090231c89s4001-A", "verdict": "unclear", "issues": ["off_feature", "evidence_api_urls"], "note": "imagery puts the point on open ground between compounds; compound fence claim and kind unresolved."}
+{"id": "CM:tan20260911t090231c89s4001-B", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "CM:tan20260911t103150c06s4001-A", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "CM:tan20260911t103349c68s4001-A", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "CM:tan20260911t103442c40s4001-A", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "CM:tan20260911t103442c40s4001-B", "verdict": "confirmed", "issues": ["same_site_dupe", "confidence_drift"], "note": "fyli; high here, medium in -A/-C/-D for the same scene."}
+{"id": "CM:tan20260911t103442c40s4001-C", "verdict": "confirmed", "issues": ["same_site_dupe"], "note": "fyli; consistent."}
+{"id": "CM:tan20260911t103442c40s4001-D", "verdict": "confirmed", "issues": ["same_site_dupe", "evidence_api_urls"], "note": "fyli; consistent."}
+{"id": "IMEO:00178691-ec95-4d47-ac0e-6fc0743e222a", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:01ce8f16-dacb-4961-a88b-a0892caedff3", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:0209d2b2-5e6c-4c13-9429-63f7d31a7a0f", "verdict": "confirmed", "issues": ["alt_not_excluded"], "note": "pingshang drainage compound; neighbouring cmm power plant flagged."}
+{"id": "IMEO:0243f924-8161-4e09-8810-14758704baa0", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:040e2d5a-9a29-4439-97f5-4f52bdafd037", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:05435f54-fa0f-4e70-a3eb-b863a9859eb0", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:071a8f7c-78b1-44d0-82e0-47fbd3f29c65", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:084aae22-b9a2-470b-8bc4-b1d587b4cc53", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:09228633-8502-415e-ba06-5a2395e7e564", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:0b42fea5-9642-484e-9010-62b8bd982072", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:1035ea4c-a664-4495-9c77-beae7eac4a85", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:11c5dd1f-0a83-4a5e-b7e7-5b5bd5a89bf1", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:13b94dfa-6a3c-46d8-8428-c8a322c4956d", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:16d7c4a8-7c18-4b6d-993f-9987a42cdcdb", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:184f6c9f-7c0b-4141-8200-731e2b12ab82", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:191c4da2-bfa7-4f19-ab60-1f6e44d5526e", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:19a23378-38de-4bab-a086-beabafceadf1", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:1a88d6f7-882f-4484-9f17-dd017f55b04f", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:1bb8c86e-6dab-4092-b4dc-a1efe2912a7f", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:1e4c3068-b4e3-4de7-bfe1-9766e8bd9e9f", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:1e770bda-cc81-4dc3-8a1a-d1d0987ef5c6", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:2022e984-eec5-4238-931d-6139e63e90c3", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:21518c3b-47fd-4752-a7fb-76d5f2daf140", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:21b4ccc2-d9a7-4a3c-95ee-822ad4cbc788", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:21cfcb2d-6036-4770-99c2-33c759668802", "verdict": "unclear", "issues": ["off_feature"], "note": "tank battery 500 m east of open desert, other pits as close; label overclaims a specific battery."}
+{"id": "IMEO:22235f97-56fc-4346-9cef-ba780f0b1504", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:2260f40b-c322-49aa-b379-dc6d12dade6c", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:22e23e33-32be-4c7b-91a3-05f510536426", "verdict": "unclear", "issues": ["off_feature", "evidence_api_urls"], "note": "nothing at the point; tank farm 280 m and compound 450 m both offered."}
+{"id": "IMEO:23d4c95c-b4bb-4f21-985d-5d6f770e2e53", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:23fbe582-0c54-4af8-b538-1fd30eb97c05", "verdict": "unclear", "issues": ["off_feature", "label_overclaims", "evidence_api_urls"], "note": "point is on village and terraced fields, mine works 1 km away; the label names a mine the imagery does not show."}
+{"id": "IMEO:25d3f045-b3ee-4730-8ede-b0873d594515", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:27b49f47-b0b1-47be-afc7-8d767d46c643", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:2822b78d-65f8-4cb2-a513-4a9949bd80e3", "verdict": "unclear", "issues": ["internal_inconsistency", "direction_error"], "note": "says the plume sits over the pad yet the pad is 300 m away; imagery puts the burning pad south-east, not north-east."}
+{"id": "IMEO:2901f039-909d-4544-9b2b-65d2cf49a514", "verdict": "unclear", "issues": ["no_operator", "evidence_api_urls"], "note": "plausible unmapped cmm compound, operator unknown."}
+{"id": "IMEO:294b598d-723f-478c-b7be-dca8604a52ce", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:2be92e47-5b3f-4727-806e-49a37176f96f", "verdict": "unclear", "issues": ["dense_industrial", "off_feature", "evidence_api_urls"], "note": "10 t/h in the middle of yanbu industrial city; ibn rushd is 250 m away and several plants are as close."}
+{"id": "IMEO:2cefe673-7678-40a6-beeb-ad9ab927f109", "verdict": "unclear", "issues": ["no_operator"], "note": "plausible unmapped cmm compound, operator unknown."}
+{"id": "IMEO:2edf25a5-87f5-49c5-857e-41dbe5c0277c", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:2ff6f767-d115-4859-adaa-97ece1f344e3", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:325c96ec-39ec-48c6-ad50-387fb99e102b", "verdict": "unclear", "issues": ["no_operator", "evidence_api_urls"], "note": "plausible unmapped cmm compound mapped as a substation, operator unknown."}
+{"id": "IMEO:33db6e98-41ee-42b0-b04d-1b0dc5bef099", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:3425cded-dc41-4110-9e55-11069bdb5844", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:36261e49-ad23-4b03-97b1-e63029505338", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:37522e4a-d4b2-4169-b972-d7d6e90ff981", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:37daadc0-f19e-453a-b00a-97e2e095eae6", "verdict": "unclear", "issues": ["ids_contradict", "label_overclaims"], "note": "label says well pad, text says none is mapped, yet the ids are a pipeline station and line 0.7 km off."}
+{"id": "IMEO:37f57442-1b85-4cfb-98e0-cf5abc025f85", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:38a1ea82-d0ed-4305-9abc-8c082d1c9313", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:39a43e8e-556e-4dc2-87a5-ac2b960ae6cd", "verdict": "unclear", "issues": ["same_site_inconsistent", "label_overclaims"], "note": "same spot as 16d7c4a8 and 33db6e98, which call it a gas-disposal site; this one calls it a well with nothing visible."}
+{"id": "IMEO:3a298c3b-0a06-4be1-9069-a27e7fe0e78f", "verdict": "unclear", "issues": ["operator_wrong_kind"], "note": "the source is a geological mud volcano; naming lapindo as operator and a wellheader as the feature is a stretch."}
+{"id": "IMEO:3a443278-7f95-44de-a0f2-6ed9061d7c51", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:3aff61ce-a828-4456-bd8b-e99a99b6768c", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:3b660c65-9fed-4ea7-88b1-218d8b11624f", "verdict": "confirmed", "issues": ["evidence_api_urls"], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:3be55a68-0b09-4854-b642-9706ff5d36e2", "verdict": "confirmed", "issues": [], "note": "source on or near the plume, ids and text consistent."}
+{"id": "IMEO:3cd32394-54c0-4dce-86ef-dfd0e2725703", "verdict": "unclear", "issues": ["off_feature", "label_overclaims", "evidence_api_urls"], "note": "imagery at the point is dunes; the label asserts a well pad nothing shows."}
+{"id":"IMEO:3ce378f3-9cba-420c-83cc-252f11b7267a","verdict":"unclear","issues":["no-equipment-named","operator-guessed"],"note":"equipment and operator unconfirmed by its own text, yet an operator is set; imagery shows a small compound the text calls bare ground"}
+{"id":"IMEO:3d385f1a-49a0-4388-b008-1e60f782d1d5","verdict":"unclear","issues":["no-equipment","well-500m"],"note":"nearest well half a kilometre away, imagery shows only fields; honest low claim with no source"}
+{"id":"IMEO:3f6ecbeb-801b-4931-a088-b188eba796cf","verdict":"unclear","issues":["duplicate-inconsistent","no-equipment"],"note":"same point as 57e93cde which calls it a well pad; no pipe visible, rests on a cited study"}
+{"id":"IMEO:3fbe1499-15df-4afa-a229-1fe06f9f8d04","verdict":"confirmed","issues":["field-centroid-id"],"note":"pad at the point in the tenge licence; only id is the gem field centroid 4 km off"}
+{"id":"IMEO:40524855-d896-4a5e-aada-d9c430573462","verdict":"confirmed","issues":[],"note":"repeated detections plus published worldview analysis of korpedzhe venting; hedged"}
+{"id":"IMEO:429fa6f4-1299-4745-8151-80eaf419e410","verdict":"unclear","issues":["overclaim-high","operator-inconsistent"],"note":"high with no ids and no named unit; same field credited to a different operator by a131daa5"}
+{"id":"IMEO:42b59c14-1306-4c7a-acb8-384ac993d9b5","verdict":"unclear","issues":["no-operator","unmapped"],"note":"viirs flare 40 m away is a reasonable guess but no plant or operator identified"}
+{"id":"IMEO:4446b02c-4225-4d8e-a71d-1ea5ac53fbae","verdict":"unclear","issues":["no-source"],"note":"honest low claim: flare, pipelines and wells all left open"}
+{"id":"IMEO:44a40520-bdec-4bf2-a74f-d5f0f71cd95a","verdict":"unclear","issues":["duplicate-inconsistent","no-operator"],"note":"same point as 58d2ccbd, which puts it in uzbekistan under a different operator"}
+{"id":"IMEO:45048284-515a-400f-92e4-9ac22b782ca2","verdict":"unclear","issues":["duplicate-inconsistent","offset-400m"],"note":"one of three claims on this point with different kinds and contradictory mapping statements"}
+{"id":"IMEO:45e98116-af11-4f4a-891b-0ec659666278","verdict":"confirmed","issues":[],"note":"production compound within 300 m, repeated detections, state operator via named department"}
+{"id":"IMEO:46de2d21-02d9-4c54-bbfd-bf4968746f73","verdict":"confirmed","issues":[],"note":"walled shaft compound tied to sihe mine filings; hedged on vent"}
+{"id":"IMEO:49e78da8-55d3-4058-8123-d01b6512c49e","verdict":"unclear","issues":["duplicate","imagery-mismatch"],"note":"one of three claims on 43.2963,52.7755; esri imagery shows a pipeline junction, not the described fenced installation"}
+{"id":"IMEO:4a0912ee-da30-42cc-b428-711047b6e4c6","verdict":"unclear","issues":["natural-seep-possible"],"note":"compound attribution hedged against mud volcanoes and a gas storage; facility identity unsettled"}
+{"id":"IMEO:4b6d2f79-73fd-4dd2-9822-2fa8ab509179","verdict":"unclear","issues":["no-equipment"],"note":"no equipment at the point, compound 1 km upwind"}
+{"id":"IMEO:4c4910c1-dd6a-42f6-bbb6-ff5594d4460f","verdict":"confirmed","issues":["osm-polygon-1km"],"note":"fenced pad 60 m from plume in uzen; consistent repeat detections"}
+{"id":"IMEO:4cb873b7-3102-461d-bf69-d75a3f935eea","verdict":"unclear","issues":["duplicate","overclaim-high"],"note":"same point as 49e78da8 and 8a7dbb4a but rated high"}
+{"id":"IMEO:4cd75acf-313e-4d27-994b-8b6454e0b760","verdict":"confirmed","issues":["rate-very-high"],"note":"plume on the fertial plant per imagery; 32 t/h is large for one site and worth a second look"}
+{"id":"IMEO:4cf259f4-8d62-4bda-bb4f-7eca4b2fed42","verdict":"unclear","issues":["operator-unsupported"],"note":"named yuecheng by inference, gem mine point 2.9 km off, text admits no document names the shaft"}
+{"id":"IMEO:4f068336-d779-444c-a0eb-c3c83966f70c","verdict":"confirmed","issues":[],"note":"pad with tanks under the point, tenge licence"}
+{"id":"IMEO:50a19eeb-c054-4328-bfb5-87b94bd3701b","verdict":"confirmed","issues":[],"note":"flare 20 m away with nightly viirs history; hedged"}
+{"id":"IMEO:51f18d6a-e937-4c6c-b4d2-1951d1a22ec5","verdict":"confirmed","issues":[],"note":"mapped well 100 m upwind, only infrastructure within 1 km"}
+{"id":"IMEO:523ca4f8-069e-4d00-af9c-4a768174993c","verdict":"confirmed","issues":[],"note":"pad with wellhead and tanks within 60 m"}
+{"id":"IMEO:56a92862-8544-49b6-a406-c7b2ee4e1ad4","verdict":"confirmed","issues":["duplicate"],"note":"tank compound 180 m away; same site as 91328e22"}
+{"id":"IMEO:57723747-a8e8-4589-95b9-74d32d664a3c","verdict":"confirmed","issues":["duplicate"],"note":"walled oilfield compound; same site as 5a92aa58"}
+{"id":"IMEO:57e93cde-50fb-4b10-b37f-8152aad79ddc","verdict":"unclear","issues":["duplicate-inconsistent","no-equipment"],"note":"same point as 3f6ecbeb, labelled a well pad there and a pipeline here; nothing mapped within 1.5 km"}
+{"id":"IMEO:58d2ccbd-e47a-481f-92fe-78efd3721ec6","verdict":"refuted","issues":["wrong-country","operator-wrong"],"note":"point sits on the turkmen side (lebap); its twin 44a40520 says kokdumalak is 7 km north in uzbekistan"}
+{"id":"IMEO:59fd4b2b-ff78-405d-aa78-2b3b4a73a235","verdict":"confirmed","issues":[],"note":"tank battery 70 m away, six repeat tanager detections"}
+{"id":"IMEO:5a92aa58-068a-411e-888a-83d501c267d5","verdict":"confirmed","issues":["duplicate"],"note":"station 150 m away; same site as 57723747 under another label"}
+{"id":"IMEO:5d9fcbc0-d635-4946-aae4-0e6c532c0039","verdict":"refuted","issues":["source-is-not-a-source"],"note":"labels a farm dam as the source while saying it cannot emit this much; should be no attribution"}
+{"id":"IMEO:5eb209e3-9ff2-4765-a82e-3197f61a8759","verdict":"unclear","issues":["operator-unsupported"],"note":"text says the operator is uncertain, but xinjing is set as operator; gem point 4.3 km away"}
+{"id":"IMEO:63cfa810-557e-4746-9ec4-5fdf58d99e68","verdict":"unclear","issues":["duplicate-inconsistent","offset-400m"],"note":"same point as 45048284 and 9c51cdbb, kind well here, facility there"}
+{"id":"IMEO:6432bfcb-56d7-49dc-b74d-bbc3898e1a34","verdict":"confirmed","issues":["duplicate"],"note":"two mapped flares within 50 m; same point as 8dfd9de6"}
+{"id":"IMEO:65b7e7f4-b62e-4ad6-a14c-8392234ff803","verdict":"confirmed","issues":[],"note":"flare pad 35 m away with long viirs record"}
+{"id":"IMEO:67ab4ac8-134c-49da-a7aa-6393cd745f34","verdict":"unclear","issues":["overclaim-high"],"note":"high confidence but only a yard a few hundred metres off and a compressor 700 m away"}
+{"id":"IMEO:67b862e1-d44b-4ce2-93ec-af26df827a6c","verdict":"confirmed","issues":[],"note":"pads, tanks and pits at the position with 30+ repeats"}
+{"id":"IMEO:6899ae61-a9a5-4598-8bb5-da1d53b08a0a","verdict":"confirmed","issues":[],"note":"compound under the mask maximum, plume trails downwind"}
+{"id":"IMEO:68caaf6a-dfa8-483d-9cc6-c7a12bcf79a2","verdict":"confirmed","issues":[],"note":"mapped flare 30 m away, repeat detections"}
+{"id":"IMEO:6a25a52a-0b2e-4dc6-8c3f-db8f466b8f9f","verdict":"confirmed","issues":["substation-as-id"],"note":"wangpo shaft compound; one attributed id is a substation"}
+{"id":"IMEO:6ac91e72-674d-4811-a35e-97367036cd23","verdict":"confirmed","issues":["duplicate"],"note":"flare and compound within 300 m; same as 758699db"}
+{"id":"IMEO:6e7e341c-70c9-43e6-b6e8-18e9e148f237","verdict":"unclear","issues":["operator-unsupported","first-person"],"note":"compound plausible, but it says another operator is possible and writes in the first person"}
+{"id":"IMEO:6e91b10c-78a9-4adb-a4f0-222e96f75d53","verdict":"unclear","issues":["label-overprecise"],"note":"label names medvedivka 82 while text says several pads are equally close"}
+{"id":"IMEO:6f5005dd-4e23-4b56-a059-d2a3746464df","verdict":"confirmed","issues":[],"note":"flare 45 m away with ponds; hedged"}
+{"id":"IMEO:708ab797-10f1-4521-b39b-bf1bf7dfa8cd","verdict":"confirmed","issues":["gem-point-3.8km"],"note":"compound inside chengzhuang mine field"}
+{"id":"IMEO:7172e125-d220-4aed-9d83-b73aafea2c67","verdict":"unclear","issues":["no-equipment","inference"],"note":"empty desert in imagery; unmapped gas infrastructure is inferred from absence"}
+{"id":"IMEO:72112caf-043b-44a8-b049-302b05979286","verdict":"confirmed","issues":["duplicate"],"note":"bermed pad 200 m upwind; same as 73a77858"}
+{"id":"IMEO:73a77858-ca0c-43bd-b640-25476ccca0ab","verdict":"confirmed","issues":["duplicate"],"note":"same pad and ids as 72112caf"}
+{"id":"IMEO:74eab966-ec72-4975-812c-24bdcd764b35","verdict":"confirmed","issues":[],"note":"on the pad, wells 50 m away, light wind"}
+{"id":"IMEO:758699db-6dbf-4d44-9d16-af05708d66bc","verdict":"confirmed","issues":["duplicate"],"note":"same site as 6ac91e72"}
+{"id":"IMEO:776fa5c1-04f6-40aa-a8a9-3a459c0423f4","verdict":"unclear","issues":["no-equipment"],"note":"bare desert at the point"}
+{"id":"IMEO:78b2264e-a59e-4196-89f6-d03121946eec","verdict":"confirmed","issues":["operator-inconsistent"],"note":"flare 300 m away in tft field; operator given differently across the three tft claims"}
+{"id":"IMEO:78b3f3c8-ee60-4acc-a7a7-b51628c4f59c","verdict":"unclear","issues":["operator-inferred"],"note":"cbm station identity and operator inferred from the basin; text says name unconfirmed"}
+{"id":"IMEO:79e2d692-a11c-4c9d-b08a-9ac6545a1c50","verdict":"confirmed","issues":[],"note":"fenced compound on the point, emit and carbon mapper agree"}
+{"id":"IMEO:79ee0946-1dff-4ad9-94a9-214d3157b378","verdict":"unclear","issues":["operator-uncertain"],"note":"compound with gas holder, but text says the operator is uncertain among neighbours"}
+{"id":"IMEO:7a533788-fec6-45e9-b14d-93ac588e9bbd","verdict":"unclear","issues":["no-equipment"],"note":"dense field, compound 150 m off, nothing identified"}
+{"id":"IMEO:7a77189c-3b01-4223-b35d-18902324ddba","verdict":"confirmed","issues":[],"note":"single platform within 100 m in imagery"}
+{"id":"IMEO:7ba984c5-042c-4d4d-b296-187d5fe34677","verdict":"unclear","issues":["duplicate-inconsistent","overclaim-high"],"note":"same point as 45e98116 but says it is 8 km south of the same field; high"}
+{"id":"IMEO:7bb91c43-62bf-42a3-8e44-96291151d363","verdict":"confirmed","issues":[],"note":"cmm power station 40 m away at huangyanhui"}
+{"id":"IMEO:8107c277-dab7-41dd-aaa9-f9953a54e257","verdict":"confirmed","issues":[],"note":"zhengbang surface works, hedged on component"}
+{"id":"IMEO:8170f8ad-714d-4d85-80db-bcfbcab69758","verdict":"confirmed","issues":[],"note":"sihe cmm power station per corporate records and imagery"}
+{"id":"IMEO:8557ddf7-d244-40e3-9da7-adafd4215a1c","verdict":"unclear","issues":["no-operator"],"note":"plausible mine plant but unnamed and no operator"}
+{"id":"IMEO:87ff516a-7e92-4620-9665-847c8438a4c4","verdict":"unclear","issues":["no-equipment"],"note":"no equipment visible; rests on mars and one study"}
+{"id":"IMEO:89334b13-4be8-4630-9749-763df953600a","verdict":"unclear","issues":["self-contradiction"],"note":"plume starts at a pipeline in an enclosure, yet the flare 150 m away is assigned"}
+{"id":"IMEO:8a7dbb4a-016b-4f59-a7e8-abebcdbc9301","verdict":"unclear","issues":["duplicate","operator-uncertain"],"note":"third claim on 43.2963,52.7755, questions the operator the others assert"}
+{"id":"IMEO:8acd9390-c59e-461b-a233-1a20de379761","verdict":"confirmed","issues":["field-centroid-id"],"note":"pad within 70 m; id is the field centroid"}
+{"id":"IMEO:8dfd9de6-d737-4bc9-a055-3836ca7a4f1b","verdict":"confirmed","issues":["duplicate"],"note":"flares within 50 m; same point as 6432bfcb with a different field name"}
+{"id":"IMEO:8e3b7299-8558-4e6d-84a7-93238eee6a1c","verdict":"confirmed","issues":[],"note":"mapped wellhead 70 m away on stained pad"}
+{"id":"IMEO:8ef4bd85-5394-4b8e-8cfb-899c45d6980b","verdict":"confirmed","issues":[],"note":"inside the harmandali landfill"}
+{"id":"IMEO:8fa8090d-a89c-4c3c-a898-b12b4ad36f50","verdict":"unclear","issues":["no-operator"],"note":"unnamed compound, operator unknown"}
+{"id":"IMEO:8ff7e375-48a1-4c60-9968-ec7e8024c60b","verdict":"unclear","issues":["no-equipment-identified"],"note":"small structures of uncertain identity"}
+{"id":"IMEO:91328e22-1352-4085-8c3f-764ded8b9401","verdict":"confirmed","issues":["duplicate"],"note":"same site as 56a92862"}
+{"id":"IMEO:9359d8a6-494d-4f8c-ac2d-a5bb18f4624d","verdict":"confirmed","issues":[],"note":"point falls inside the compound"}
+{"id":"IMEO:93d47795-d631-4ea9-b07e-1b3d136852a3","verdict":"confirmed","issues":["gem-point-5km"],"note":"buchanan shaft site, gem classification agrees"}
+{"id":"IMEO:96604fb4-83eb-435d-82ba-416ec38d90b2","verdict":"confirmed","issues":[],"note":"mars logs the point and the operator responded"}
+{"id":"IMEO:99108b68-762b-4a82-80dd-a2c4da49cfa3","verdict":"confirmed","issues":[],"note":"bermed pad 160 m upwind"}
+{"id":"IMEO:9ad953b3-0334-4293-801c-f9ae23f08ca5","verdict":"confirmed","issues":[],"note":"kureit flares within a few hundred metres"}
+{"id":"IMEO:9c01d359-52b7-4ddc-b790-6aac4c417a5e","verdict":"unclear","issues":["no-equipment","stale-imagery"],"note":"farmland at the point; imagery from 2016"}
+{"id":"IMEO:9c51cdbb-c088-426d-bcc0-317acf890181","verdict":"unclear","issues":["duplicate-inconsistent","offset-500m"],"note":"third claim on this point; calls the flare the only mapped thing in 10 km"}
+{"id":"IMEO:9ccc7af1-de87-4937-9e20-efd572de0feb","verdict":"confirmed","issues":[],"note":"pad with wellhead at the point"}
+{"id":"IMEO:9ec4114e-040d-400f-9077-dc22bc52fcba","verdict":"confirmed","issues":["operator-inconsistent"],"note":"pad and tanks at the point; ownership given as thg holding where siblings say zpec"}
+{"id":"IMEO:9fc08611-e95e-4082-8ec4-d84ff56a1df1","verdict":"confirmed","issues":[],"note":"shaft compound, gem classification agrees"}
+{"id":"IMEO:9fda6a94-cee1-40b3-b6ce-edef822a22c0","verdict":"confirmed","issues":[],"note":"inside the jas de rhodes landfill"}
+{"id":"IMEO:a08a4229-6889-461e-ad0d-0b14c31b76f8","verdict":"confirmed","issues":[],"note":"visibly burning flare within 50 m"}
+{"id":"IMEO:a131cbce-d1ae-445f-9017-98fccdde0f43","verdict":"unclear","issues":["overclaim-high","operator-inferred"],"note":"high, but name and owner are inferred from the basin"}
+{"id":"IMEO:a131daa5-cfd1-4a14-99c7-e75be249a3ab","verdict":"unclear","issues":["field-centroid-id","operator-inconsistent"],"note":"ids are field centroids 2.5 km off; operator differs from 429fa6f4"}
+{"id":"IMEO:a3aa06e2-52b2-4216-8e9a-ae8bd271088a","verdict":"confirmed","issues":[],"note":"nafoora cpf with flare at the point"}
+{"id":"IMEO:a4a4b972-37db-4a58-be99-2911aa060f95","verdict":"unclear","issues":["no-equipment"],"note":"nothing visible in imagery; honest low claim"}
+{"id":"IMEO:a6f01acb-3916-4aa3-9b68-3e4e691e89c5","verdict":"confirmed","issues":[],"note":"flare at the point, many repeats"}
+{"id":"IMEO:a867b7eb-35c5-4e91-8d32-621fa3928eb3","verdict":"confirmed","issues":["no-ids","dup-site"],"note":"imagery shows the stained pit compound at the point; unmapped, so no ids; one of six tabiyeh claims with differing labels"}
+{"id":"IMEO:a95382d8-e7ed-4add-be48-ade52c1fbc7b","verdict":"confirmed","issues":[],"note":"platform 361 resolves 70 m away, hedges on which unit"}
+{"id":"IMEO:ac68805f-93c4-41d9-8e55-1655027fbf11","verdict":"confirmed","issues":["pad-level"],"note":"four osm wells 200-430 m; field-level well pad claim hedged properly"}
+{"id":"IMEO:acd4561c-d297-4d98-9b98-12bdc3135e6f","verdict":"confirmed","issues":["name-mismatch"],"note":"inside the landfill polygon (osm calls it montalban landfill, the same site); 10 t/h fits"}
+{"id":"IMEO:ad0ba303-66f4-4b50-8b55-8c0511ec3e9d","verdict":"unclear","issues":["no-ids","overclaim"],"note":"high confidence on an unmapped pad with no ids attached"}
+{"id":"IMEO:afbb226a-e944-4cae-bc4e-cf7f84d697f1","verdict":"confirmed","issues":[],"note":"flares 20-40 m from the point, hedged"}
+{"id":"IMEO:afca9782-cd6c-4bc2-b48a-2c32e0798df6","verdict":"unclear","issues":["no-ids","overclaim","unsourced-superlative"],"note":"high, no ids, and 'world's second-largest methane source' is an unverified superlative"}
+{"id":"IMEO:b1ed1cec-f03b-4471-bd55-a7936e2b7127","verdict":"unclear","issues":["no-ids","operator-field-vs-text"],"note":"no ids; operator field names eni while the text says the operator is unconfirmed"}
+{"id":"IMEO:b22e02b7-8763-4064-87fb-6c82b189500e","verdict":"unclear","issues":["no-ids"],"note":"unmapped tenge pad, plausible but nothing to check against"}
+{"id":"IMEO:b2bbc6e4-aab7-4beb-b5a7-045b41356037","verdict":"unclear","issues":["operator-conflict"],"note":"ids resolve, but mps/gem name the plant sdic xiyang huangyanhui while operator says china coal xiyang"}
+{"id":"IMEO:b2d65fba-9655-4b73-8867-303fb47bc457","verdict":"confirmed","issues":["off-point"],"note":"pad 160 m away with flare id at 90 m; hedged appropriately"}
+{"id":"IMEO:b41b21d4-84dc-4b68-919b-ebb96169f587","verdict":"unclear","issues":["no-ids"],"note":"no mapped mine; coal-mine venting inferred from context only"}
+{"id":"IMEO:b627a491-157f-420a-9bbe-d2bbcd7755f6","verdict":"confirmed","issues":["id-offset"],"note":"point is inside bid boland refinery in imagery; osm polygon centroid 340 m"}
+{"id":"IMEO:b80f626a-26f6-4896-b478-0cee381b12a7","verdict":"confirmed","issues":[],"note":"centro_field_26 at 20 m, hedged on neighbours"}
+{"id":"IMEO:b8948127-2ade-4b8d-97a9-564e2edc078c","verdict":"confirmed","issues":[],"note":"osm flares at 10-60 m, aghajari plant polygon nearby"}
+{"id":"IMEO:b9472109-7551-45a9-bc6f-7794938c0eee","verdict":"unclear","issues":["no-ids","overclaim"],"note":"high confidence yet 'exact operator unconfirmed' and no ids"}
+{"id":"IMEO:b9c5ca59-8b35-4649-a8c2-8378b4865a0b","verdict":"confirmed","issues":["field-level"],"note":"wells and flare within 450 m; field-level claim with correct operator"}
+{"id":"IMEO:bba43171-7063-4354-9468-534945047234","verdict":"unclear","issues":["no-ids","overclaim","self-contradiction"],"note":"high on an unmapped pad described both as 2 km outside the field and inside the licence"}
+{"id":"IMEO:bbcdea4b-1ade-4a8c-b668-e0bb58b6e550","verdict":"unclear","issues":["no-ids","operator-presumed"],"note":"unmapped site, operator presumed"}
+{"id":"IMEO:bbf46d8c-d428-4268-a4f4-2af0453f7c7e","verdict":"unclear","issues":["no-ids","pipeline-inferred"],"note":"nothing visible; pipeline leak inferred from a paper"}
+{"id":"IMEO:bc9b57cf-43ae-442c-b224-be370d2336ab","verdict":"unclear","issues":["no-ids"],"note":"unmapped dark structure in desert"}
+{"id":"IMEO:bf8d182d-cbfd-4506-82d0-b6d13040cf8f","verdict":"unclear","issues":["no-ids","unidentified-object"],"note":"imagery shows only desert and a small dark object; 30 t/h with no identified source"}
+{"id":"IMEO:c152d201-2577-44ef-9777-57261717add2","verdict":"unclear","issues":["no-ids"],"note":"no facility mapped or visible"}
+{"id":"IMEO:c40a92ae-c928-4ce5-9150-0ef4e6dc5315","verdict":"unclear","issues":["id-far","low"],"note":"pipeline id centroid 5.7 km away; low confidence and two hypotheses"}
+{"id":"IMEO:c40c776c-f6a8-4129-97c3-94fdf175f4d0","verdict":"unclear","issues":["label-overclaim","id-far"],"note":"label names shakhtinskaya ventilation shaft but the gem mine is 2.5 km away and the text says unconfirmed"}
+{"id":"IMEO:c452977c-a825-4ade-a8a9-0ecbf68f781b","verdict":"unclear","issues":["id-far"],"note":"nearest wells 700 m; nothing visible at the point"}
+{"id":"IMEO:c52b940f-97f6-4164-8733-0435bac56562","verdict":"unclear","issues":["no-ids"],"note":"unmapped cbm station; operator inferred from licence only"}
+{"id":"IMEO:c65bcc84-3248-44a5-9f17-538c6ccb0b7d","verdict":"confirmed","issues":[],"note":"imagery shows starbase pad and tanks at the point; osm methane tanks 70-100 m"}
+{"id":"IMEO:c6b0c713-d0b3-4ad9-af0b-1f86eff2bc2e","verdict":"unclear","issues":["no-ids","overclaim"],"note":"high confidence with no ids and shut-in field"}
+{"id":"IMEO:c6fa2342-fa78-4da0-b460-f00ac95429f8","verdict":"unclear","issues":["no-ids","operator-unknown"],"note":"unmapped pad 300 m away; licences overlap"}
+{"id":"IMEO:c9e1f4b6-3a76-4a4c-9661-4b1304a5f306","verdict":"unclear","issues":["no-operator"],"note":"compound resolves but nothing known about it"}
+{"id":"IMEO:c9e503f3-21b4-4fe5-a175-5fcdece6e95d","verdict":"confirmed","issues":["dup-site"],"note":"same four wells as #3, consistent field-level claim"}
+{"id":"IMEO:ca05cf64-046b-42d8-9be9-3f784aeadb1e","verdict":"unclear","issues":["id-offset","dup-site"],"note":"osm ids 620-710 m, text says exactly at the point"}
+{"id":"IMEO:cb6104a6-56c7-486a-9308-68d3667fbb35","verdict":"unclear","issues":["no-ids","dup-site","count-claim"],"note":"'more than a hundred' detections unverified; no ids"}
+{"id":"IMEO:cda1bcca-c1f7-4870-a002-1dfd987f0018","verdict":"confirmed","issues":["id-far"],"note":"gem mine 1.9 km but ventilation-shaft site argued from the eia document; well sourced"}
+{"id":"IMEO:ce55a274-2d6c-4482-8f6e-94d56a56fcca","verdict":"confirmed","issues":[],"note":"platform and flare within 100 m, hedged between them"}
+{"id":"IMEO:cf1389af-aa57-45c8-a0f0-8a5cc35f6bb0","verdict":"unclear","issues":["operator-conflict","overclaim"],"note":"high, but the same operator conflict as #10 (sdic vs china coal)"}
+{"id":"IMEO:cf13ee4b-99a1-496f-88ff-dc6eeb2e11f1","verdict":"unclear","issues":["overclaim","id-offset"],"note":"high while flare is 270 m and the compound 500 m away"}
+{"id":"IMEO:cf1ddf39-a4b8-4b8a-8bab-a7f816c73c09","verdict":"confirmed","issues":["id-offset"],"note":"inside sangachal terminal; ogim points 1.2-1.5 km but osm polygon covers it"}
+{"id":"IMEO:cf2b6493-6e4f-44c0-85be-82945e2e6b87","verdict":"unclear","issues":["off-point","wind-reasoning"],"note":"pads 0.3-0.6 km away, source placement argued from wind, operator uncertain"}
+{"id":"IMEO:cf4bc326-0029-4d14-895e-212a04aecd33","verdict":"unclear","issues":["no-ids","overclaim"],"note":"high on an unmapped pad outside the field outline"}
+{"id":"IMEO:d0ec830d-e828-4fe2-a848-f833425ba8ca","verdict":"unclear","issues":["no-ids"],"note":"pad 250 m away, unmapped"}
+{"id":"IMEO:d12d4f5b-25c1-4a7a-b8a5-969545b6766d","verdict":"unclear","issues":["no-ids","dup-site"],"note":"tabiyeh pit compound, same site as #1 and #46 with a different label"}
+{"id":"IMEO:d1b52b9e-a9f9-4df3-9b61-9dea9ec85431","verdict":"unclear","issues":["no-ids","dup-site"],"note":"same nebit dag site as #8"}
+{"id":"IMEO:d205edf9-4b05-4d3d-911d-a684e2fa7791","verdict":"unclear","issues":["no-ids"],"note":"no equipment mapped at the point"}
+{"id":"IMEO:d21918a8-5a23-48e0-a783-7a3be7503a4b","verdict":"unclear","issues":["no-ids","dup-site"],"note":"same tabiyeh compound as #1/#43"}
+{"id":"IMEO:d448f4be-633e-4b90-aa99-a1c89843214e","verdict":"unclear","issues":["no-ids","dup-site"],"note":"same korpeje point as #70 at a lower confidence"}
+{"id":"IMEO:d4a77d29-53f7-426d-8c50-45f7dcf4b54d","verdict":"unclear","issues":["no-ids"],"note":"unmapped pad, operator uncertain"}
+{"id":"IMEO:d63863b3-23bc-4ee8-bc4e-58768757640b","verdict":"confirmed","issues":[],"note":"ogim vent 60 m and battery; 54 kg/h small plume hedged"}
+{"id":"IMEO:d743a732-15dd-4903-ad4a-ef74d2e0d236","verdict":"unclear","issues":["no-ids","nothing-visible"],"note":"imagery shows only tracks; no source identified"}
+{"id":"IMEO:d7cdcc0a-84bb-4ddb-84b2-8f4c7c75ecc0","verdict":"unclear","issues":["id-far"],"note":"mps plant 0.8 km; the actual complex is unnamed"}
+{"id":"IMEO:d9c21b37-6605-4352-b75c-10ffe966632c","verdict":"confirmed","issues":[],"note":"compound 200 m with tanager mask support"}
+{"id":"IMEO:d9eef123-e0cb-454d-b8f0-a7b88c7f4562","verdict":"confirmed","issues":["dup-site"],"note":"ogim battery 30 m; same battery as #61, consistent"}
+{"id":"IMEO:da1cd171-d27e-4c61-b399-5d3e6547afd1","verdict":"confirmed","issues":["dup-site"],"note":"compound polygon 100 m; one of four goturdepe claims on w274902521"}
+{"id":"IMEO:deb30160-8f0f-4bbf-82f3-7f12d9439158","verdict":"confirmed","issues":[],"note":"ogim flare 170 m on the oaky creek north gas plant lease"}
+{"id":"IMEO:e23f3f00-f6c9-4a2e-9ecf-444fe2588702","verdict":"unclear","issues":["id-far"],"note":"gem mine 1.4 km; unmapped compound"}
+{"id":"IMEO:e3dd6f14-972d-4b6a-bb88-1d05b5c1def2","verdict":"unclear","issues":["no-ids"],"note":"tenge pad, nothing mapped"}
+{"id":"IMEO:e3ec834d-0f79-4253-842c-6f4450eecfde","verdict":"confirmed","issues":[],"note":"osm wellsite polygon 170 m, named гу 45"}
+{"id":"IMEO:e3fb78cc-e8a7-4485-985d-b9a32d712d26","verdict":"refuted","issues":["no-ids","first-person","dup-site"],"note":"paragraph says 'i could not identify'; leaked first person, no ids, vague site"}
+{"id":"IMEO:e54576e3-cf02-40be-9d8e-7478895b73dd","verdict":"confirmed","issues":[],"note":"flare 46 m, hedged"}
+{"id":"IMEO:e845ba15-0a20-4fa0-b26b-0273cbc6c3dc","verdict":"confirmed","issues":["dup-site"],"note":"same battery as #53"}
+{"id":"IMEO:ec426fd0-6883-4419-a775-8ada49e1f28b","verdict":"confirmed","issues":["dup-site"],"note":"same compound as #54"}
+{"id":"IMEO:ecc5046d-8800-45cd-b369-60b245c10086","verdict":"unclear","issues":["no-ids"],"note":"unmapped pad 250 m away"}
+{"id":"IMEO:edf2dca2-003a-4983-83b5-5894d1ef4fd5","verdict":"unclear","issues":["id-far","site-mismatch"],"note":"imagery shows a village house next to sewage works; gem mine 1.9 km; shaft not seen"}
+{"id":"IMEO:ee3c5602-d644-4fed-af3a-23ced5220e98","verdict":"unclear","issues":["no-ids"],"note":"compound 150 m, nothing mapped"}
+{"id":"IMEO:eeaf8a05-8bc1-4421-916c-58dcf954345e","verdict":"confirmed","issues":[],"note":"well 110 m, pad visible per text"}
+{"id":"IMEO:ef7ace00-0c20-4b3e-a306-c287548bc3c7","verdict":"unclear","issues":["no-operator"],"note":"unmapped compound, mps plant 360 m"}
+{"id":"IMEO:efd68219-9f52-4408-9a80-4a41b53b97dc","verdict":"confirmed","issues":[],"note":"flare 50 m in the bhit plant polygon"}
+{"id":"IMEO:f0186eff-b70a-45d3-b8cb-4075fccb627c","verdict":"unclear","issues":["id-far"],"note":"gem mine 0.95 km; compound unmapped"}
+{"id":"IMEO:f1119f9e-1782-4898-98a3-dbaf2505ab30","verdict":"unclear","issues":["no-ids","overclaim","dup-site","count-claim"],"note":"high and 'more than three hundred detections' with no ids; same point as #47"}
+{"id":"IMEO:f348a3ec-1485-4882-bbc0-a6b27a460590","verdict":"unclear","issues":["no-ids"],"note":"gathering facility not mapped"}
+{"id":"IMEO:f525a6b7-ec67-4f47-9f8e-080a96f979b8","verdict":"confirmed","issues":[],"note":"mps wells 90-300 m, hedged"}
+{"id":"IMEO:f579db5e-13f2-4f85-b8fb-7e0956ab9de7","verdict":"unclear","issues":["no-ids","nothing-visible"],"note":"low; nothing visible"}
+{"id":"IMEO:f5ca3689-fbd8-455e-a71f-89ee1196aeb7","verdict":"unclear","issues":["id-offset"],"note":"wells 260 m+, nothing at the point"}
+{"id":"IMEO:f7873df8-4c2f-4a25-be91-3927a91dd8ec","verdict":"unclear","issues":["id-offset"],"note":"inside yanbu industrial area; nearest gem plant 240 m but neighbouring plants are as likely"}
+{"id":"IMEO:f7aaa9cb-1377-4a1a-8bae-e171d7576ece","verdict":"unclear","issues":["id-far"],"note":"gem mine 0.9 km"}
+{"id":"IMEO:f9ab66d8-cfbd-4cd8-9c2c-36d8ad7c4834","verdict":"confirmed","issues":["dup-site"],"note":"same goturdepe compound"}
+{"id":"IMEO:fb4e1d63-bd02-4e7c-9f99-252d5583aa06","verdict":"unclear","issues":["id-far"],"note":"ogim flare 540 m; operator unconfirmed"}
+{"id":"IMEO:fcfd8fbb-ece0-4cd4-b008-baa2aadb4495","verdict":"confirmed","issues":["id-offset"],"note":"compound in mapped mine industrial area 0.5 km"}
+{"id":"IMEO:fd42d8fe-962a-44de-93f1-3231b4cb670c","verdict":"confirmed","issues":[],"note":"platform 10 m"}
+{"id":"IMEO:fd489bee-f8a5-4a7f-9bd3-1e22b263754c","verdict":"unclear","issues":["no-ids"],"note":"compound 150 m, nothing mapped"}
+{"id":"IMEO:fdb2e0cb-eb12-45f4-9d4f-96acc184865a","verdict":"confirmed","issues":["dup-site"],"note":"flares within 45 m; same site as #6"}
+{"id":"IMEO:fdf3478d-9faf-418b-8d5c-53d726fca778","verdict":"confirmed","issues":[],"note":"platform 40 m"}
+{"id":"IMEO:ff99ea1b-2388-4920-981b-4eb9b9475ac4","verdict":"unclear","issues":["overclaim","dup-site"],"note":"high and 'inside the fence', but the imagery is cloud-covered and the polygon is 100 m"}
