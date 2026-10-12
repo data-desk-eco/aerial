@@ -209,11 +209,11 @@ with no value flattens the ramp rather than vanishing. a plume is the other way
 round: no rate is not a low rate, so it is grey, off the ramp and out of every
 band.
 
-**two ramps, because they answer different questions.** flaring reads on the
-dd intensity ramp (red → orange → white), methane on blue → cyan → green,
-the cartography palette's cool end (the plume rasters stay viridis); three
-bands each. colour never means provider or category — that
-is shape's job.
+**one ramp, three scales.** every family reads on the dd intensity ramp
+(red → orange → white, the guidelines' own), each on its stops: B12, MW,
+t/hr. the key's headings carry the units, and shape says burned or leaked:
+the flare marking, the plume's diamond (the attributed source is a square).
+colour never means provider or category.
 
 **a lane is a connection, and the engine serialises each one.** statements on
 one connection run one after another; on different connections they overlap
