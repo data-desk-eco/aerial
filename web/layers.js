@@ -6,8 +6,10 @@
 // two ramps, because they answer different questions. flaring reads on the
 // dd intensity ramp, red -> orange -> white, each instrument on its own stops:
 // b12 reflectance and radiant heat are different numbers for one question.
-// methane reads on viridis, the ramp its plume rasters are rendered in; one
-// shared ramp made a bright plume and a bright flare look like one quantity.
+// methane reads purple -> green -> yellow, the guidelines' cool tri-point
+// ramp in the map's own hues; one shared ramp made a bright plume and a
+// bright flare look like one quantity. three bands each, so the key reads
+// alike: viridis's four had a turquoise and a green no one told apart.
 
 import { palette } from './vendor/dd/dd.js';
 
@@ -40,23 +42,22 @@ export const flareBands = cfg => {
     ];
 };
 
-const VIRIDIS = ['#3B528B', '#21918C', '#5EC962', '#FDE725'];   // low → high
-const PLUME_STOPS = [1000, 5000, 10000];   // kg/h, the key's bands too
+const COOL = [DD.purple, DD.green, DD.yellow];   // low → high
+const PLUME_STOPS = [1000, 10000];   // kg/h, the key's bands too
 
 // no rate is not a low rate: an unquantified plume is drawn grey, off the
 // ramp and out of every band
 export const plumeIcon = ['case',
     ['!=', ['typeof', ['get', 'rate_kg_h']], 'number'],
     `quantitative-${DD.grey}`,
-    stepIcon('quantitative', ['get', 'rate_kg_h'], PLUME_STOPS, VIRIDIS)];
+    stepIcon('quantitative', ['get', 'rate_kg_h'], PLUME_STOPS, COOL)];
 
 // [label in t/hr, lo kg/h, hi kg/h, colour], off the same stops
-const [LO, MID, HI] = PLUME_STOPS, t = kg => kg / 1000;
+const [LO, HI] = PLUME_STOPS, t = kg => kg / 1000;
 export const PLUME_BANDS = [
-    [`${t(HI)}+`, HI, null, VIRIDIS[3]],
-    [`${t(MID)}–${t(HI)}`, MID, HI, VIRIDIS[2]],
-    [`${t(LO)}–${t(MID)}`, LO, MID, VIRIDIS[1]],
-    [`< ${t(LO)}`, 0, LO, VIRIDIS[0]],
+    [`${t(HI)}+`, HI, null, COOL[2]],
+    [`${t(LO)}–${t(HI)}`, LO, HI, COOL[1]],
+    [`< ${t(LO)}`, 0, LO, COOL[0]],
 ];
 
 // white is the default state. the two structure shapes that cannot be told
@@ -67,13 +68,11 @@ export const MARK = {
 };
 
 // where aerial departs from the guidelines on purpose, written down so
-// vendor/dd/audit.js passes everything else (`make audit`): viridis, the
-// plume rasters' own ramp; gl text for the cluster counts, which wants inter
+// vendor/dd/audit.js passes everything else (`make audit`): gl text for the cluster counts, which wants inter
 // glyphs the basemap does not serve; the heat halo and the probability
 // surface, which are data, not imagery; and the intro heading at 600, the
 // title weight of datadesk.eco, where the guidelines' 750 read heavy
 export const AUDIT = {
-    colors: VIRIDIS,
     skip: '.fx-modal-content [slot=title], .fx-modal-content [slot=title] *',
     glyphs: ['clusters'],
     graded: ['detection-footprint', 'dd-plume-probability',
@@ -84,7 +83,7 @@ export const DASH = [2, 2];
 
 // marking ids only expressions name, which styleimagemissing never sees
 export const MARKS = [...RAMP.map(c => `flare-${c}`),
-    ...[...VIRIDIS, DD.grey, DD.white].map(c => `quantitative-${c}`),
+    ...[...COOL, DD.grey, DD.white].map(c => `quantitative-${c}`),
     ...Object.values(MARK)];
 
 // every marking pins its icon: a detection sits where it was measured, so

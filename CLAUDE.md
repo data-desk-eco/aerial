@@ -40,7 +40,7 @@ repository compiles from mikael dahlén's guidelines: `dd-panel`, `dd-key`,
 markings and graded imagery. aerial css places and sizes them and styles what
 it puts in them, in `--dd-*` tokens only. `make audit` runs
 `vendor/dd/audit.js` over the intro, the map and a card, and fails on any
-deviation not declared in `AUDIT` (`layers.js`): viridis, the cluster
+deviation not declared in `AUDIT` (`layers.js`): the cluster
 counts' gl text, the data rasters. a new deviation is a line there, argued in its comment.
 change the elements in the design repository, never in vendor/.
 
@@ -210,8 +210,9 @@ round: no rate is not a low rate, so it is grey, off the ramp and out of every
 band.
 
 **two ramps, because they answer different questions.** flaring reads on the
-dd intensity ramp (red → orange → white), methane on viridis, the ramp the
-plume rasters are rendered in. colour never means provider or category — that
+dd intensity ramp (red → orange → white), methane on purple → green →
+yellow (the guidelines' cool tri-point in map hues; the plume rasters stay
+viridis), three bands each. colour never means provider or category — that
 is shape's job.
 
 **a lane is a connection, and the engine serialises each one.** statements on
