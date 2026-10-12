@@ -1,4 +1,4 @@
-// flux — one map, one date window, three layers: s2 flaring, vnf flaring and
+// aerial — one map, one date window, three layers: s2 flaring, vnf flaring and
 // methane plumes. this is the whole app declaration; shell/app.js mounts it
 // and everything it names lives in the hook modules. it reads and draws, and
 // does nothing else.
@@ -161,7 +161,7 @@ const props = id => ({ sources }) =>
 const link = (href, text) => `<a href="${href}" target="_blank">${text}</a>`;
 
 mount({
-    title: 'Flux',
+    title: 'Aerial',
     subtitle: 'Emissions explorer',
     badge: 'Beta',
     search: true,
@@ -174,7 +174,7 @@ mount({
             <svg id="modal-worldmap"></svg>
         </div>
         <div class="fx-intro">
-            <p>Flux is a research tool designed for facility-level
+            <p>Aerial is a research tool designed for facility-level
                 attribution of satellite emissions observations. Use it to
                 investigate a specific facility or to browse point source
                 emissions globally.</p>

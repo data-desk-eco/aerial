@@ -66,7 +66,7 @@ export const MARK = {
     attributed: `diamond-${DD.white}`,    // the attributed source among them
 };
 
-// where flux departs from the guidelines on purpose, written down so
+// where aerial departs from the guidelines on purpose, written down so
 // vendor/dd/audit.js passes everything else (`make audit`): viridis, the
 // plume rasters' own ramp; gl text for the cluster counts, which wants inter
 // glyphs the basemap does not serve; the heat halo and the probability

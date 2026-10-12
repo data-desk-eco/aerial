@@ -1,4 +1,4 @@
-# flux against the data desk guidelines
+# aerial against the data desk guidelines
 
 an illustrated version, with the before and after screens and the kernel set
 against the pdf specimens: https://claude.ai/artifact/ArJaWpETWu13gcpkj4QevB
@@ -9,7 +9,7 @@ review of 2026-10-09, against mikael dahlén's visual identity guidelines
 script), the appendix maplibre reference and the marking svgs. page numbers
 are the pdf's (`pdf:n`); printed folios are five lower.
 
-the review found flux close to the guidelines in structure and loose in
+the review found aerial close to the guidelines in structure and loose in
 detail: the panels, key, card and markings were the right devices, but the
 satellite imagery ignored the gradient map, the type had drifted (a
 synthesised bold, a serif glyph, 8px and 14px text where the ui is 11px),
@@ -20,7 +20,7 @@ classes a page could override, and did.
 ## what changed
 
 the guidelines are now code in the `design` repository, as a kernel, and
-flux is built on it:
+aerial is built on it:
 
 - `dd.js`: the ui chapter (pdf:77-86) as custom elements that draw their own
   chrome in shadow roots from the tokens (`dd-panel`, `dd-key`, `dd-row`,
@@ -50,7 +50,7 @@ and set them against the figma rasters the pdf embeds, band by band at 2×
   1.21 (intro lines 17px apart at 14px), not the 2022 prose rule's 1.4. that
   was the 21-versus-18px gap between statistic rows.
 - **features.** the drawings use inter's defaults: proportional, standard
-  digits. tnum, ss01 and ss02 (pdf:21) had made flux's numbers look
+  digits. tnum, ss01 and ss02 (pdf:21) had made aerial's numbers look
   monospaced. they stay with prose.
 - **optical size.** the drawings were made at 2×, so inter's automatic optical
   size followed the doubled size: 22 at 11px, 26 at 14px. css's own (14) ran
@@ -122,7 +122,7 @@ fixed unless marked. **declared**: a deliberate deviation written into
     device a black ground and the map no veil; the other panels now hide
     while the intro is up, so it is the one device on screen.
 11. **methane is on viridis** (declared, open). colour is meaning (pdf:66,
-    71), but viridis is off both palettes. it is flux's deliberate choice,
+    71), but viridis is off both palettes. it is aerial's deliberate choice,
     the ramp the plume rasters are rendered in. for mikael: approve viridis
     as the quantitative exception, or give a cartography ramp the rasters
     can share.
@@ -186,7 +186,7 @@ measured against the 2× rasters, which put a panel at 270px:
 ## in the running app
 
 set against the screens rather than the specimens (2026-10-09): the drawer's
-tabs had lost their padding and grey, because a page's own rules (flux's
+tabs had lost their padding and grey, because a page's own rules (aerial's
 `* { padding: 0 }` reset, `button { color: inherit }`) beat a shadow root's
 `::slotted` ones. the kernel now marks slotted chrome important, and the
 specimen carries that reset so the fit test would catch it. the drawer's

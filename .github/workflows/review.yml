@@ -1,9 +1,9 @@
 name: Review gate
 
-# the cloudflare access application over flux.datadesk.eco/review, gated by
+# the cloudflare access application over aerial.datadesk.eco/review, gated by
 # the shared "Data Desk" policy. wrangler's login cannot manage access, and
 # the org token this reads can; it creates the application once and then
-# finds it there
+# finds it there. it also points aerial.datadesk.eco at pages
 on:
   push:
     branches: [main]
@@ -16,8 +16,18 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       API: https://api.cloudflare.com/client/v4/accounts/6bf7022757e7f54cfc2ad145de0632b7/access
-      DOMAIN: flux.datadesk.eco/review
+      DOMAIN: aerial.datadesk.eco/review
     steps:
+      # the pages site's name, proxied as flux.datadesk.eco was
+      - run: |
+          cf() { curl -sf -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H 'Content-Type: application/json' "$@"; }
+          Z=https://api.cloudflare.com/client/v4/zones/$(cf \
+            "https://api.cloudflare.com/client/v4/zones?name=datadesk.eco" |
+            jq -r '.result[0].id')/dns_records
+          cf "$Z?name=aerial.datadesk.eco" | jq -e '.result[0]' >/dev/null ||
+            cf -X POST "$Z" -d '{"type": "CNAME", "name": "aerial",
+              "content": "data-desk-eco.github.io", "proxied": true}'
       - run: |
           cf() { curl -sf -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
             -H 'Content-Type: application/json' "$@"; }
@@ -28,7 +38,7 @@ jobs:
           p=$(cf "$API/policies" |
             jq -r '.result[] | select(.name == "Data Desk") | .id')
           cf -X POST "$API/apps" -d "$(jq -n --arg d "$DOMAIN" --arg p "$p" \
-            '{name: "flux review", domain: $d, type: "self_hosted",
+            '{name: "aerial review", domain: $d, type: "self_hosted",
               session_duration: "168h", policies: [{id: $p, precedence: 1}]}')" \
             >/dev/null
           echo "$DOMAIN gated"

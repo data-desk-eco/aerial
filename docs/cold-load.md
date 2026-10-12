@@ -114,6 +114,6 @@ trims about 20%.
 
 ```bash
 make serve
-# first-feature timing: poll window.flux.map.getSource(id)._data.features
+# first-feature timing: poll window.aerial.map.getSource(id)._data.features
 # request cascade: chromium --log-net-log, filter events to the store host
 ```

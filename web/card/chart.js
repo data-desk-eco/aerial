@@ -1,6 +1,6 @@
 // the intensity chart, as drawn in pdf:89: a small dot per detection over
 // time on the family's own scale, five short dim ticks spanning the data and
-// a rule 13px under the lowest; flux adds a line and an 11px label, in that
+// a rule 13px under the lowest; aerial adds a line and an 11px label, in that
 // band, at each new year. a dot click selects that date. drawn at the card's
 // content width, so 11px is 11px
 

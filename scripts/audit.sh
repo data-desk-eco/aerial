@@ -15,14 +15,14 @@ curl -sfI "localhost:$PORT/" >/dev/null \
     const wait = t => new Promise(r => setTimeout(r, t));
     const { audit } = await import('/vendor/dd/audit.js');
     const run = () => audit(document.body,
-        { map: flux.map, allow: flux.config.audit });
+        { map: aerial.map, allow: aerial.config.audit });
     await wait(3000);
     const found = run();
     document.getElementById('enter-btn').click();
     await wait(15000);
-    const f = flux.map.queryRenderedFeatures(
+    const f = aerial.map.queryRenderedFeatures(
         { layers: ['detections', 'vnf'] })[0];
-    if (f) flux.map.fire('click', { point: flux.map.project(
+    if (f) aerial.map.fire('click', { point: aerial.map.project(
         f.geometry.coordinates), lngLat: { lng: f.geometry.coordinates[0],
         lat: f.geometry.coordinates[1] }, originalEvent: {} });
     await wait(8000);

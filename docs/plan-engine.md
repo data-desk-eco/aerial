@@ -1,12 +1,12 @@
 # handover: the archive and the engine do the work
 
-goal: delete flux front-end code by setting the archive up properly and
-investing in the duckdb lite build. flux should be a thin layer between
+goal: delete aerial front-end code by setting the archive up properly and
+investing in the duckdb lite build. aerial should be a thin layer between
 maplibre and the archive: a reader builds one statement, the engine does the
 rest (see "the engine does the work" in `CLAUDE.md`, and commit f679345, which
 moved every reader to sql).
 
-three repos, in this order. each phase ships on its own and leaves flux green.
+three repos, in this order. each phase ships on its own and leaves aerial green.
 
 ## phase 1: lite build (`~/Tools/duckdb-wasm-lite`, release `lite.6`)
 
@@ -24,7 +24,7 @@ three repos, in this order. each phase ships on its own and leaves flux green.
    `DUCKDB_EXTENSION_API_VERSION_UNSTABLE`.
 2. **a data range cache** (`PLAN.md`, "evaluate a range cache"). footers are
    cached already; completed data ranges are not, so a repeated read refetches
-   them (flux: 1,858 ms cold, 280 ms again for a card; ~1.2 s every time for
+   them (aerial: 1,858 ms cold, 280 ms again for a card; ~1.2 s every time for
    the six-table candidate read). a small bounded LRU in `browser/async_io.cc`
    keyed by (file, offset, length), dropped in `dropFile`.
 3. tests in `test/accept.mjs`: `h3_latlng_to_cell`, `h3_grid_disk`,
@@ -42,14 +42,14 @@ three repos, in this order. each phase ships on its own and leaves flux green.
    measured today, a 6 km candidate box costs 13–16 row groups and 14–16 MB
    (osm row groups are 51,200 rows spanning ~10° of longitude) for ~600 rows.
 2. **sizes in `index.json`**, per object (per partition where partitioned), so
-   flux picks whole fetch vs ranged read without a probing GET.
+   aerial picks whole fetch vs ranged read without a probing GET.
 3. **`bounds` as geometry** (geoparquet) rather than wkt text: nature trace's
    wkt is 7.6 of its 9.4 MB detections object.
 4. keep each `*.checks.sql` passing, add checks for the partition key and the
-   index sizes. say in the commit which consumers outside flux read these
+   index sizes. say in the commit which consumers outside aerial read these
    tables whole, and check they still work through the index.
 
-## phase 3: flux (this repo)
+## phase 3: aerial (this repo)
 
 1. `make vendor` to `lite.6` (bump `DUCKDB_TAG` in `scripts/vendor.sh` and
    `DUCKDB_RELEASE` in `shell/engine.js`; `rm -rf web/vendor` first, the
@@ -105,7 +105,7 @@ cell, 10,000-row hilbert groups; a 6 km box reads 0.16 MB of osm at ras laffan
 against 1.46 MB before. `index.json` carries `sizes` (59.6 KB compact, from
 16.5). three items were measured and not done:
 
-- `gem` stays one object. flux names flares after its 205 export terminals,
+- `gem` stays one object. aerial names flares after its 205 export terminals,
   in 54 of 353 cells, and a whole read of it is 1.9 MB.
 - `data-desk/detections` stays one object: its 84 plumes would cost the plume
   layer a footer read in each of 56 cells.

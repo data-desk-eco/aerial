@@ -1,4 +1,4 @@
-# flux
+# aerial
 
 one map of two ways the oil and gas industry puts carbon into the air: gas it
 burns and gas it leaks. flaring is Sentinel-2 archive clusters (S2) and VIIRS
@@ -6,13 +6,13 @@ Nightfire looks (VNF), a layer each and both drawn at once; methane plumes are
 the third layer. one quarter grid sets the date window for all three, and a
 quarter greys only when no layer covers it.
 
-flux reads parquet off the Data Desk archive with DuckDB and draws it, and does
+aerial reads parquet off the Data Desk archive with DuckDB and draws it, and does
 nothing else: no detection, no publishing, no live third-party api. the one
 exception is `/review`, behind cloudflare access: a person's verdict on each
 new attribution goes to `worker/review.js`, and the jump host folds it into the
 archive. the map shows a claim from a later run only once it is confirmed.
 
-`web/config.js` is the declaration `mount()` takes; everything flux-specific
+`web/config.js` is the declaration `mount()` takes; everything aerial-specific
 lives in the hook modules it wires in. `web/shell/` is the map shell,
 first-party since 2026-08-17 (it was the cartograph library): change it here,
 and delete what only a second consumer would have wanted.
@@ -20,7 +20,7 @@ and delete what only a second consumer would have wanted.
 zero npm dependencies. MapLibre GL and DuckDB-Wasm lite are vendored; everything
 else is browser built-ins.
 
-**the engine does the work.** flux's js is a thin layer between maplibre and
+**the engine does the work.** aerial's js is a thin layer between maplibre and
 the archive: a reader builds one statement, the engine filters, windows,
 reduces, rates, names, joins and orders, and the rows come out as the map's
 properties (`fc()`). the lite build carries spatial (`ST_Distance_Sphere`,
@@ -37,7 +37,7 @@ the ui is built on `vendor/dd/dd.js`, the kernel the data desk `design`
 repository compiles from mikael dahlén's guidelines: `dd-panel`, `dd-key`,
 `dd-row`, `dd-btn`, `dd-dot`, `dd-slider`, `dd-toggle`, `dd-label`,
 `dd-logo`, which draw their own chrome in shadow roots, and the basemap,
-markings and graded imagery. flux css places and sizes them and styles what
+markings and graded imagery. aerial css places and sizes them and styles what
 it puts in them, in `--dd-*` tokens only. `make audit` runs
 `vendor/dd/audit.js` over the intro, the map and a card, and fails on any
 deviation not declared in `AUDIT` (`layers.js`): viridis, the cluster
@@ -51,8 +51,8 @@ the whole world, over `data-desk/flares` (S2 clusters) or `eog/flares` (VNF
 sites), one row per site with its quarterly history nested in `quarters`, both held as engine
 buffers. the per-date series, `data-desk/detections` and `eog/detections`, is
 read per site on card open. every eog detections row is a positive detection;
-the looks that found nothing are `eog/observations`, which flux does not read
-(see invariants). the S2 methodology is s2-flares, run in the etl; flux is a
+the looks that found nothing are `eog/observations`, which aerial does not read
+(see invariants). the S2 methodology is s2-flares, run in the etl; aerial is a
 viewer. a pan reads nothing: every family is drawn whole and maplibre
 draws what is in view. below z5 all three are one clustered source, every
 point a cluster (60k markers placed each frame made the globe crawl); from z5
@@ -187,7 +187,7 @@ object asks the engine for the cell of the position it holds
 around a rect asks for the cells the rect overlaps; nothing plumbs `cell`
 through a feature builder, and no js reimplements h3.
 
-**flux does not read `eog/observations`, deliberately.** the quarters list
+**aerial does not read `eog/observations`, deliberately.** the quarters list
 already carries the looks, windowed the same way as the numerator. a second
 read is a second place to get the pairing wrong.
 

@@ -11,7 +11,7 @@ export const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ENTITY[c]);
 export const canon = id => String(id).toLowerCase().replace(/_/g, ':')
     .replace(/^[a-z]+:/, '');
 
-// a value as a sql literal: every statement flux issues is built as text
+// a value as a sql literal: every statement aerial issues is built as text
 export const quote = v => {
     if (v instanceof Date) v = v.toISOString();
     if (typeof v === 'string') return `'${v.replaceAll("'", "''")}'`;

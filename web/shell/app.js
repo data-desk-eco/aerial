@@ -97,6 +97,6 @@ export async function mount(config) {
     await config.ready?.(ctx);
     // after ready: onShow hooks use handles wired there
     restorePermalink(cold);
-    window.flux = ctx;   // console handle
+    window.aerial = ctx;   // console handle
     return ctx;
 }
