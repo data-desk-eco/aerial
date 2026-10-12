@@ -48,6 +48,17 @@ export const plumeIcon = ['case',
     `diamond-${DD.grey}`,
     stepIcon('diamond', ['get', 'rate_kg_h'], PLUME_STOPS, RAMP)];
 
+// a feature's band on its own family's stops, 0 → 2, so one number means the
+// same across the families a cluster mixes; no value is the foot, as in
+// flareIcon. MODE's stops are passed in, as render.js imports this module
+export const band = ({ s2, vnf }) => {
+    const at = (prop, [, mid, hi]) =>
+        ['step', ['coalesce', ['get', prop], -1], 0, mid, 1, hi, 2];
+    return ['match', ['get', 'kind'], 'flare', at(s2.prop, s2.stops),
+        'vnf', at(vnf.prop, vnf.stops),
+        'plume', at('rate_kg_h', [0, ...PLUME_STOPS]), 0];
+};
+
 // [label in t/hr, lo kg/h, hi kg/h, colour], off the same stops
 const [LO, HI] = PLUME_STOPS, t = kg => kg / 1000;
 export const PLUME_BANDS = [
@@ -64,13 +75,11 @@ export const MARK = {
 };
 
 // where aerial departs from the guidelines on purpose, written down so
-// vendor/dd/audit.js passes everything else (`make audit`): gl text for the cluster counts, which wants inter
-// glyphs the basemap does not serve; the heat halo and the probability
+// vendor/dd/audit.js passes everything else (`make audit`): the heat halo and the probability
 // surface, which are data, not imagery; and the intro heading at 600, the
 // title weight of datadesk.eco, where the guidelines' 750 read heavy
 export const AUDIT = {
     skip: '.fx-modal-content [slot=title], .fx-modal-content [slot=title] *',
-    glyphs: ['cluster-counts'],
     graded: ['detection-footprint', 'dd-plume-probability',
         'plume-mask-image'],
 };

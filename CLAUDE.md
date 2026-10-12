@@ -40,8 +40,7 @@ repository compiles from mikael dahlén's guidelines: `dd-panel`, `dd-key`,
 markings and graded imagery. aerial css places and sizes them and styles what
 it puts in them, in `--dd-*` tokens only. `make audit` runs
 `vendor/dd/audit.js` over the intro, the map and a card, and fails on any
-deviation not declared in `AUDIT` (`layers.js`): the cluster
-counts' gl text, the data rasters. a new deviation is a line there, argued in its comment.
+deviation not declared in `AUDIT` (`layers.js`): the data rasters. a new deviation is a line there, argued in its comment.
 change the elements in the design repository, never in vendor/.
 
 ## the three families
@@ -55,7 +54,9 @@ the looks that found nothing are `eog/observations`, which aerial does not read
 (see invariants). the S2 methodology is s2-flares, run in the etl; aerial is a
 viewer. a pan reads nothing: every family is drawn whole and maplibre
 draws what is in view. below z5 all three are one clustered source, every
-point a cluster (60k markers placed each frame made the globe crawl); from z5
+point a cluster (60k markers placed each frame made the globe crawl), drawn
+in the marking of the family most of it is and coloured by the mean band
+(`band`, `layers.js`) of what it holds; from z5
 each family draws every point (S2 is 631 sites in 47 ms, VNF 21k in 0.4 s; per viewport, flares
 lagged and churned the card).
 

@@ -10,8 +10,8 @@ import { canon, padBbox, escapeHtml, formatDate, debounce }
 import { initArchive, objects } from './shell/archive.js';
 import { prefetchData, fc, from } from './shell/data.js';
 import { MODE } from './flaring/render.js';
-import { DD, MARKS, PIN, RATE_LABEL, AUDIT, flareIcon, plumeIcon }
-    from './layers.js';
+import { MARKS, PIN, AUDIT, RAMP, band, flareIcon,
+    plumeIcon } from './layers.js';
 import { keySections } from './key.js';
 import { readS2, readVNF, readSite, quarters, coverage, loadTerminals }
     from './flaring/flares.js';
@@ -57,19 +57,16 @@ const whenReady = new Promise(r => readyResolve = r);
 // layer draws every point. a cluster's label is a count, since a summed
 // value would mash t/hr, ppm·m, b12 and radiant heat
 const FAMILIES = ['detections', 'vnf', 'plumes'], NEAR = 5;
-// a cluster's size; a point no cluster took counts one
-const COUNT = ['coalesce', ['get', 'point_count'], 1];
-// a cluster's box: a hairline square stepped on a log of its count, drawn
-// once per step at device resolution, as an icon scaled would thicken it
-const BOX = [1, 3, 10, 30, 100, 300, 1000, 3000];
-const boxes = map => BOX.forEach((c, i) => {
-    const r = 7 + 19 * Math.log(c) / Math.log(1e4), d = devicePixelRatio,
-        n = Math.ceil(2 * r + 2) * d, x = new OffscreenCanvas(n, n)
-            .getContext('2d');
-    x.strokeStyle = DD.white; x.lineWidth = 0.6 * d;
-    x.strokeRect(d, d, n - 2 * d, n - 2 * d);
-    map.addImage(`box-${i}`, x.getImageData(0, 0, n, n), { pixelRatio: d });
-});
+// a cluster's colour: the mean band of what it holds, shifted up so a mixed
+// cluster reads at its brighter end
+const BAND = band(MODE);
+const PLUME = ['==', ['get', 'kind'], 'plume'];
+// its shape: the marking of the family most of it is
+const SHAPE = ['case', ['has', 'point_count'],
+    ['case', ['>', ['*', 2, ['get', 'p']], ['get', 'point_count']],
+        'diamond', 'flare'], ['case', PLUME, 'diamond', 'flare']];
+const MEAN = ['case', ['has', 'point_count'],
+    ['/', ['get', 'b'], ['get', 'point_count']], BAND];
 
 // a source this app re-reads has to pass the key's live predicates itself:
 // the shell applies them when a row is toggled, not when the data changes.
@@ -267,14 +264,15 @@ mount({
         CTX = ctx;
         // before the layers, or maplibre logs the expression-only ids missing
         MARKS.forEach(id => ensureMark(ctx.map, id));
-        boxes(ctx.map);
         return {
             sites: empty,
             detections: empty,
             vnf: empty,
             plumes: empty,
             everything: { data: empty, cluster: true,
-                          clusterMaxZoom: NEAR - 1, clusterRadius: 40 },
+                          clusterProperties: { b: ['+', BAND],
+                              p: ['+', ['case', PLUME, 1, 0]] },
+                          clusterMaxZoom: NEAR - 1, clusterRadius: 15 },
         };
     },
 
@@ -301,23 +299,14 @@ mount({
             layout: { ...PIN, 'icon-image': plumeIcon },
         },
         {
-            // a cluster is a grouping, so it is off the ramp: a hairline
-            // box sized on a log of its count, the count inside, never
-            // dropped for a collision. a point no cluster took is a cluster
-            // of one, so far out is all clusters
+            // the marking of the family most of it is, at its own size and
+            // coloured by the mean band of what it holds. a
+            // point no cluster took is a cluster of one, so far out is all
+            // clusters
             id: 'clusters', type: 'symbol', source: 'everything',
             maxzoom: NEAR,
-            layout: { 'icon-image': ['step', COUNT, 'box-0',
-                    ...BOX.slice(1).flatMap((c, i) => [c, `box-${i + 1}`])],
-                'icon-allow-overlap': true, 'icon-ignore-placement': true },
-        },
-        {
-            id: 'cluster-counts', type: 'symbol', source: 'everything',
-            maxzoom: NEAR,
-            layout: { ...RATE_LABEL, 'text-anchor': 'center',
-                'text-offset': [0, 0], 'text-field': ['to-string', COUNT],
-                'text-allow-overlap': true, 'text-ignore-placement': true },
-            paint: { 'text-color': DD.white },
+            layout: { ...PIN, 'icon-image': ['concat', SHAPE, '-',
+                    ['step', MEAN, RAMP[0], 0.4, RAMP[1], 1, RAMP[2]]] },
         },
     ],
 
