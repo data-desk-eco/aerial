@@ -1,6 +1,6 @@
 // candidate sources around an open plume card, and nowhere else: one radius
 // read of every provider's `infrastructure` table, cleared on close. drawn
-// white over an invisible fat hit layer — a triangle per candidate, a diamond
+// white over an invisible fat hit layer — a triangle per candidate, a square
 // for the attributed source — since colour on this map is measurement.
 
 import { hover } from '../vendor/dd/dd.js';

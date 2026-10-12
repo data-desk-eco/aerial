@@ -264,7 +264,7 @@ flex-direction:column;gap:${S.gapS}}
 }, ['collapsed'])
 
 define('dd-key-group', `.label{position:relative;cursor:pointer;
-white-space:nowrap}${HANG}.chev{top:calc((1lh - 16px) / 2)}
+white-space:pre}${HANG}.chev{top:calc((1lh - 16px) / 2)}
 :host([first]) .chev{display:grid}
 :host([collapsed]) .chev svg{transform:rotate(180deg)}
 .rows{display:flex;flex-direction:column;gap:${S.keyRowGap};

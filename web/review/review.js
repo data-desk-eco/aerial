@@ -157,8 +157,8 @@ function render(t) {
     select(list.querySelector('.rv-item'));
 }
 
-// the plume in the quantitative marking on the main map's ramp, and the
-// attributed features in their diamonds where the source data puts them:
+// the plume in its diamond on the main map's ramp, and the
+// attributed features in their squares where the source data puts them:
 // the agent's own point is a conclusion, so it is a bare ring. a fine dash
 // joins plume and each: the link is the claim, not a measurement
 const map = createMap({ center: [0, 20], zoom: 2 });

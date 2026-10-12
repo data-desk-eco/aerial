@@ -3,13 +3,10 @@
 // feature burned or leaked — and colour is measurement alone, never provider
 // or category (pdf:71, 75, 76).
 //
-// two ramps, because they answer different questions. flaring reads on the
-// dd intensity ramp, red -> orange -> white, each instrument on its own stops:
-// b12 reflectance and radiant heat are different numbers for one question.
-// methane reads blue -> cyan -> green, the cartography palette's cool end,
-// three steps so the key reads alike and clear of the flares' warm hues;
-// one shared ramp made a bright plume and a bright flare look like one
-// quantity.
+// one ramp, the guidelines' intensity ramp, red -> orange -> white, each
+// family on its own stops: b12 reflectance, radiant heat and a plume's rate
+// are different numbers, so the key gives each its units, and shape says
+// which is which — the flare marking burned, the diamond leaked.
 
 import { palette } from './vendor/dd/dd.js';
 
@@ -42,29 +39,28 @@ export const flareBands = cfg => {
     ];
 };
 
-const COOL = [DD.blue, DD.cyan, DD.green];   // low → high
 const PLUME_STOPS = [1000, 10000];   // kg/h, the key's bands too
 
 // no rate is not a low rate: an unquantified plume is drawn grey, off the
 // ramp and out of every band
 export const plumeIcon = ['case',
     ['!=', ['typeof', ['get', 'rate_kg_h']], 'number'],
-    `quantitative-${DD.grey}`,
-    stepIcon('quantitative', ['get', 'rate_kg_h'], PLUME_STOPS, COOL)];
+    `diamond-${DD.grey}`,
+    stepIcon('diamond', ['get', 'rate_kg_h'], PLUME_STOPS, RAMP)];
 
 // [label in t/hr, lo kg/h, hi kg/h, colour], off the same stops
 const [LO, HI] = PLUME_STOPS, t = kg => kg / 1000;
 export const PLUME_BANDS = [
-    [`${t(HI)}+`, HI, null, COOL[2]],
-    [`${t(LO)}–${t(HI)}`, LO, HI, COOL[1]],
-    [`< ${t(LO)}`, 0, LO, COOL[0]],
+    [`${t(HI)}+`, HI, null, RAMP[2]],
+    [`${t(LO)}–${t(HI)}`, LO, HI, RAMP[1]],
+    [`< ${t(LO)}`, 0, LO, RAMP[0]],
 ];
 
 // white is the default state. the two structure shapes that cannot be told
-// apart wrongly at icon size
+// apart wrongly at icon size, and neither the plume's diamond
 export const MARK = {
     candidate: `triangle-${DD.white}`,    // infrastructure near the plume
-    attributed: `diamond-${DD.white}`,    // the attributed source among them
+    attributed: `square-${DD.white}`,    // the attributed source among them
 };
 
 // where aerial departs from the guidelines on purpose, written down so
@@ -83,7 +79,8 @@ export const DASH = [2, 2];
 
 // marking ids only expressions name, which styleimagemissing never sees
 export const MARKS = [...RAMP.map(c => `flare-${c}`),
-    ...[...COOL, DD.grey, DD.white].map(c => `quantitative-${c}`),
+    ...[...RAMP, DD.grey].map(c => `diamond-${c}`),
+    `quantitative-${DD.white}`,
     ...Object.values(MARK)];
 
 // every marking pins its icon: a detection sits where it was measured, so
