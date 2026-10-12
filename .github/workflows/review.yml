@@ -3,7 +3,7 @@ name: Review gate
 # the cloudflare access application over aerial.datadesk.eco/review, gated by
 # the shared "Data Desk" policy. wrangler's login cannot manage access, and
 # the org token this reads can; it creates the application once and then
-# finds it there. it also points aerial.datadesk.eco at pages
+# finds it there.
 on:
   push:
     branches: [main]
@@ -18,16 +18,6 @@ jobs:
       API: https://api.cloudflare.com/client/v4/accounts/6bf7022757e7f54cfc2ad145de0632b7/access
       DOMAIN: aerial.datadesk.eco/review
     steps:
-      # the pages site's name, proxied as flux.datadesk.eco was
-      - run: |
-          cf() { curl -sf -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-            -H 'Content-Type: application/json' "$@"; }
-          Z=https://api.cloudflare.com/client/v4/zones/$(cf \
-            "https://api.cloudflare.com/client/v4/zones?name=datadesk.eco" |
-            jq -r '.result[0].id')/dns_records
-          cf "$Z?name=aerial.datadesk.eco" | jq -e '.result[0]' >/dev/null ||
-            cf -X POST "$Z" -d '{"type": "CNAME", "name": "aerial",
-              "content": "data-desk-eco.github.io", "proxied": true}'
       - run: |
           cf() { curl -sf -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
             -H 'Content-Type: application/json' "$@"; }
