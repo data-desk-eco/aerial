@@ -55,7 +55,7 @@ the looks that found nothing are `eog/observations`, which aerial does not read
 viewer. a pan reads nothing: every family is drawn whole and maplibre
 draws what is in view. below z5 all three are one clustered source, every
 point a cluster (60k markers placed each frame made the globe crawl), drawn
-in the marking of the family most of it is and coloured by the mean band
+as a hairline ring on a log of its count, coloured by the mean band
 (`band`, `layers.js`) of what it holds; from z5
 each family draws every point (S2 is 631 sites in 47 ms, VNF 21k in 0.4 s; per viewport, flares
 lagged and churned the card).

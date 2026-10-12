@@ -60,11 +60,7 @@ const FAMILIES = ['detections', 'vnf', 'plumes'], NEAR = 5;
 // a cluster's colour: the mean band of what it holds, shifted up so a mixed
 // cluster reads at its brighter end
 const BAND = band(MODE);
-const PLUME = ['==', ['get', 'kind'], 'plume'];
-// its shape: the marking of the family most of it is
-const SHAPE = ['case', ['has', 'point_count'],
-    ['case', ['>', ['*', 2, ['get', 'p']], ['get', 'point_count']],
-        'diamond', 'flare'], ['case', PLUME, 'diamond', 'flare']];
+const COUNT = ['coalesce', ['get', 'point_count'], 1];
 const MEAN = ['case', ['has', 'point_count'],
     ['/', ['get', 'b'], ['get', 'point_count']], BAND];
 
@@ -270,8 +266,7 @@ mount({
             vnf: empty,
             plumes: empty,
             everything: { data: empty, cluster: true,
-                          clusterProperties: { b: ['+', BAND],
-                              p: ['+', ['case', PLUME, 1, 0]] },
+                          clusterProperties: { b: ['+', BAND] },
                           clusterMaxZoom: NEAR - 1, clusterRadius: 15 },
         };
     },
@@ -299,14 +294,17 @@ mount({
             layout: { ...PIN, 'icon-image': plumeIcon },
         },
         {
-            // the marking of the family most of it is, at its own size and
-            // coloured by the mean band of what it holds. a
-            // point no cluster took is a cluster of one, so far out is all
-            // clusters
-            id: 'clusters', type: 'symbol', source: 'everything',
+            // a hairline ring sized on a log of its count and coloured by
+            // the mean band of what it holds. a point no cluster took is a
+            // cluster of one, so far out is all clusters
+            id: 'clusters', type: 'circle', source: 'everything',
             maxzoom: NEAR,
-            layout: { ...PIN, 'icon-image': ['concat', SHAPE, '-',
-                    ['step', MEAN, RAMP[0], 0.4, RAMP[1], 1, RAMP[2]]] },
+            paint: { 'circle-color': 'transparent',
+                'circle-stroke-width': 0.6,
+                'circle-stroke-color': ['step', MEAN,
+                    RAMP[0], 0.4, RAMP[1], 1, RAMP[2]],
+                'circle-radius': ['interpolate', ['linear'],
+                    ['ln', COUNT], 0, 1.5, Math.log(1e4), 18] },
         },
     ],
 
