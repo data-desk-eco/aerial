@@ -1,0 +1,5 @@
+# the old name's forwarder: `npx wrangler deploy -c flux.toml` from worker/
+name = "flux"
+main = "flux.js"
+compatibility_date = "2026-10-01"
+routes = [{ pattern = "flux.datadesk.eco/*", zone_name = "datadesk.eco" }]
