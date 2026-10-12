@@ -41,7 +41,7 @@ export const flareBands = cfg => {
     ];
 };
 
-const COOL = ['#472D7B', '#21918C', '#FDE725'];   // low → high
+const COOL = ['#3B528B', '#5EC962', '#FDE725'];   // low → high
 const PLUME_STOPS = [1000, 10000];   // kg/h, the key's bands too
 
 // no rate is not a low rate: an unquantified plume is drawn grey, off the
