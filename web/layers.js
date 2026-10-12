@@ -70,7 +70,7 @@ export const MARK = {
 // title weight of datadesk.eco, where the guidelines' 750 read heavy
 export const AUDIT = {
     skip: '.fx-modal-content [slot=title], .fx-modal-content [slot=title] *',
-    glyphs: ['clusters'],
+    glyphs: ['cluster-counts'],
     graded: ['detection-footprint', 'dd-plume-probability',
         'plume-mask-image'],
 };
