@@ -6,10 +6,9 @@
 // two ramps, because they answer different questions. flaring reads on the
 // dd intensity ramp, red -> orange -> white, each instrument on its own stops:
 // b12 reflectance and radiant heat are different numbers for one question.
-// methane reads purple -> green -> yellow, the guidelines' cool tri-point
-// ramp in the map's own hues; one shared ramp made a bright plume and a
-// bright flare look like one quantity. three bands each, so the key reads
-// alike: viridis's four had a turquoise and a green no one told apart.
+// methane reads on viridis, the ramp its plume rasters are rendered in, at
+// three steps so the key reads alike; one shared ramp made a bright plume
+// and a bright flare look like one quantity.
 
 import { palette } from './vendor/dd/dd.js';
 
@@ -42,7 +41,7 @@ export const flareBands = cfg => {
     ];
 };
 
-const COOL = [DD.purple, DD.green, DD.yellow];   // low → high
+const COOL = ['#472D7B', '#21918C', '#FDE725'];   // low → high
 const PLUME_STOPS = [1000, 10000];   // kg/h, the key's bands too
 
 // no rate is not a low rate: an unquantified plume is drawn grey, off the
@@ -68,11 +67,13 @@ export const MARK = {
 };
 
 // where aerial departs from the guidelines on purpose, written down so
-// vendor/dd/audit.js passes everything else (`make audit`): gl text for the cluster counts, which wants inter
+// vendor/dd/audit.js passes everything else (`make audit`): viridis, the
+// plume rasters' own ramp; gl text for the cluster counts, which wants inter
 // glyphs the basemap does not serve; the heat halo and the probability
 // surface, which are data, not imagery; and the intro heading at 600, the
 // title weight of datadesk.eco, where the guidelines' 750 read heavy
 export const AUDIT = {
+    colors: COOL,
     skip: '.fx-modal-content [slot=title], .fx-modal-content [slot=title] *',
     glyphs: ['clusters'],
     graded: ['detection-footprint', 'dd-plume-probability',
