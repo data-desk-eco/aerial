@@ -164,7 +164,7 @@ export function initDetail(m, config, getFeatures) {
     // a hairline box round the selection, from highlightZoom: below it a
     // selection is carried by its own marking
     const img = new Image(58, 58);
-    img.onload = () => map.addImage('highlight-#FFFFFF', img,
+    img.onload = () => map.addImage('fx-box', img,
         { pixelRatio: 2 });
     img.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns='
         + '"http://www.w3.org/2000/svg" width="58" height="58"><rect x="1" '
@@ -175,7 +175,7 @@ export function initDetail(m, config, getFeatures) {
     map.addLayer({
         id: 'fx-highlight', type: 'symbol', source: 'fx-highlight',
         minzoom: cfg.highlightZoom ?? 0,
-        layout: { 'icon-image': 'highlight-#FFFFFF', 'icon-size': 1,
+        layout: { 'icon-image': 'fx-box', 'icon-size': 1,
                   'icon-allow-overlap': true, 'icon-ignore-placement': true },
     });
 
