@@ -17,7 +17,6 @@
 // }
 
 import { escapeHtml, fmtCoords, readHashKeys, writeHashKeys } from './util.js';
-import { mark } from '../vendor/dd/dd.js';
 
 let map, cfg, allFeatures;
 let overlapping = [], overlapIndex = 0;
@@ -162,15 +161,21 @@ export function initDetail(m, config, getFeatures) {
     const h = map._hash, full = h?.getHashString.bind(h);
     if (h) h.getHashString = f => shown ? bare(full(f)) : full(f);
 
-    // the dd heavy-stroke box round the selection, from highlightZoom: below
-    // it a selection is carried by its own marking
-    mark(map, 'highlight');
+    // a hairline box round the selection, from highlightZoom: below it a
+    // selection is carried by its own marking
+    const img = new Image(58, 58);
+    img.onload = () => map.addImage('highlight-#FFFFFF', img,
+        { pixelRatio: 2 });
+    img.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns='
+        + '"http://www.w3.org/2000/svg" width="58" height="58"><rect x="1" '
+        + 'y="1" width="56" height="56" fill="none" stroke="#fff" '
+        + 'stroke-width="2"/></svg>');
     map.addSource('fx-highlight', { type: 'geojson',
         data: { type: 'FeatureCollection', features: [] } });
     map.addLayer({
         id: 'fx-highlight', type: 'symbol', source: 'fx-highlight',
         minzoom: cfg.highlightZoom ?? 0,
-        layout: { 'icon-image': 'highlight-#FFFFFF', 'icon-size': 1.2,
+        layout: { 'icon-image': 'highlight-#FFFFFF', 'icon-size': 1,
                   'icon-allow-overlap': true, 'icon-ignore-placement': true },
     });
 
