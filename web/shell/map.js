@@ -10,18 +10,7 @@ export function createMap(opts = {}) {
     const map = new maplibregl.Map({ container: 'map', style, ...opts });
     map.on('style.load', () => map.setProjection({ type: 'globe' }));
     marks(map);
-    padFor(map, document.querySelector('.fx-main'));
     return map;
-}
-
-// the centre sits in the clear area right of the panel, on screens wide
-// enough that the panel stands beside the map rather than over it
-function padFor(map, el) {
-    if (!el) return;
-    const pad = () => { const r = el.getBoundingClientRect().right;
-        map.setPadding({ left: r < innerWidth / 3 ? r : 0 }); };
-    new ResizeObserver(pad).observe(el);
-    addEventListener('resize', pad);
 }
 
 export function ensureMark(map, id) {
