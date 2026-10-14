@@ -46,8 +46,6 @@ export function buildShell(config) {
         <dd-panel intro class="fx-modal-content">
             <span slot="title">${title}${badge}</span>
             ${config.about}
-            <input type="email" class="fx-search" id="email" required
-                placeholder="Email address" autocomplete="email">
             <dd-btn id="enter-btn">Enter</dd-btn>
         </dd-panel>
     </div>` : ''}`);
@@ -74,33 +72,20 @@ function evenTops() {
     document.fonts.ready.then(even);
 }
 
-// an email lets the reader in the first time, for the mailing list
-// (worker/review.js); after that enter or the overlay dismisses it,
-// remembered per title (one origin serves several maps); ⓘ reopens it
-// (pdf:82). the field leaves once given
+// enter or the overlay dismisses it, remembered per title (one origin serves
+// several maps); ⓘ reopens it (pdf:82)
 function wireIntro(title) {
     const modal = document.getElementById('about-modal');
-    const email = document.getElementById('email');
     const seen = `fx-entered:${title}`;
     const dismiss = () => {
-        if (!localStorage.getItem(seen)) {
-            if (!email.value || !email.checkValidity())
-                return email.reportValidity();
-            fetch('/api/subscribe', { method: 'POST', keepalive: true,
-                body: JSON.stringify({ email: email.value, map: title }) })
-                .catch(() => {});
-            localStorage.setItem(seen, '1');
-        }
-        email.remove();
         modal.classList.add('hidden');
+        localStorage.setItem(seen, '1');
     };
-    email.addEventListener('keydown', e => e.key === 'Enter' && dismiss());
     modal.addEventListener('click', e => e.target === modal && dismiss());
     document.getElementById('enter-btn').addEventListener('click', dismiss);
     document.getElementById('main-panel')
         .addEventListener('info', () => modal.classList.remove('hidden'));
-    if (localStorage.getItem(seen))
-        email.remove(), modal.classList.add('hidden');
+    if (localStorage.getItem(seen)) modal.classList.add('hidden');
 }
 
 // ── the key ──
