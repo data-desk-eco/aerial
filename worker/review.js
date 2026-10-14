@@ -4,6 +4,8 @@
 // cloudflare access login, checked here as well as at the edge, so a dropped
 // path rule cannot open it. reads are open: a verdict is public within the
 // quarter hour anyway, and the host reads with no credential at all.
+// /api/subscribe is the other thing it takes: the email the map's intro asks
+// for, into `subscriber`, open to anyone, for the mailing list.
 const TEAM = 'https://datadesk.cloudflareaccess.com'
 // `open` takes a verdict back: the claim awaits review again
 const VERDICTS = ['confirmed', 'refuted', 'unclear', 'open']
@@ -30,6 +32,15 @@ async function who(req) {
 
 export default {
   async fetch(req, env) {
+    if (new URL(req.url).pathname === '/api/subscribe') {
+      const { email, map } = await req.json().catch(() => ({}))
+      if (req.method !== 'POST' || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
+        return new Response(null, { status: 400 })
+      await env.DB.prepare('insert or ignore into subscriber values'
+        + " (lower(?), ?, strftime('%Y-%m-%dT%H:%M:%SZ'))")
+        .bind(email.slice(0, 254), String(map || '').slice(0, 64)).run()
+      return new Response(null, { status: 204 })
+    }
     if (req.method === 'GET') {
       const { results } = await env.DB.prepare('select * from decision').all()
       return Response.json(results)
