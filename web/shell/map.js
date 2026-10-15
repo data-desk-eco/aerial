@@ -20,14 +20,7 @@ export function ensureMark(map, id) {
 
 // the dd satellite underlay: esri, graded to the guidelines' gradient map
 // (pdf:62), fading in over the basemap from z7.5
-const SAT = new WeakMap();
-export function addSatellite(map) {
-    SAT.set(map, imagery(map, { id: 'satellite' }));
-}
-
-// darker still while an image overlay is up
-export const dimSatellite = (map, dim) => SAT.get(map)?.forEach(id => map
-    .setPaintProperty(id, 'raster-brightness-max', dim ? 0.35 : 1));
+export const addSatellite = map => imagery(map, { id: 'satellite' });
 
 export function viewportBbox(map) {
     const b = map.getBounds();

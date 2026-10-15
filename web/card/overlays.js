@@ -3,7 +3,7 @@
 // a scene, so the halo is what a selected date draws, coloured and sized by
 // intensity on the family's own scale.
 
-import { dimSatellite } from '../shell/map.js';
+import { sql } from '../shell/data.js';
 import { degLat, degLon } from '../shell/util.js';
 import { rampRGB, scaleT } from '../flaring/render.js';
 
@@ -25,7 +25,7 @@ function clearFootprint() {
 
 export function clearOverlays() {
     clearFootprint();
-    dimSatellite(map, false);
+    dim(false);
     greyCircles(false);
 }
 
@@ -52,5 +52,27 @@ export function heatFootprint({ lon, lat, val, radiusM, cfg }) {
     map.addLayer({ id: FOOTPRINT, type: 'raster', source: FOOTPRINT,
         paint: { 'raster-opacity': 1 } }, 'detections');
     greyCircles(true);
-    dimSatellite(map, true);
+    dim(lon, lat);
+}
+
+// the imagery darkened while a footprint is up, bar the outline of the site
+// the detection sits in, which stays lit: the world less that site, in sql
+const DIM = 'dim', REACH = 0.005;
+let dimEpoch = 0;
+async function dim(lon, lat) {
+    const e = ++dimEpoch;
+    if (map.getLayer(DIM)) map.removeLayer(DIM);
+    if (map.getSource(DIM)) map.removeSource(DIM);
+    if (lon === false) return;
+    const [{ g } = {}] = await sql(`SELECT ST_AsGeoJSON(ST_Difference(
+        ST_MakeEnvelope(-180, -85, 180, 85), coalesce(ST_Union_Agg(geometry),
+        ST_GeomFromText('POLYGON EMPTY')))) AS g FROM site_view
+        WHERE ST_DWithin(geometry, ST_Point(${+lon}, ${+lat}), ${REACH})`)
+        .catch(() => [{ g: '{"type":"Polygon","coordinates":[[[-180,-85],'
+            + '[180,-85],[180,85],[-180,85],[-180,-85]]]}' }]);
+    if (e !== dimEpoch || !g) return;
+    map.addSource(DIM, { type: 'geojson', data: JSON.parse(g) });
+    map.addLayer({ id: DIM, type: 'fill', source: DIM, minzoom: 7.5,
+        paint: { 'fill-color': '#000', 'fill-opacity': 0.65 } },
+        map.getLayer('sites-hit') ? 'sites-hit' : FOOTPRINT);
 }
