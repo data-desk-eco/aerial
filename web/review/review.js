@@ -27,7 +27,8 @@ const [rows, decided] = await Promise.all([sql(`
            p.provider as pprov, p.satellite, p.date::varchar as pdate,
            p.rate_kg_h, p.lat as plat, p.lon as plon
     from read_parquet('${BUCKET}data-desk/attributions/data.parquet') a
-    left join (select * from read_parquet([${['carbon-mapper', 'imeo', 'sron',
+    left join (select id, provider, satellite, date, rate_kg_h, lat, lon
+        from read_parquet([${['carbon-mapper', 'imeo', 'sron',
         'data-desk'].map(p => `'${BUCKET}${p}/detections/data.parquet'`)}],
         union_by_name = true) where kind = 'plume') p using (id)
     ${all ? '' : "where a.verified is distinct from 'grandfathered'"}
