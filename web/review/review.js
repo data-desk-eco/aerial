@@ -1,7 +1,7 @@
 // the attribution review page: each new claim on a map, and a verdict on it
 // posted to worker/review.js
 
-import { sql } from '../shell/data.js';
+import { sql, from, prefetchData } from '../shell/data.js';
 import { initArchive } from '../shell/archive.js';
 import { addCandidateLayers, selectPlume } from '../methane/candidates.js';
 import { label } from '../methane/plumes.js';
@@ -21,16 +21,20 @@ const km = r => 111.2 * Math.hypot(r.lat - r.plat,
 const $ = id => document.getElementById(id);
 document.body.insertAdjacentHTML('beforeend', logo);
 
+// held whole where the index allows (shell/data.js): a ranged read of the
+// attributions came back from the disk cache whole, thousands of times over
+const ATT = `${BUCKET}data-desk/attributions/data.parquet`;
+const DET = ['carbon-mapper', 'imeo', 'sron', 'data-desk']
+    .map(p => `${BUCKET}${p}/detections/data.parquet`);
+[ATT, ...DET].forEach(prefetchData);
 const [rows, decided] = await Promise.all([sql(`
     select a.*, strftime(a.run_at, '%Y-%m-%d %H:%M') as run,
            strftime(a.run_at, '%Y-%m-%d %H:%M:%S') as run_s,
            p.provider as pprov, p.satellite, p.date::varchar as pdate,
            p.rate_kg_h, p.lat as plat, p.lon as plon
-    from read_parquet('${BUCKET}data-desk/attributions/data.parquet') a
+    from ${await from(ATT)} a
     left join (select id, provider, satellite, date, rate_kg_h, lat, lon
-        from read_parquet([${['carbon-mapper', 'imeo', 'sron',
-        'data-desk'].map(p => `'${BUCKET}${p}/detections/data.parquet'`)}],
-        union_by_name = true) where kind = 'plume') p using (id)
+        from ${await from(DET)} where kind = 'plume') p using (id)
     ${all ? '' : "where a.verified is distinct from 'grandfathered'"}
     order by a.run_at desc, p.date desc, a.id`),
     fetch(API).then(r => r.json()).catch(() => [])]);
