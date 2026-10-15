@@ -62,13 +62,13 @@ function evenTops() {
         document.getElementById(id));
     const key = els[1];
     const even = () => {
-        // the key keeps its expanded width collapsed: measured open
+        // collapsed, the key keeps its expanded width: measured open
         const c = key.hasAttribute('collapsed');
         key.style.width = '';
         key.removeAttribute('collapsed');
         const w = key.getBoundingClientRect().width;
         if (c) key.setAttribute('collapsed', '');
-        key.style.width = `${w}px`;
+        if (c) key.style.width = `${w}px`;
         for (const e of els) e.style.height = '';
         if (!PHONE.matches || !els.every(e => e.hasAttribute('collapsed')))
             return;
@@ -79,6 +79,7 @@ function evenTops() {
     PHONE.addEventListener('change', even);
     addEventListener('resize', even);
     document.fonts.ready.then(even);
+    key.addEventListener('fx-rendered', even);
 }
 
 // enter or the overlay dismisses it, remembered per title (one origin serves
@@ -150,7 +151,8 @@ export function initKey(map, onFilter) {
     flow();
 
     return {
-        set: s => { sections = s; render(); },
+        set: s => { sections = s; render();
+            el.dispatchEvent(new Event('fx-rendered')); },
         preds: () => sections.flatMap(s => {
             const rows = s.rows.filter(r => r.pred);
             return rows.some(r => r.off) ? [p => rows.some(r =>
