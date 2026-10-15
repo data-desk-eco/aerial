@@ -59,7 +59,7 @@ export function heatFootprint({ lon, lat, val, radiusM, cfg }) {
 // the detection sits in, which stays lit: the world less that site, in sql
 const DIM = 'dim', REACH = 0.005;
 let dimEpoch = 0;
-async function dim(lon, lat) {
+export async function dim(lon, lat) {
     const e = ++dimEpoch;
     if (map.getLayer(DIM)) map.removeLayer(DIM);
     if (map.getSource(DIM)) map.removeSource(DIM);
@@ -74,5 +74,6 @@ async function dim(lon, lat) {
     map.addSource(DIM, { type: 'geojson', data: JSON.parse(g) });
     map.addLayer({ id: DIM, type: 'fill', source: DIM, minzoom: 7.5,
         paint: { 'fill-color': '#000', 'fill-opacity': 0.65 } },
-        map.getLayer('sites-hit') ? 'sites-hit' : FOOTPRINT);
+        ['sites-hit', 'dd-plume-probability', 'plume-mask-image',
+         'plume-mask-fill', FOOTPRINT, 'plumes'].find(l => map.getLayer(l)));
 }

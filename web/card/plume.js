@@ -9,6 +9,7 @@ import { clearProbabilityOverlay, showProbabilityOverlay }
     from '../methane/overlay.js';
 import { label, rateT, enhT } from '../methane/plumes.js';
 import { clearMask, showMask } from '../methane/mask.js';
+import { dim } from './overlays.js';
 
 let archive = '';
 
@@ -87,6 +88,8 @@ export default {
         enrich(p);
         showProbabilityOverlay(p, overlayUrl(p));
         showMask(p);
+        dim(+p.lon, +p.lat);
     },
-    close: () => { clearSelection(); clearProbabilityOverlay(); clearMask(); },
+    close: () => { clearSelection(); clearProbabilityOverlay(); clearMask();
+                   dim(false); },
 };
