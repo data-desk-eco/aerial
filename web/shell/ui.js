@@ -60,7 +60,15 @@ const PHONE = matchMedia('(max-width: 768px)');
 function evenTops() {
     const els = ['main-panel', 'key-panel'].map(id =>
         document.getElementById(id));
+    const key = els[1];
     const even = () => {
+        // the key keeps its expanded width collapsed: measured open
+        const c = key.hasAttribute('collapsed');
+        key.style.width = '';
+        key.removeAttribute('collapsed');
+        const w = key.getBoundingClientRect().width;
+        if (c) key.setAttribute('collapsed', '');
+        key.style.width = `${w}px`;
         for (const e of els) e.style.height = '';
         if (!PHONE.matches || !els.every(e => e.hasAttribute('collapsed')))
             return;
@@ -69,6 +77,7 @@ function evenTops() {
     };
     for (const e of els) e.addEventListener('toggle', even);
     PHONE.addEventListener('change', even);
+    addEventListener('resize', even);
     document.fonts.ready.then(even);
 }
 
