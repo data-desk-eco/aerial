@@ -57,7 +57,7 @@ export function heatFootprint({ lon, lat, val, radiusM, cfg }) {
 
 // the imagery darkened while a card is open, bar the outline of the site the
 // detection sits in, which stays lit: the world less that site, in sql. no
-// site, no union, a null difference: nothing is darkened
+// site, no row: nothing is darkened
 const DIM = 'dim', REACH = 0.005;
 let dimEpoch = 0;
 export async function dim(lon, lat) {
@@ -68,8 +68,8 @@ export async function dim(lon, lat) {
     const [{ g } = {}] = await sql(`SELECT ST_AsGeoJSON(ST_Difference(
         ST_MakeEnvelope(-180, -85, 180, 85), ST_Union_Agg(geometry))) AS g
         FROM site_view
-        WHERE ST_DWithin(geometry, ST_Point(${+lon}, ${+lat}), ${REACH})`)
-        .catch(() => []);   // no site_view yet: no site
+        WHERE ST_DWithin(geometry, ST_Point(${+lon}, ${+lat}), ${REACH})
+        HAVING count(*) > 0`).catch(() => []);   // no site_view yet: no site
     if (e !== dimEpoch || !g) return;
     map.addSource(DIM, { type: 'geojson', data: JSON.parse(g) });
     map.addLayer({ id: DIM, type: 'fill', source: DIM, minzoom: 7.5,
