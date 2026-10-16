@@ -2,7 +2,8 @@
 // at /review writes one; the jump host reads them all every quarter hour and
 // folds them into the table's `verified` and `verify_notes`. a write needs a
 // cloudflare access login, checked here as well as at the edge, so a dropped
-// path rule cannot open it. reads are open: a verdict is public within the
+// path rule cannot open it. the jump host's audit writes with the AGENT
+// bearer instead, and its verdicts are signed `agent`. reads are open: a verdict is public within the
 // quarter hour anyway, and the host reads with no credential at all.
 const TEAM = 'https://datadesk.cloudflareaccess.com'
 // `open` takes a verdict back: the claim awaits review again
@@ -35,7 +36,8 @@ export default {
       return Response.json(results)
     }
     if (req.method !== 'POST') return new Response(null, { status: 405 })
-    const by = await who(req).catch(() => {})
+    const by = env.AGENT && req.headers.get('authorization')
+      === 'Bearer ' + env.AGENT ? 'agent' : await who(req).catch(() => {})
     if (!by) return new Response('a data desk access login is needed',
       { status: 403 })
     const { id, run_at, verdict, notes } = await req.json()
