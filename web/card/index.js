@@ -4,7 +4,7 @@
 // chart, dated rows. dispatch is on the feature, so a card opened from "also
 // here" is the kind it names.
 
-import { showDetail, refreshDetail, closeDetail } from '../shell/detail.js';
+import { showDetail, closeDetail } from '../shell/detail.js';
 import { dateInQuarters, formatDate } from '../shell/util.js';
 import { renderChart } from './chart.js';
 import { initOverlays, greyCircles, clearOverlays } from './overlays.js';
@@ -88,13 +88,13 @@ export function onCardClose() {
 // ── selection across re-renders ──
 
 const rerender = fn => { skipAuto = true; fn(); skipAuto = false; };
-const reopen = p => rerender(() => showDetail(featureOf(p), true));
+const reopen = p => rerender(() => showDetail(featureOf(p), true, moved));
 
-// re-filter the open card to a new quarter window: forced, since the
-// properties have not moved and showDetail would see an unchanged card
-export function refreshCard() {
-    if (current) rerender(refreshDetail);
-}
+// a new quarter window: the card's own layer re-reads and reselect re-renders
+// it once, forced, since its series is windowed even where the properties
+// have not moved. rendering here as well drew the old numbers first
+let moved = false;
+export const refreshCard = () => { moved = true; };
 
 // load-bearing: every refresh path ends here. a dot carries the numbers for
 // the ticked quarters alone and an open card holds a copy, so re-open it on
@@ -109,7 +109,7 @@ export function reselectCurrentFeature(id) {
     // sites' cards, and ids are VARCHAR everywhere
     const match = features
         .find(f => String(f.properties.id) === String(current.id));
-    if (match) reopen(match.properties);
+    if (match) { reopen(match.properties); moved = false; }
     else if (map.getBounds().contains(coords(current))) closeDetail();
 }
 

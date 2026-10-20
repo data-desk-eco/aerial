@@ -81,15 +81,10 @@ export const setOverlapping = (features, i = 0) => {
 // apps hand the current feature back on every re-read (a resize fires
 // moveend too). an unchanged card is not re-rendered, which would drop
 // whatever the reader had selected inside it.
-export function showDetail(feature, fromPermalink) {
-    if (shown && shown.n === overlapping.length && shown.i === overlapIndex
+export function showDetail(feature, fromPermalink, force) {
+    if (!force && shown && shown.n === overlapping.length && shown.i === overlapIndex
         && sameProps(shown.feature.properties, feature.properties)) return;
     render(feature, fromPermalink);
-}
-
-// rebuild in place, for a body that reads state outside the feature
-export function refreshDetail() {
-    if (shown) render(shown.feature, true);
 }
 
 function render(feature, fromPermalink) {
