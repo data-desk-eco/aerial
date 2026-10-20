@@ -25,8 +25,11 @@ let shown = null;   // {feature, n, i}: the card on screen and its position
 const panel = () => document.getElementById('detail');
 const idOf = f => String(f.properties[cfg.idProp || 'id']);
 const keys = () => Object.keys(cfg.hashKeys);
-const flyTo = center => map.flyTo({ center,
-    zoom: Math.max(map.getZoom(), cfg.flyZoom ?? 15) });
+// flyZoom is a number or a function of the feature's properties
+export const zoomFor = (c, p) =>
+    (typeof c?.flyZoom === 'function' ? c.flyZoom(p) : c?.flyZoom) ?? 15;
+const flyTo = (center, p) => map.flyTo({ center,
+    zoom: Math.max(map.getZoom(), zoomFor(cfg, p)) });
 
 // properties are exact; geometry is quantised by the tile grid at low zoom
 export const coordsOf = f => f.properties.lon != null
@@ -149,8 +152,8 @@ export async function restorePermalink(jump) {
             ...features.filter((_, i) => i !== idx)]);
         showDetail(overlapping[0], true);
     });
-    jump ? map.jumpTo({ center: [lon, lat], zoom: cfg.flyZoom ?? 15 })
-        : flyTo([lon, lat]);
+    jump ? map.jumpTo({ center: [lon, lat], zoom: zoomFor(cfg, match.properties) })
+        : flyTo([lon, lat], match.properties);
 }
 
 export function initDetail(m, config, getFeatures) {
@@ -184,7 +187,7 @@ export function initDetail(m, config, getFeatures) {
         if (!features.length) return closeDetail();
         setOverlapping(features);
         showDetail(features[0]);
-        flyTo(coordsOf(features[0]));
+        flyTo(coordsOf(features[0]), features[0].properties);
     });
 
     const cursor = c => () => { map.getCanvas().style.cursor = c; };

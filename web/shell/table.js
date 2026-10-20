@@ -13,7 +13,7 @@
 
 import { escapeHtml } from './util.js';
 import { viewportBbox } from './map.js';
-import { showDetail } from './detail.js';
+import { showDetail, zoomFor } from './detail.js';
 
 const MIN = 300, CAP = 500;
 const fmt = v => typeof v === 'number' && !Number.isInteger(v)
@@ -117,7 +117,7 @@ export function initTable(ctx) {
             if (isFinite(lat) && isFinite(lon)) ctx.map.flyTo({
                 center: [lon, lat],
                 zoom: Math.max(ctx.map.getZoom(),
-                    ctx.config.detail?.flyZoom ?? 15) });
+                    zoomFor(ctx.config.detail, r)) });
             pick(r);
         } else return;
         render();

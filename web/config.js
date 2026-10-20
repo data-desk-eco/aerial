@@ -348,7 +348,7 @@ mount({
         hashKeys: { flare: resolveFlare, plume: resolvePlume },
         hashKey: p => isPlume(p) ? 'plume' : 'flare',
         idProp: 'id',
-        flyZoom: 15, highlightZoom: 10,
+        flyZoom: p => isPlume(p) ? 13 : 15, highlightZoom: 10,
         title: cardTitle,
         stats: cardStats,
         html: cardHtml,
