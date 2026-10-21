@@ -29,11 +29,13 @@ export function initCard(deps) {
     initOverlays(map);
     for (const b of Object.values(BODIES)) b.init?.(deps);
 
-    // j/k and the arrows step the dated rows; escape is the shell's
+    // j/k and the arrows step the dated rows, but not in a text field; escape
+    // is the shell's
     const STEP = { ArrowDown: 1, j: 1, ArrowUp: -1, k: -1 };
     document.addEventListener('keydown', e => {
         const dir = STEP[e.key];
-        if (!dir || !document.getElementById('detail')
+        if (!dir || e.target.matches('input,textarea,select,[contenteditable]')
+            || !document.getElementById('detail')
             .classList.contains('visible')) return;
         e.preventDefault();
         const items = [...document.querySelectorAll('.event-item')];
