@@ -14,33 +14,43 @@
 // only the squares it uncovers. sites, their looks and the squares read are
 // kept in indexeddb, so a reload starts from them. a site is the detections
 // within SITE_M of its first, and a look at it is clear when its 640 m
-// square is under CLEAR cloud, as in the archive. it is drawn once LIT of
-// its clear dates found it, so a new site waits for its reads to confirm it,
-// and named, as the archive's are, by its clear detections.
+// square is under CLEAR cloud. it is drawn as the archive's sites are, once
+// two dates found it and its mean b12 is over aerial's floor, so a new site
+// waits for its reads to confirm it, and is named by its clear detections.
 
 import { dateInQuarters } from '../shell/util.js';
+import { MODE } from './render.js';
 
 const BUCKET = 'gcp-public-data-sentinel-2';
 const LIST = `https://storage.googleapis.com/storage/v1/b/${BUCKET}/o`;
 export const LIVE_ZOOM = 10;
 const DAYS = 365, FRESH = 2, SITE_M = 135, CLEAR = 0.6, MIN_LOOKS = 10;
-// a site is drawn once it is lit on LIT clear dates of its year: a single
-// bright pixel is as often a roof or glint as a flare, and the archive too
-// asks two
+// a site is drawn as the archive's are: lit on LIT dates, and over the
+// floor aerial holds the archive's sites to on their mean b12
 const LIT = 2;
+const lit = s => [...s.looks.values()].filter(l => l.flare);
+const drawn = s => {
+    const l = lit(s);
+    return l.length >= LIT && l.reduce((a, x) => a + x.flare.max_b12, 0)
+        / l.length >= MODE.s2.floor;
+};
 const G = 0.05;       // the coverage grid, degrees
 const GROUP = 0.03;   // a site read takes the sites this close, degrees
 
-// ── the view, and how much a place in it matters: in view, nearest the
-// centre first; within a view's width of it, after; further, not yet ──
+// ── the view, and how much a place in it matters: in view, a site not
+// yet drawn first, then the rest, nearest the centre first; within a
+// view's width (at least MARGIN degrees) of it, after; further, not yet.
+// the view is followed at every zoom, though reads over it start at
+// LIVE_ZOOM ──
 
+const MARGIN = 0.5;
 let shown = [0, 0, 0, 0];
 const inside = (p, [w, s, e, n], d = 0) =>
     p.lon >= w - d && p.lon <= e + d && p.lat >= s - d && p.lat <= n + d;
 function weight(p) {
-    const [w, s, e, n] = shown, d = Math.max(e - w, n - s);
+    const [w, s, e, n] = shown, d = Math.max(e - w, n - s, MARGIN);
     const off = Math.hypot(p.lon - (w + e) / 2, p.lat - (s + n) / 2) / d;
-    return inside(p, shown) ? 1e8 + 1 - off / 2
+    return inside(p, shown) ? (p.looks && !p.ok ? 2e8 : 1e8) + 1 - off / 2
         : inside(p, shown, d) ? 1 - off / 4 : -Infinity;
 }
 
@@ -155,7 +165,8 @@ const loaded = db.then(async d => {
     const t = d.transaction(['sites', 'cover']);
     const [[, ss], [us, cs]] = await Promise.all([all(t, 'sites'),
         all(t, 'cover')]);
-    ss.forEach(s => add({ ...s, looks: new Map(s.looks) }));
+    ss.map(s => add({ ...s, looks: new Map(s.looks) }))
+        .forEach(s => s.ok = drawn(s));
     us.forEach((u, i) => cover.set(u, new Map(cs[i])));
     changed();
 }).catch(() => {});
@@ -170,7 +181,7 @@ async function flush() {
     if (!d) return;
     const t = d.transaction(['sites', 'cover'], 'readwrite');
     for (const id of dirty.sites) {
-        const { probed, ...s } = byId.get(id);
+        const { probed, ok, ...s } = byId.get(id);
         t.objectStore('sites').put({ ...s, looks: [...s.looks] }, id);
     }
     for (const u of dirty.cover)
@@ -202,6 +213,7 @@ const near = p => {
 // scene of its tile
 function land(scene, held, r) {
     if (r.error) return console.warn('burnoff:', scene.url, r.error);
+    const touched = new Set(held);
     held.forEach((s, i) => r.cloud[i] >= 0 && look(s, scene, r.cloud[i]));
     for (const f of r.flares) {
         let s = near(f);
@@ -210,7 +222,9 @@ function land(scene, held, r) {
             looks: new Map() }));
         const l = look(s, scene, s.looks.get(scene.date)?.cloud ?? f.cloud);
         if (!(l.flare?.max_b12 >= f.max_b12)) l.flare = f, save('sites', s.id);
+        touched.add(s);
     }
+    touched.forEach(s => s.ok = drawn(s));
     changed();
 }
 function look(s, scene, cloud) {
@@ -278,7 +292,6 @@ async function owners(i0, j0, i1, j1) {
 }
 
 export async function view(map) {
-    if (map.getZoom() < LIVE_ZOOM) return;
     await loaded;
     const b = map.getBounds(), e = ++epoch;
     shown = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
@@ -288,6 +301,7 @@ export async function view(map) {
         if (jobs[i].sweep) jobs.splice(i, 1)[0].done({ dropped: true });
     sites.filter(s => !s.probed && weight(s) > -Infinity).forEach(probe);
     kick();
+    if (map.getZoom() < LIVE_ZOOM) return;
     const [i0, j0, i1, j1] = shown.map(v => Math.floor(v / G));
     await owners(i0, j0, i1, j1);
     if (e !== epoch) return;
@@ -371,17 +385,16 @@ export function onChange(fn) { changed = fn; }
 globalThis.burnoff = { sites, jobs, log, cover };
 
 export function features(keys) {
-    return sites.filter(s => [...s.looks.values()].filter(l => l.flare
-        && l.cloud < CLEAR).length >= LIT).map(s => {
+    return sites.filter(drawn).map(s => {
         const looks = [...s.looks].filter(([d]) => dateInQuarters(d, keys));
         const clear = looks.filter(([, l]) => l.cloud < CLEAR);
-        const lit = looks.filter(([, l]) => l.flare);
+        const on = looks.filter(([, l]) => l.flare);
         const n = clear.filter(([, l]) => l.flare).length;
         return { type: 'Feature', geometry: { type: 'Point',
             coordinates: [s.lon, s.lat] }, properties: {
             id: s.id, kind: 'live', lat: s.lat, lon: s.lon,
             name: `${n} detection${n === 1 ? '' : 's'}`,
-            max_b12: Math.max(0, ...lit.map(([, l]) => l.flare.max_b12)),
+            max_b12: Math.max(0, ...on.map(([, l]) => l.flare.max_b12)),
             detection_count: n, passes: looks.length,
             observations: clear.length,
             persistence: clear.length >= MIN_LOOKS

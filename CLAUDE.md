@@ -86,15 +86,17 @@ one exception to "detects nothing": burnoff's detector, as wasm in
 workers per core over google's sentinel-2 mirror. from z10 each tile under
 the view has its newest scenes read over the view until two came back
 mostly clear, and every other scene of the last year read only around the
-sites found: newest date first, the view's sites first and nearest its
-centre first, work further than a view's width away paused. what each
+sites found: newest date first, the view's sites first (those not yet
+drawn before the rest) and nearest its centre first, work further than a
+view's width (at least 0.5°) away paused. the view is followed at every
+zoom, so the work is the view's even below z10, where no new sweep starts. what each
 scene has read is kept as 0.05° squares, so zooming in reads nothing and a
 pan reads only what it uncovers. sites, their looks and those squares are
 in indexeddb (`burnoff-live`); a reload reads only new scenes. a site is
 the detections within 135 m of its first, a look is clear under 0.6 cloud,
-as in the archive, and a site is drawn once two clear dates found it, and
-named by its clear detections, as the archive's are: one bright pixel is
-as often a roof or glint as a flare. kind `live` draws,
+as in the archive. a site is drawn as the archive's are: lit on two dates,
+with its mean b12 over MODE.s2.floor (aerial's gate on archive sites), and
+named by its clear detections. like aerial, it does not hide likely_glint. kind `live` draws,
 clusters and filters as an s2 site (`key.js`, `layers.js` band, FAMILIES)
 and opens the s2 card over its own dates (`card/live.js`). the old burnoff
 map (`~/Tools/burnoff-map`) did this with l2a cogs, a stac search, every
