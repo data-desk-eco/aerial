@@ -11,8 +11,9 @@ import { initOverlays, greyCircles, clearOverlays } from './overlays.js';
 import flare from './flare.js';
 import vnf from './vnf.js';
 import plume from './plume.js';
+import live from './live.js';
 
-const BODIES = { flare, vnf, plume };
+const BODIES = { flare, vnf, plume, live };
 const bodyOf = p => BODIES[p.kind] ?? BODIES.flare;
 
 export let map = null;

@@ -24,6 +24,8 @@ import { initProbabilityOverlay } from './methane/overlay.js';
 import { initMask } from './methane/mask.js';
 import { loadAttributions } from './methane/attribution.js';
 import { SITE_LAYERS, SITE_ZOOM, holdSites, drawSites } from './sites.js';
+import { LIVE_ZOOM, view as liveView, features as liveFeatures,
+    onChange as onLive } from './flaring/live.js';
 
 // the bucket every layer reads. index.json names each table's objects, so no
 // module names one
@@ -89,6 +91,8 @@ const READS = {
         .features,
     plumes: async ({ startDate, endDate }) =>
         CTX.fc(await readPlumes(startDate, endDate)).features,
+    // what burnoff found in this browser's own reads of the archive
+    live: async () => liveFeatures(CTX.quarters.keys()),
     // every outline around the view, held in the engine; drawSites draws
     // the ones a detection holds, so there is no source to set
     sites: async () => {
@@ -263,6 +267,7 @@ mount({
         return {
             sites: empty,
             detections: empty,
+            live: empty,
             vnf: empty,
             plumes: empty,
             everything: { data: empty, cluster: true,
@@ -277,6 +282,11 @@ mount({
         {
             id: 'detections', type: 'symbol', source: 'detections',
             minzoom: NEAR,
+            layout: { ...PIN, 'icon-image': flareIcon(MODE.s2) },
+        },
+        {
+            // the live reads draw from a little further out than they read
+            id: 'live', type: 'symbol', source: 'live', minzoom: LIVE_ZOOM - 2,
             layout: { ...PIN, 'icon-image': flareIcon(MODE.s2) },
         },
         {
@@ -338,13 +348,16 @@ mount({
         { label: 'Flares (VNF)', rows: props('vnf'),
           cols: ['id', 'name', 'country', 'max_rh', 'detection_count',
                  'observations', 'persistence', 'lat', 'lon'] },
+        { label: 'Flares (live)', rows: props('live'),
+          cols: ['id', 'name', 'max_b12', 'detection_count', 'observations',
+                 'persistence', 'lat', 'lon'] },
         { label: 'Flares (S2)', rows: props('detections'),
           cols: ['id', 'name', 'max_b12', 'detection_count', 'observations',
                  'persistence', 'lat', 'lon'] },
     ],
 
     detail: {
-        layers: ['detections', 'vnf', 'plumes'],
+        layers: ['detections', 'live', 'vnf', 'plumes'],
         hashKeys: { flare: resolveFlare, plume: resolvePlume },
         hashKey: p => isPlume(p) ? 'plume' : 'flare',
         idProp: 'id',
@@ -365,7 +378,13 @@ mount({
         boxesWorldmap(document.getElementById('modal-worldmap'),
             coverage, 0.06);
 
-        ctx.map.on('moveend', () => { scheduleDots(); SCHEDULED.sites(); });
+        ctx.map.on('moveend', () => { scheduleDots(); SCHEDULED.sites();
+            liveView(ctx.map); });
+        // the live reads land a scene at a time: redrawn at most twice a
+        // second while they do
+        let soon;
+        onLive(() => soon ??= setTimeout(() => (soon = null, REFRESH.live()),
+            500));
 
         // an outline is drawn while a drawn detection is inside it: after
         // any layer is re-set, and after the key re-filters them
@@ -375,6 +394,7 @@ mount({
             100));
         // the dots wait for the first paint: their plume index is a read
         // still on the network, and ahead of it it held the layers
+        liveView(ctx.map);
         const first = Promise.allSettled([REFRESH.detections(),
             REFRESH.vnf(), REFRESH.plumes(), REFRESH.sites()]);
         // what no first paint draws waits for it, rather than sharing a

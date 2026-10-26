@@ -18,7 +18,10 @@ Three detection layers, all drawn at once, one quarter grid over all of them:
     carries a modeled methane enhancement (ppm·m) and a model confidence, shown
     in place of a rate so it is never read as a mass.
 
-Aerial reads. It publishes nothing and detects nothing of its own: the archive it
+A fourth, experimental layer, live S2, runs the burnoff detector in the
+browser from zoom 10 (web/flaring/live.js).
+
+Aerial reads. It publishes nothing, and except for live S2 it detects nothing: the archive it
 draws is built by the etl repo, and the methodology behind the Sentinel-2 tables
 is s2-flares (github.com/data-desk-eco/s2-flares).
 

@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# vendor the third-party half of web/: maplibre, duckdb-wasm-lite, inter and
-# the data desk design system. everything else under web/ is first-party.
+# vendor the third-party half of web/: maplibre, duckdb-wasm-lite, inter, the
+# data desk design system and burnoff's wasm detector. everything else under
+# web/ is first-party.
 set -euo pipefail
 
 VENDOR=web/vendor
 DD_DIST="${DD_DIST:-$HOME/Tools/design/dist}"
+BURNOFF="${BURNOFF:-$HOME/Tools/burnoff}"   # after `make wasm` there
 DUCKDB_TAG="v2.0.0-alpha1-lite.6"   # DuckDB data engine release
 grep -q "DUCKDB_RELEASE = '$DUCKDB_TAG'" web/shell/engine.js
 
@@ -34,6 +36,10 @@ mkdir -p "$VENDOR/dd"
 # dd.js is the kernel the app is built on; audit.js checks a page against it.
 cp "$DD_DIST/dd.js" "$DD_DIST/audit.js" "$DD_DIST/style.dark.json" \
    "$DD_DIST/worldmap.js" "$DD_DIST/land.json" "$VENDOR/dd/"
+
+echo "burnoff (from $BURNOFF/web) ..."
+mkdir -p "$VENDOR/burnoff"
+cp "$BURNOFF"/web/{burnoff.js,burnoff.wasm,worker.js} "$VENDOR/burnoff/"
 
 echo "inter font ..."
 # a desktop chrome agent, so google serves woff2

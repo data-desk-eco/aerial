@@ -23,7 +23,7 @@ const KIND = { refinery: 'Refinery', lng_terminal: 'LNG terminal',
 // below this a refinery is a few pixels and the outlines are noise
 export const SITE_ZOOM = 10;
 // the layers whose points an outline must hold to be drawn
-const HELD_BY = ['detections', 'vnf', 'plumes'];
+const HELD_BY = ['detections', 'live', 'vnf', 'plumes'];
 // how far outside its outline a detection still holds it, in degrees (~500 m):
 // a vnf pixel is 375 m, and a cluster's centre need not fall inside
 const REACH = 0.005;

@@ -8,7 +8,9 @@ import { PLUME_BANDS, flareBands } from './layers.js';
 import { MODE } from './flaring/render.js';
 
 const [s2, vnf] = [MODE.s2, MODE.vnf].map(flareBands);
-const of = (kind, inBand) => p => p.kind !== kind || inBand(p);
+// a live site is an s2 one, read in the browser
+const family = p => p.kind === 'live' ? 'flare' : p.kind;
+const of = (kind, inBand) => p => family(p) !== kind || inBand(p);
 
 // no row for a plume with no rate: it is drawn, in grey, but in no band. the
 // null test matters, as `null >= 0` is true

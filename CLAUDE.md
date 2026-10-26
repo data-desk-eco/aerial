@@ -80,6 +80,18 @@ so a table that starts partitioning does not break a reader. its `sizes` say
 what each object weighs and which partitions a table holds (`bytes()`,
 `shell/archive.js`): a hint, listed as the archive publishes.
 
+**live s2 (experimental, branch burnoff-live).** `flaring/live.js` is the
+one exception to "detects nothing": burnoff's detector, as wasm in
+`vendor/burnoff/` (built by `make wasm` in `~/Tools/burnoff`), runs in a
+worker per core over google's sentinel-2 mirror. from z10 a view's mgrs
+tiles are listed, each tile's newest scenes are read over the whole view
+until two came back mostly clear, and every other scene of the last year is
+read only around the sites found, the view's own first. a site is the
+detections within 135 m of its first and a look is clear under 0.6 cloud,
+as in the archive. sites are js objects, not engine tables: they grow a read
+at a time and the workers need them. kind `live` draws and filters as an s2
+site (`key.js`) and opens the s2 card over its own dates (`card/live.js`).
+
 ## layout
 
 ```
