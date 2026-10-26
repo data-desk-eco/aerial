@@ -381,7 +381,9 @@ function rects(squares) {
 
 // ── the map's features: a site each, rated over the ticked quarters ──
 
-export function onChange(fn) { changed = fn; }
+// fn redraws the layer: at once for the sites a reload restored, which land
+// before the map is ready to be told, and after every read
+export function onChange(fn) { changed = fn; loaded.then(fn); }
 globalThis.burnoff = { sites, jobs, log, cover };
 
 export function features(keys) {
@@ -406,4 +408,4 @@ export function features(keys) {
 export const series = id => [...byId.get(id)?.looks ?? []]
     .filter(([, l]) => l.flare).sort(([a], [b]) => a < b ? -1 : 1)
     .map(([date, { flare: f }]) => ({ date, max_b12: f.max_b12,
-        pixels: f.pixels, raw_lat: f.lat, raw_lon: f.lon }));
+        pixels: f.pixels, raw_lat: f.lat, raw_lon: f.lon, px: f.px }));

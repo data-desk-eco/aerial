@@ -75,13 +75,14 @@ export const MARK = {
 };
 
 // where aerial departs from the guidelines on purpose, written down so
-// vendor/dd/audit.js passes everything else (`make audit`): the heat halo and the probability
+// vendor/dd/audit.js passes everything else (`make audit`): the heat halo, a
+// live detection's pixels and the probability
 // surface, which are data, not imagery; and the intro heading at 600, the
 // title weight of datadesk.eco, where the guidelines' 750 read heavy
 export const AUDIT = {
     skip: '.fx-modal-content [slot=title], .fx-modal-content [slot=title] *',
-    graded: ['detection-footprint', 'dd-plume-probability',
-        'plume-mask-image'],
+    graded: ['detection-footprint', 'detection-pixels-fill',
+        'dd-plume-probability', 'plume-mask-image'],
 };
 
 export const DASH = [2, 2];

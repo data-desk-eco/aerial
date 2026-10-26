@@ -98,7 +98,9 @@ as in the archive. a site is drawn as the archive's are: lit on two dates,
 with its mean b12 over MODE.s2.floor (aerial's gate on archive sites), and
 named by its clear detections. like aerial, it does not hide likely_glint. kind `live` draws,
 clusters and filters as an s2 site (`key.js`, `layers.js` band, FAMILIES)
-and opens the s2 card over its own dates (`card/live.js`). the old burnoff
+and opens the s2 card over its own dates (`card/live.js`), where a date
+draws the detector's own pixels, each on the ramp by its b12 inside a
+hairline outline, as a plume mask is drawn, in place of the archive's halo. the old burnoff
 map (`~/Tools/burnoff-map`) did this with l2a cogs, a stac search, every
 band of every 256 px block of every scene, and a crdt shared over webrtc.
 

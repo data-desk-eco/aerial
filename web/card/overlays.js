@@ -6,21 +6,25 @@
 import { sql } from '../shell/data.js';
 import { degLat, degLon } from '../shell/util.js';
 import { rampRGB, scaleT } from '../flaring/render.js';
+import { RAMP, DD } from '../layers.js';
 
 const FOOTPRINT = 'detection-footprint';   // the layer id and its source
+const PIXELS = 'detection-pixels';         // the source, and its layers' stem
 let map = null;
 export const initOverlays = m => { map = m; };
 
 // both flaring layers: imagery under one is imagery under the other
 export function greyCircles(grey) {
-    for (const id of ['detections', 'vnf'])
+    for (const id of ['detections', 'live', 'vnf'])
         if (map.getLayer(id))
             map.setPaintProperty(id, 'icon-opacity', grey ? 0.35 : 1);
 }
 
 function clearFootprint() {
-    if (map.getLayer(FOOTPRINT)) map.removeLayer(FOOTPRINT);
-    if (map.getSource(FOOTPRINT)) map.removeSource(FOOTPRINT);
+    for (const l of [FOOTPRINT, `${PIXELS}-fill`, `${PIXELS}-line`])
+        if (map.getLayer(l)) map.removeLayer(l);
+    for (const s of [FOOTPRINT, PIXELS])
+        if (map.getSource(s)) map.removeSource(s);
 }
 
 export function clearOverlays() {
@@ -57,6 +61,42 @@ export function heatFootprint({ lon, lat, val, radiusM, cfg }) {
         paint: { 'raster-opacity': 1 } }, 'detections');
     greyCircles(true);
     dim(lon, lat);
+}
+
+// a live detection's own pixels, drawn as the plume mask draws a plume: each
+// pixel filled on the family's ramp by its own b12, and a hairline round
+// them all, along the edges no two of them share. px is [b12, then each
+// corner's lon and lat]
+export function pixelFootprint({ px, raw_lon, raw_lat }, cfg) {
+    const k = JSON.stringify(px);
+    if (k === halo && map.getLayer(`${PIXELS}-fill`)) return;
+    halo = k;
+    clearFootprint();
+    const corner = (c, i) => [c[2 * (i % 4)], c[2 * (i % 4) + 1]];
+    const edges = new Map();
+    for (const [, ...c] of px)
+        for (let i = 0; i < 4; i++) {
+            const e = [corner(c, i), corner(c, i + 1)];
+            const key = e.map(String).sort().join();
+            edges.set(key, edges.has(key) ? null : e);
+        }
+    const [lo, mid, hi] = cfg.stops;
+    map.addSource(PIXELS, { type: 'geojson', data: { type:
+        'FeatureCollection', features: [...px.map(([v, ...c]) => ({
+            type: 'Feature', properties: { v }, geometry: { type: 'Polygon',
+                coordinates: [[0, 1, 2, 3, 0].map(i => corner(c, i))] } })),
+        { type: 'Feature', properties: {}, geometry: { type:
+            'MultiLineString', coordinates: [...edges.values()]
+                .filter(Boolean) } }] } });
+    map.addLayer({ id: `${PIXELS}-fill`, type: 'fill', source: PIXELS,
+        filter: ['has', 'v'], paint: { 'fill-opacity': 0.5,
+            'fill-color': ['interpolate', ['linear'], ['get', 'v'],
+                lo, RAMP[0], mid, RAMP[1], hi, RAMP[2]] } }, 'detections');
+    map.addLayer({ id: `${PIXELS}-line`, type: 'line', source: PIXELS,
+        filter: ['!', ['has', 'v']], paint: { 'line-color': DD.white,
+            'line-width': 1, 'line-opacity': 0.8 } }, 'detections');
+    greyCircles(true);
+    dim(raw_lon, raw_lat);
 }
 
 // the imagery darkened while a card is open, bar the outline of the site the
