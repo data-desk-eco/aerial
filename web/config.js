@@ -25,7 +25,7 @@ import { initMask } from './methane/mask.js';
 import { loadAttributions } from './methane/attribution.js';
 import { SITE_LAYERS, SITE_ZOOM, holdSites, drawSites } from './sites.js';
 import { view as liveView, features as liveFeatures,
-    onChange as onLive } from './flaring/live.js';
+    onChange as onLive, hold as holdLive } from './flaring/live.js';
 
 // the bucket every layer reads. index.json names each table's objects, so no
 // module names one
@@ -75,8 +75,16 @@ function put(id, features) {
         features: features.filter(f => CTX.preds.every(p => p(f.properties))) }
         : all);
 }
+// the clusters, the outlines and the table follow a layer only when its
+// set of points changes: the live layer is re-set at every read, and
+// re-clustering 60k points each time made the map judder
+const drawn = {};
 function setSource(id, features) {
     put(id, features);
+    const k = features.map(f => `${f.properties.id}:${f.properties[
+        f.properties.kind === 'vnf' ? MODE.vnf.prop : MODE.s2.prop]}`).join();
+    if (k === drawn[id]) return;
+    drawn[id] = k;
     put('everything', FAMILIES.flatMap(f => CTX.sources[f].features));
     dispatchEvent(new Event('fx-filters'));   // the table drawer re-renders
 }
@@ -378,13 +386,16 @@ mount({
         boxesWorldmap(document.getElementById('modal-worldmap'),
             coverage, 0.06);
 
+        // no live read starts while the map moves, so its frames keep the
+        // cores the workers would take
+        ctx.map.on('movestart', () => holdLive(true));
         ctx.map.on('moveend', () => { scheduleDots(); SCHEDULED.sites();
-            liveView(ctx.map); });
+            holdLive(false); liveView(ctx.map); });
         // the live reads land a scene at a time: redrawn at most twice a
         // second while they do
         let soon;
         onLive(() => soon ??= setTimeout(() => (soon = null, REFRESH.live()),
-            500));
+            1000));
 
         // an outline is drawn while a drawn detection is inside it: after
         // any layer is re-set, and after the key re-filters them

@@ -89,7 +89,11 @@ mostly clear, and every other scene of the last year read only around the
 sites found: newest date first, the view's sites first (those not yet
 drawn before the rest) and nearest its centre first, work further than a
 view's width (at least 0.5°) away paused. the view is followed at every
-zoom, so the work is the view's even below z10, where no new sweep starts. what each
+zoom, so the work is the view's even below z10, where no new sweep starts.
+the page's thread is the map's: no read starts while it moves, the
+read-ahead fetches run in their own worker (`flaring/ahead.js`), and a live
+update re-sets only its own source unless its set of points changed
+(`setSource`), as re-clustering 60k points at every read made pans judder. what each
 scene has read is kept as 0.05° squares, so zooming in reads nothing and a
 pan reads only what it uncovers. sites, their looks and those squares are
 in indexeddb (`burnoff-live`); a reload reads only new scenes. a site is

@@ -63,10 +63,15 @@ const N = Math.min(2 * (navigator.hardwareConcurrency || 4), 16);
 // whether a sweep]
 const log = [];
 const jobs = [], idle = [];
+let moving = false;   // while the map moves, no job starts
+export const hold = h => { moving = h; if (!h) kick(); };
 const pump = w => {
     for (;;) {
-        let i = -1;
-        jobs.forEach((j, k) => j.pri > (jobs[i]?.pri ?? -Infinity) && (i = k));
+        let i = -1, best = -Infinity;
+        if (!moving) jobs.forEach((j, k) => {
+            const p = j.pri;
+            if (p > best) best = p, i = k;
+        });
         if (i < 0) return idle.push(w);
         const [j] = jobs.splice(i, 1);
         if (j.start?.(j) !== false)
@@ -75,7 +80,8 @@ const pump = w => {
     }
 };
 const kick = () => {
-    while (idle.length && jobs.some(j => j.pri > -Infinity)) pump(idle.pop());
+    while (!moving && idle.length && jobs.some(j => j.pri > -Infinity))
+        pump(idle.pop());
 };
 for (let i = 0; i < N; i++) {
     const w = new Worker(new URL('../vendor/burnoff/worker.js',
@@ -85,6 +91,7 @@ for (let i = 0; i < N; i++) {
         const j = w.job, t = performance.now();
         if (data !== 'ready') log.push([t | 0, j.args, t - j.t | 0,
             data[1].flares?.length, !!j.sweep]), j.done(data[1]);
+        if (log.length > 4000) log.splice(0, 2000);
         pump(w);
     };
 }
@@ -97,13 +104,15 @@ const day = scene => +scene.date.replaceAll('-', '');
 
 // the detector's reads block its worker, one at a time. the small ones every
 // read of a scene starts with, its cloud mask and each band's header, are
-// fetched here at once when the read is queued, and so is every read a
-// worker posts before making it: the browser's http cache answers the same
-// ranged read again, a worker's included, in under a ms
+// fetched at once when the read is queued, and so is every read a worker
+// posts before making it: the browser's http cache answers the same ranged
+// read again, a worker's included, in under a ms. a worker of its own
+// fetches them, as tens of mb a minute through the page's thread made the
+// map judder
 const gcs = u => 'https://storage.googleapis.com/download/storage/v1/b/'
     + `${BUCKET}/o/${encodeURIComponent(u.slice(6 + BUCKET.length))}?alt=media`;
-const ahead = (u, Range) => fetch(u, Range && { headers: { Range } })
-    .then(r => r.arrayBuffer()).catch(() => {});
+const fetcher = new Worker(new URL('./ahead.js', import.meta.url));
+const ahead = (u, range) => fetcher.postMessage([u, range]);
 const warmed = new Set();
 function warm({ url }) {
     if (warmed.has(url) || !warmed.add(url)) return;
