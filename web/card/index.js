@@ -68,13 +68,15 @@ export const cardHtml = p => (bodyOf(p).html ?? seriesHtml)(p, bodyOf(p));
 
 export function onCardShow(p, el) {
     const b = bodyOf(p);
+    // a re-render keeps the date the reader had selected
+    const keep = skipAuto ? selectedDetection?.date : null;
     // a selection that crosses families never fires onClose, so the
     // outgoing body takes its own map state down here
     if (shownBody && shownBody !== b) closeBody(shownBody);
     shownBody = b;
     current = p;
     selectedDetection = null;
-    (b.show ?? seriesShow)(p, el, b);
+    (b.show ?? seriesShow)(p, el, b, keep);
     document.activeElement?.blur();
 }
 
@@ -147,7 +149,7 @@ function seriesHtml(p, b) {
             : ''}`;
 }
 
-function seriesShow(p, el, b) {
+function seriesShow(p, el, b, keep) {
     greyCircles(true);
     // the series is read per site on open, then windowed to the ticked
     // quarters; a failed read lists nothing rather than loading for good
@@ -157,11 +159,11 @@ function seriesShow(p, el, b) {
     b.fetch(p)
         .then(dets => dets.filter(d => dateInQuarters(d.date, qKeys)))
         .catch(err => (console.error('detection series:', err), []))
-        .then(dets => { if (current === p) renderEvents(el, dets, b); });
+        .then(dets => { if (current === p) renderEvents(el, dets, b, keep); });
     b.wire?.(el);
 }
 
-function renderEvents(el, detections, b) {
+function renderEvents(el, detections, b, keep) {
     currentDets = detections;
     const list = el.querySelector('#events-list');
     list.innerHTML = '';
@@ -206,8 +208,8 @@ function renderEvents(el, detections, b) {
         list.innerHTML = '<div class="events-empty">No detections</div>';
     }
 
-    if (firstItem && !skipAuto)
-        selectDetection(firstItem.det, firstItem.item, b);
+    const pick = dateToItem.get(keep) ?? firstItem;
+    if (pick) selectDetection(pick.det, pick.item, b);
 }
 
 function selectDetection(det, item, b) {

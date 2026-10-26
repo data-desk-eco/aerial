@@ -82,15 +82,23 @@ what each object weighs and which partitions a table holds (`bytes()`,
 
 **live s2 (experimental, branch burnoff-live).** `flaring/live.js` is the
 one exception to "detects nothing": burnoff's detector, as wasm in
-`vendor/burnoff/` (built by `make wasm` in `~/Tools/burnoff`), runs in a
-worker per core over google's sentinel-2 mirror. from z10 a view's mgrs
-tiles are listed, each tile's newest scenes are read over the whole view
-until two came back mostly clear, and every other scene of the last year is
-read only around the sites found, the view's own first. a site is the
-detections within 135 m of its first and a look is clear under 0.6 cloud,
-as in the archive. sites are js objects, not engine tables: they grow a read
-at a time and the workers need them. kind `live` draws and filters as an s2
-site (`key.js`) and opens the s2 card over its own dates (`card/live.js`).
+`vendor/burnoff/` (built by `make wasm` in `~/Tools/burnoff`), runs in two
+workers per core over google's sentinel-2 mirror. from z10 each tile under
+the view has its newest scenes read over the view until two came back
+mostly clear, and every other scene of the last year read only around the
+sites found: newest date first, the view's sites first and nearest its
+centre first, work further than a view's width away paused. what each
+scene has read is kept as 0.05° squares, so zooming in reads nothing and a
+pan reads only what it uncovers. sites, their looks and those squares are
+in indexeddb (`burnoff-live`); a reload reads only new scenes. a site is
+the detections within 135 m of its first, a look is clear under 0.6 cloud,
+as in the archive, and a site is drawn once two clear dates found it, and
+named by its clear detections, as the archive's are: one bright pixel is
+as often a roof or glint as a flare. kind `live` draws,
+clusters and filters as an s2 site (`key.js`, `layers.js` band, FAMILIES)
+and opens the s2 card over its own dates (`card/live.js`). the old burnoff
+map (`~/Tools/burnoff-map`) did this with l2a cogs, a stac search, every
+band of every 256 px block of every scene, and a crdt shared over webrtc.
 
 ## layout
 

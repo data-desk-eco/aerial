@@ -1,16 +1,22 @@
 // live sentinel-2 flaring: burnoff's detector (data-desk-eco/burnoff), wasm
 // in a worker per core, reading the l1c jpeg2000 straight off google's
 // sentinel-2 mirror, whose json api answers cross-origin ranged reads. no
-// catalogue, no proxy, no tiler: a view's mgrs tiles are named in the
-// worker, one listing per satellite and year gives each tile's scenes, and
-// the detector reads the bytes it needs and decodes only clear sky.
+// catalogue, no proxy, no tiler: the workers name a view's mgrs tiles, one
+// listing per satellite and year gives each tile's scenes, and the detector
+// reads the bytes it needs and decodes only clear sky.
 //
-// it works back from today. a tile's freshest clear scenes are read over the
-// whole view, split across the workers, so a flare is drawn as soon as its
-// scene is read; every other scene is read only around the sites found, so a
-// site's dates fill in behind it, newest first. a site is the detections
-// within SITE_M of its first, and a look at it is clear when its 640 m square
-// is under CLEAR cloud, as in the archive.
+// it works back from today. a tile's newest scenes are read over the view
+// until FRESH of them saw it mostly clear, so a flare is drawn as soon as
+// its scene is read; every other scene is read only around the sites found,
+// so a site's dates fill in behind it, newest first and nearest the view's
+// centre first. what a scene has read is kept as squares of a G degree
+// grid, so a view inside one already read reads nothing, and a pan reads
+// only the squares it uncovers. sites, their looks and the squares read are
+// kept in indexeddb, so a reload starts from them. a site is the detections
+// within SITE_M of its first, and a look at it is clear when its 640 m
+// square is under CLEAR cloud, as in the archive. it is drawn once LIT of
+// its clear dates found it, so a new site waits for its reads to confirm it,
+// and named, as the archive's are, by its clear detections.
 
 import { dateInQuarters } from '../shell/util.js';
 
@@ -18,24 +24,48 @@ const BUCKET = 'gcp-public-data-sentinel-2';
 const LIST = `https://storage.googleapis.com/storage/v1/b/${BUCKET}/o`;
 export const LIVE_ZOOM = 10;
 const DAYS = 365, FRESH = 2, SITE_M = 135, CLEAR = 0.6, MIN_LOOKS = 10;
+// a site is drawn once it is lit on LIT clear dates of its year: a single
+// bright pixel is as often a roof or glint as a flare, and the archive too
+// asks two
+const LIT = 2;
+const G = 0.05;       // the coverage grid, degrees
+const GROUP = 0.03;   // a site read takes the sites this close, degrees
 
-// ── the pool: jobs run highest priority first, one per worker. a job's
-// start, when it has one, fills its args as it leaves the queue, or
-// returns false to be dropped ──
+// ── the view, and how much a place in it matters: in view, nearest the
+// centre first; within a view's width of it, after; further, not yet ──
+
+let shown = [0, 0, 0, 0];
+const inside = (p, [w, s, e, n], d = 0) =>
+    p.lon >= w - d && p.lon <= e + d && p.lat >= s - d && p.lat <= n + d;
+function weight(p) {
+    const [w, s, e, n] = shown, d = Math.max(e - w, n - s);
+    const off = Math.hypot(p.lon - (w + e) / 2, p.lat - (s + n) / 2) / d;
+    return inside(p, shown) ? 1e8 + 1 - off / 2
+        : inside(p, shown, d) ? 1 - off / 4 : -Infinity;
+}
+
+// ── the pool: jobs run highest priority first, one per worker, and one
+// whose priority is -Infinity waits. a job's start, when it has one, fills
+// its args as it leaves the queue, or returns false to be dropped ──
 
 const N = Math.min(2 * (navigator.hardwareConcurrency || 4), 16);
-// every finished read, for the console: [ms since load, args, ms, flares]
+// every finished read, for the console: [ms since load, args, ms, flares,
+// whether a sweep]
 const log = [];
 const jobs = [], idle = [];
 const pump = w => {
     for (;;) {
-        if (!jobs.length) return idle.push(w);
-        const i = jobs.reduce((b, j, k) => j.pri > jobs[b].pri ? k : b, 0);
+        let i = -1;
+        jobs.forEach((j, k) => j.pri > (jobs[i]?.pri ?? -Infinity) && (i = k));
+        if (i < 0) return idle.push(w);
         const [j] = jobs.splice(i, 1);
         if (j.start?.(j) !== false)
             return w.job = j, j.t = performance.now(),
                 w.postMessage([0, ...j.args]);
     }
+};
+const kick = () => {
+    while (idle.length && jobs.some(j => j.pri > -Infinity)) pump(idle.pop());
 };
 for (let i = 0; i < N; i++) {
     const w = new Worker(new URL('../vendor/burnoff/worker.js',
@@ -44,21 +74,22 @@ for (let i = 0; i < N; i++) {
         if (data[0] === 'ahead') return ahead(data[1], data[2]);
         const j = w.job, t = performance.now();
         if (data !== 'ready') log.push([t | 0, j.args, t - j.t | 0,
-            data[1].flares?.length]), j.done(data[1]);
+            data[1].flares?.length, !!j.sweep]), j.done(data[1]);
         pump(w);
     };
 }
 const run = job => new Promise(done => {
     if (job.scene) warm(job.scene);
     jobs.push(Object.assign(job, { done }));
-    if (idle.length) pump(idle.pop());
+    kick();
 });
 const day = scene => +scene.date.replaceAll('-', '');
 
 // the detector's reads block its worker, one at a time. the small ones every
 // read of a scene starts with, its cloud mask and each band's header, are
-// fetched here at once when the read is queued: the browser's http cache
-// answers the same ranged read again, a worker's included, in under a ms
+// fetched here at once when the read is queued, and so is every read a
+// worker posts before making it: the browser's http cache answers the same
+// ranged read again, a worker's included, in under a ms
 const gcs = u => 'https://storage.googleapis.com/download/storage/v1/b/'
     + `${BUCKET}/o/${encodeURIComponent(u.slice(6 + BUCKET.length))}?alt=media`;
 const ahead = (u, Range) => fetch(u, Range && { headers: { Range } })
@@ -104,42 +135,96 @@ const scenes = tile => listed.get(tile) ?? listed.set(tile, (async () => {
     return [...by.values()].sort((a, b) => b.date < a.date ? -1 : 1);
 })()).get(tile);
 
+// ── memory: sites and the squares each scene read, in indexeddb ──
+
+const sites = [], byId = new Map(), bucket = new Map();
+const cover = new Map();   // scene url -> Map(square -> cloud at its centre)
+const dirty = { sites: new Set(), cover: new Set() };
+const db = new Promise(ok => {
+    const q = indexedDB.open('burnoff-live', 1);
+    q.onupgradeneeded = () => ['sites', 'cover']
+        .forEach(s => q.result.createObjectStore(s));
+    q.onsuccess = () => ok(q.result);
+    q.onerror = () => ok(null);
+});
+const all = (t, s) => Promise.all(['getAllKeys', 'getAll'].map(f =>
+    new Promise(ok => t.objectStore(s)[f]().onsuccess = e =>
+        ok(e.target.result))));
+const loaded = db.then(async d => {
+    if (!d) return;
+    const t = d.transaction(['sites', 'cover']);
+    const [[, ss], [us, cs]] = await Promise.all([all(t, 'sites'),
+        all(t, 'cover')]);
+    ss.forEach(s => add({ ...s, looks: new Map(s.looks) }));
+    us.forEach((u, i) => cover.set(u, new Map(cs[i])));
+    changed();
+}).catch(() => {});
+let flushing = null;
+const save = (store, k) => {
+    dirty[store].add(k);
+    flushing ??= setTimeout(flush, 2000);
+};
+async function flush() {
+    flushing = null;
+    const d = await db;
+    if (!d) return;
+    const t = d.transaction(['sites', 'cover'], 'readwrite');
+    for (const id of dirty.sites) {
+        const { probed, ...s } = byId.get(id);
+        t.objectStore('sites').put({ ...s, looks: [...s.looks] }, id);
+    }
+    for (const u of dirty.cover)
+        t.objectStore('cover').put([...cover.get(u)], u);
+    dirty.sites.clear(), dirty.cover.clear();
+}
+
 // ── sites: what the reads found, and every look at each ──
 
-const sites = [];
 let changed = () => {};
+const cell = p => `${Math.floor(p.lon * 100)},${Math.floor(p.lat * 100)}`;
+function add(s) {
+    sites.push(s), byId.set(s.id, s);
+    const k = cell(s);
+    bucket.set(k, [...bucket.get(k) ?? [], s]);
+    return s;
+}
 const metres = (a, b) => Math.hypot((a.lon - b.lon) * Math.cos(a.lat
     * Math.PI / 180), a.lat - b.lat) * 111320;
-const near = p => sites.find(s => metres(s, p) <= SITE_M);
+const near = p => {
+    const [x, y] = cell(p).split(',').map(Number);
+    for (let d = 0; d < 9; d++)
+        for (const s of bucket.get(`${x + d % 3 - 1},${y + (d / 3 | 0) - 1}`)
+            ?? []) if (metres(s, p) <= SITE_M) return s;
+};
 
-// a scene read over a box: each site the box held gets its look, a flare
-// joins the site it is near or starts one, and a new site is read in every
-// other scene of its tile
+// a read over a box: each site the box held gets its look, a flare joins
+// the site it is near or starts one, and a new site is read in every other
+// scene of its tile
 function land(scene, held, r) {
     if (r.error) return console.warn('burnoff:', scene.url, r.error);
     held.forEach((s, i) => r.cloud[i] >= 0 && look(s, scene, r.cloud[i]));
     for (const f of r.flares) {
         let s = near(f);
-        if (!s) {
-            const id = `live:${f.lat.toFixed(5)},${f.lon.toFixed(5)}`;
-            sites.push(s = { id, lat: f.lat, lon: f.lon, tile: scene.tile,
-                looks: new Map() });
-            probe(s);
-        }
+        if (!s) probe(s = add({ id: `live:${f.lat.toFixed(5)},${
+            f.lon.toFixed(5)}`, lat: f.lat, lon: f.lon, tile: scene.tile,
+            looks: new Map() }));
         const l = look(s, scene, s.looks.get(scene.date)?.cloud ?? f.cloud);
-        if (!(l.flare?.max_b12 >= f.max_b12)) l.flare = f;
+        if (!(l.flare?.max_b12 >= f.max_b12)) l.flare = f, save('sites', s.id);
     }
     changed();
 }
-const look = (s, scene, cloud) => s.looks.get(scene.date)
-    ?? s.looks.set(scene.date, { cloud }).get(scene.date);
+function look(s, scene, cloud) {
+    if (!s.looks.has(scene.date))
+        s.looks.set(scene.date, { cloud }), save('sites', s.id);
+    return s.looks.get(scene.date);
+}
 
-// every scene of a site's tile that has not looked at it, newest first. a
-// read takes every site waiting on its scene within GROUP of the first, so
-// a cluster of sites is one read
+// every scene of a site's tile that has not looked at it. a read takes the
+// most wanted site waiting on its scene and those within GROUP of it, so a
+// cluster of sites is one read
 const pending = new Map();   // scene url -> the sites waiting on it
-const GROUP = 0.03;          // degrees
 async function probe(s) {
+    s.probed = true;
     for (const scene of await scenes(s.tile))
         if (!s.looks.has(scene.date))
             pending.get(scene.url)?.add(s)
@@ -147,12 +232,14 @@ async function probe(s) {
 }
 function queue(scene) {
     let held;
-    // newest first, the view's own sites before any other
     run({ get pri() {
-        const [s] = pending.get(scene.url) ?? [];
-        return day(scene) + (s && inside(s) ? 1e8 : 0);
+        const wait = pending.get(scene.url);
+        return wait ? day(scene) + Math.max(...[...wait].map(weight))
+            : -Infinity;
     }, scene, start: job => {
-        const wait = pending.get(scene.url), [a] = wait;
+        const wait = pending.get(scene.url);
+        if (!wait) return false;
+        const a = [...wait].reduce((a, s) => weight(s) > weight(a) ? s : a);
         held = [...wait].filter(t => Math.abs(t.lat - a.lat) < GROUP
             && Math.abs(t.lon - a.lon) < GROUP);
         held.forEach(t => wait.delete(t));
@@ -167,60 +254,125 @@ const box = (ps, d) => [Math.min(...ps.map(p => p.lon)) - d,
     Math.min(...ps.map(p => p.lat)) - d, Math.max(...ps.map(p => p.lon)) + d,
     Math.max(...ps.map(p => p.lat)) + d];
 
-// ── a view: its tiles, and each tile's newest scenes read whole until
-// FRESH of them saw the view mostly clear (a scene can hold no data here at
-// all, at the edge of its swath) ──
+// ── a view: the squares of the grid it covers, each with the tiles its
+// corners and centre fall in (the tile its centre is in owns it) ──
 
-let epoch = 0, shown = [0, 0, 0, 0];
-const inside = s => s.lon >= shown[0] && s.lon <= shown[2]
-    && s.lat >= shown[1] && s.lat <= shown[3];
-const swept = new Map();     // scene url + view: whether it saw it clear
+let epoch = 0;
+const owner = new Map();   // square -> [the tile owning it, every tile on it]
+const sq = (i, j) => `${i},${j}`;
+async function owners(i0, j0, i1, j1) {
+    const pts = [], keys = [];
+    for (let j = j0; j <= j1 + 1; j++)
+        for (let i = i0; i <= i1 + 1; i++) pts.push(i * G, j * G);
+    for (let j = j0; j <= j1; j++)
+        for (let i = i0; i <= i1; i++)
+            if (!owner.has(sq(i, j))) keys.push([i, j]),
+                pts.push((i + .5) * G, (j + .5) * G);
+    if (!keys.length) return;
+    const t = await run({ pri: Infinity, args: ['tiles', pts] });
+    const nx = i1 - i0 + 2, c0 = nx * (j1 - j0 + 2);
+    const at = (i, j) => t[(j - j0) * nx + i - i0];
+    keys.forEach(([i, j], k) => owner.set(sq(i, j), [t[c0 + k],
+        [...new Set([at(i, j), at(i + 1, j), at(i, j + 1), at(i + 1, j + 1),
+            t[c0 + k]])]]));
+}
+
 export async function view(map) {
     if (map.getZoom() < LIVE_ZOOM) return;
+    await loaded;
     const b = map.getBounds(), e = ++epoch;
-    const bbox = shown = [b.getWest(), b.getSouth(), b.getEast(),
-        b.getNorth()];
-    // the old view's whole-scene reads that have not started are dropped
+    shown = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+    // the old view's whole-scene reads that have not started are dropped,
+    // and its sites' reads wait unless they are near this one
     for (let i = jobs.length; i--;)
         if (jobs[i].sweep) jobs.splice(i, 1)[0].done({ dropped: true });
-    const tiles = await run({ pri: Infinity, args: ['tiles', ...bbox] });
-    // two scenes at a time: most of a scene's parts finish at once, cloud
-    // or no data, and a few hold the rest of the workers' time
-    for (const tile of tiles) (async () => {
+    sites.filter(s => !s.probed && weight(s) > -Infinity).forEach(probe);
+    kick();
+    const [i0, j0, i1, j1] = shown.map(v => Math.floor(v / G));
+    await owners(i0, j0, i1, j1);
+    if (e !== epoch) return;
+    const by = new Map();      // tile -> [its squares, those it owns]
+    for (let j = j0; j <= j1; j++)
+        for (let i = i0; i <= i1; i++) {
+            const [own, on] = owner.get(sq(i, j));
+            for (const t of on) {
+                if (!by.has(t)) by.set(t, [[], []]);
+                by.get(t)[0].push([i, j]);
+                if (t === own) by.get(t)[1].push([i, j]);
+            }
+        }
+    // two scenes at a time: most of a scene's reads finish at once, cloud or
+    // no data, and a few hold the rest of the workers' time
+    for (const [tile, [all, own]] of by) (async () => {
         let clear = 0;
         const flight = [];
         for (const scene of await scenes(tile)) {
             if (e !== epoch || clear >= FRESH) return;
-            const key = scene.url + bbox.map(v => v.toFixed(2));
-            flight.push((swept.has(key) ? Promise.resolve(swept.get(key))
-                : sweep(scene, bbox).then(ok => (ok != null
-                    && swept.set(key, ok), ok))).then(ok => clear += !!ok));
+            flight.push(sweep(scene, all).then(c => clear += c != null
+                && own.filter(([i, j]) => c.get(sq(i, j)) >= 0
+                    && c.get(sq(i, j)) < CLEAR).length >= own.length / 2));
             if (flight.length > 1) await flight.shift();
         }
     })();
 }
 
-// a scene over the box, split across the workers: whether it saw it
-// clear, or null if a part was dropped
-async function sweep(scene, bbox) {
-    const held = sites.filter(inside);
-    const pts = held.flatMap(s => [s.lon, s.lat]);
-    const rs = await Promise.all(Array.from({ length: N }, (_, i) =>
-        run({ pri: 1e9 + day(scene), scene, sweep: true,
-              args: ['detect', scene.url, ...bbox, i, N, pts] })
-            .then(r => r.dropped ? null : (land(scene, held, r), r.clear))));
+// the squares a scene has not read yet, read; its squares' clouds, or null
+// if a read was dropped. they are read as rectangles mostly of them, each
+// split across the workers by 6.4 km cell columns, with the centre of each
+// square for its cloud
+async function sweep(scene, squares) {
+    const c = cover.get(scene.url) ?? new Map();
+    const rs = await Promise.all(rects(squares.filter(([i, j]) =>
+        !c.has(sq(i, j)))).map(async r => {
+        const [w, s, e, n] = [r.i0 * G, r.j0 * G, (r.i1 + 1) * G,
+            (r.j1 + 1) * G];
+        const km = (e - w) * 111 * Math.cos((s + n) * Math.PI / 360);
+        const parts = Math.max(1, Math.min(N, Math.round(km / 12.8)));
+        const held = sites.filter(p => inside(p, [w, s, e, n]));
+        const pts = [...held.flatMap(p => [p.lon, p.lat]),
+            ...r.sq.flatMap(([i, j]) => [(i + .5) * G, (j + .5) * G])];
+        const mid = { lon: (w + e) / 2, lat: (s + n) / 2 };
+        const got = await Promise.all(Array.from({ length: parts }, (_, k) =>
+            run({ get pri() {
+                return 1e9 + day(scene) + (weight(mid) % 1e8 || 0);
+            }, scene, sweep: true,
+                  args: ['detect', scene.url, w, s, e, n, k, parts, pts] })));
+        if (got.some(g => g.dropped)) return null;
+        got.forEach(g => land(scene, held, g));
+        if (got.some(g => g.error)) return [];
+        return r.sq.map(([i, j], k) => [sq(i, j), Math.max(...got.map(g =>
+            g.cloud[held.length + k]))]);
+    }));
     if (rs.includes(null)) return null;
-    const seen = rs.filter(c => c >= 0);
-    return seen.length > 0 && seen.reduce((a, c) => a + c) / seen.length >= .5;
+    if (rs.flat().length) {
+        rs.flat().forEach(([k, v]) => c.set(k, v));
+        cover.set(scene.url, c), save('cover', scene.url);
+    }
+    return c;
+}
+
+// squares as rectangles at least half full of them, by halving the long
+// side of any that is not
+function rects(squares) {
+    if (!squares.length) return [];
+    const is = squares.map(s => s[0]), js = squares.map(s => s[1]);
+    const r = { i0: Math.min(...is), i1: Math.max(...is), j0: Math.min(...js),
+        j1: Math.max(...js), sq: squares };
+    const wi = r.i1 - r.i0 + 1, wj = r.j1 - r.j0 + 1;
+    if (squares.length * 2 >= wi * wj) return [r];
+    const [a, m] = wi >= wj ? [0, r.i0 + (wi >> 1)] : [1, r.j0 + (wj >> 1)];
+    return [...rects(squares.filter(s => s[a] < m)),
+        ...rects(squares.filter(s => s[a] >= m))];
 }
 
 // ── the map's features: a site each, rated over the ticked quarters ──
 
 export function onChange(fn) { changed = fn; }
-globalThis.burnoff = { sites, jobs, log };
+globalThis.burnoff = { sites, jobs, log, cover };
 
 export function features(keys) {
-    return sites.map(s => {
+    return sites.filter(s => [...s.looks.values()].filter(l => l.flare
+        && l.cloud < CLEAR).length >= LIT).map(s => {
         const looks = [...s.looks].filter(([d]) => dateInQuarters(d, keys));
         const clear = looks.filter(([, l]) => l.cloud < CLEAR);
         const lit = looks.filter(([, l]) => l.flare);
@@ -228,7 +380,7 @@ export function features(keys) {
         return { type: 'Feature', geometry: { type: 'Point',
             coordinates: [s.lon, s.lat] }, properties: {
             id: s.id, kind: 'live', lat: s.lat, lon: s.lon,
-            name: `${lit.length} detection${lit.length === 1 ? '' : 's'}`,
+            name: `${n} detection${n === 1 ? '' : 's'}`,
             max_b12: Math.max(0, ...lit.map(([, l]) => l.flare.max_b12)),
             detection_count: n, passes: looks.length,
             observations: clear.length,
@@ -238,7 +390,7 @@ export function features(keys) {
 }
 
 // a site's dated detections, oldest first, as the card lists them
-export const series = id => [...sites.find(s => s.id === id)?.looks ?? []]
+export const series = id => [...byId.get(id)?.looks ?? []]
     .filter(([, l]) => l.flare).sort(([a], [b]) => a < b ? -1 : 1)
     .map(([date, { flare: f }]) => ({ date, max_b12: f.max_b12,
         pixels: f.pixels, raw_lat: f.lat, raw_lon: f.lon }));

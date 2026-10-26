@@ -54,7 +54,7 @@ export const plumeIcon = ['case',
 export const band = ({ s2, vnf }) => {
     const at = (prop, [, mid, hi]) =>
         ['step', ['coalesce', ['get', prop], -1], 0, mid, 1, hi, 2];
-    return ['match', ['get', 'kind'], 'flare', at(s2.prop, s2.stops),
+    return ['match', ['get', 'kind'], ['flare', 'live'], at(s2.prop, s2.stops),
         'vnf', at(vnf.prop, vnf.stops),
         'plume', at('rate_kg_h', [0, ...PLUME_STOPS]), 0];
 };

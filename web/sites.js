@@ -65,7 +65,7 @@ export async function holdSites([w, s, e, n]) {
 // all of them made this 10 s against 5 ms. the inset dash sits right of the
 // stroke's direction, so inside a clockwise ring, which is how ST_Normalize
 // winds an outer ring (and each hole the other way)
-let epoch = 0;
+let epoch = 0, drawn = null;
 export async function drawSites(map, shown) {
     if (map.getZoom() < SITE_ZOOM) return;
     const points = HELD_BY.flatMap(id => shown(id))
@@ -79,8 +79,12 @@ export async function drawSites(map, shown) {
             ([x, y]) => `(${+x}, ${+y})`)}) AS p(x, y)
             WHERE ST_DWithin(s.geometry, ST_Point(p.x, p.y), ${REACH}))`)
         .catch(() => []) : [];   // no site_view yet: nothing to draw
-    if (e === epoch) map.getSource('sites')?.setData({
-        type: 'FeatureCollection', features: rows.map(
-            ({ outline, ...properties }) => ({ type: 'Feature', properties,
-                geometry: JSON.parse(outline) })) });
+    // the same outlines again are left as they are: re-setting them flashed
+    // the lines at every key toggle and every live read
+    const k = rows.map(r => r.id).sort().join();
+    if (e !== epoch || k === drawn) return;
+    drawn = k;
+    map.getSource('sites')?.setData({ type: 'FeatureCollection',
+        features: rows.map(({ outline, ...properties }) => ({ type: 'Feature',
+            properties, geometry: JSON.parse(outline) })) });
 }

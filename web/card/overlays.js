@@ -30,8 +30,12 @@ export function clearOverlays() {
 }
 
 // a radial gradient, in under 'detections' so both families' markings stay
-// above it
+// above it. the same one again, as a re-rendered card asks, is left as it is
+let halo = null;
 export function heatFootprint({ lon, lat, val, radiusM, cfg }) {
+    const k = [lon, lat, val, radiusM].join();
+    if (k === halo && map.getLayer(FOOTPRINT)) return;
+    halo = k;
     clearFootprint();
     if (!(val > 0)) return;
     const size = 128, half = size / 2;
@@ -57,23 +61,30 @@ export function heatFootprint({ lon, lat, val, radiusM, cfg }) {
 
 // the imagery darkened while a card is open, bar the outline of the site the
 // detection sits in, which stays lit: the world less that site, in sql. no
-// site, no row: nothing is darkened
+// site, no row: nothing is darkened. a new outline replaces the old in
+// place: taking the layer down while the statement ran flashed the map
 const DIM = 'dim', REACH = 0.005;
-let dimEpoch = 0;
+let dimEpoch = 0, dimmed = null;
 export async function dim(lon, lat) {
     const e = ++dimEpoch;
-    if (map.getLayer(DIM)) map.removeLayer(DIM);
-    if (map.getSource(DIM)) map.removeSource(DIM);
-    if (lon === false) return;
-    const [{ g } = {}] = await sql(`SELECT ST_AsGeoJSON(ST_Difference(
-        ST_MakeEnvelope(-180, -85, 180, 85), ST_Union_Agg(geometry))) AS g
+    const [{ g } = {}] = lon === false ? [] : await sql(`SELECT
+        ST_AsGeoJSON(ST_Difference(ST_MakeEnvelope(-180, -85, 180, 85),
+            ST_Union_Agg(geometry))) AS g
         FROM site_view
         WHERE ST_DWithin(geometry, ST_Point(${+lon}, ${+lat}), ${REACH})
         HAVING count(*) > 0`).catch(() => []);   // no site_view yet: no site
-    if (e !== dimEpoch || !g) return;
-    map.addSource(DIM, { type: 'geojson', data: JSON.parse(g) });
-    map.addLayer({ id: DIM, type: 'fill', source: DIM, minzoom: 7.5,
-        paint: { 'fill-color': '#000', 'fill-opacity': 0.65 } },
-        ['sites-hit', 'dd-plume-probability', 'plume-mask-image',
-         'plume-mask-fill', FOOTPRINT, 'plumes'].find(l => map.getLayer(l)));
+    if (e !== dimEpoch || g === dimmed) return;
+    dimmed = g;
+    if (!g) {
+        if (map.getLayer(DIM)) map.removeLayer(DIM);
+        if (map.getSource(DIM)) map.removeSource(DIM);
+    } else if (map.getSource(DIM)) map.getSource(DIM).setData(JSON.parse(g));
+    else {
+        map.addSource(DIM, { type: 'geojson', data: JSON.parse(g) });
+        map.addLayer({ id: DIM, type: 'fill', source: DIM, minzoom: 7.5,
+            paint: { 'fill-color': '#000', 'fill-opacity': 0.65 } },
+            ['sites-hit', 'dd-plume-probability', 'plume-mask-image',
+             'plume-mask-fill', FOOTPRINT, 'plumes']
+                .find(l => map.getLayer(l)));
+    }
 }

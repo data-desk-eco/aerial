@@ -24,7 +24,7 @@ import { initProbabilityOverlay } from './methane/overlay.js';
 import { initMask } from './methane/mask.js';
 import { loadAttributions } from './methane/attribution.js';
 import { SITE_LAYERS, SITE_ZOOM, holdSites, drawSites } from './sites.js';
-import { LIVE_ZOOM, view as liveView, features as liveFeatures,
+import { view as liveView, features as liveFeatures,
     onChange as onLive } from './flaring/live.js';
 
 // the bucket every layer reads. index.json names each table's objects, so no
@@ -58,7 +58,7 @@ const whenReady = new Promise(r => readyResolve = r);
 // placed each frame made the globe crawl. from NEAR in, each family's own
 // layer draws every point. a cluster's label is a count, since a summed
 // value would mash t/hr, ppm·m, b12 and radiant heat
-const FAMILIES = ['detections', 'vnf', 'plumes'], NEAR = 5;
+const FAMILIES = ['detections', 'live', 'vnf', 'plumes'], NEAR = 5;
 // a cluster's colour: the mean band of what it holds, shifted up so a mixed
 // cluster reads at its brighter end
 const BAND = band(MODE);
@@ -285,8 +285,8 @@ mount({
             layout: { ...PIN, 'icon-image': flareIcon(MODE.s2) },
         },
         {
-            // the live reads draw from a little further out than they read
-            id: 'live', type: 'symbol', source: 'live', minzoom: LIVE_ZOOM - 2,
+            // read from z10, drawn from NEAR and clustered below it
+            id: 'live', type: 'symbol', source: 'live', minzoom: NEAR,
             layout: { ...PIN, 'icon-image': flareIcon(MODE.s2) },
         },
         {
