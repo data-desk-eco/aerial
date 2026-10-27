@@ -126,7 +126,7 @@ a year of scenes the heat test took london from ~2000 drawn sites to 87 and
 the summer rule to 54; madrid 704, 114, 43; the permian's sites by a viirs
 flare 327, 308, 301. kind `live` draws, clusters and filters as an s2 site
 (`key.js`, `layers.js` band, FAMILIES) and opens the s2 card
-(`card/flare.js`), named by its clear detections, whose title says Loading…
+(`card/flare.js`), named by every detection it lists, cloudy ones too, whose title says Loading…
 in grey until every scene of the year has looked at the site (`loading`:
 scenes waiting and reads in flight), and where a date draws the detector's
 own pixels, each on the ramp by its b12 inside a hairline outline, as a

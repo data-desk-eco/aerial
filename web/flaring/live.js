@@ -18,7 +18,8 @@
 // within SITE_M of its first, and a look at it is clear when its 640 m
 // square is under CLEAR cloud. it is drawn as the archive's sites are, once
 // two dates found it and its mean b12 is over aerial's floor, so a new site
-// waits for its reads to confirm it, and is named by its clear detections.
+// waits for its reads to confirm it, and is named by every detection its card
+// lists, cloudy looks too (persistence counts the clear ones alone).
 
 import { dateInQuarters, quarterOf } from '../shell/util.js';
 import { MODE } from './render.js';
@@ -492,7 +493,7 @@ export function features(keys) {
             coordinates: [s.lon, s.lat] }, properties: {
             id: s.id, kind: 'live', lat: s.lat, lon: s.lon,
             loading: !(s.wait === 0 && s.reads === 0),
-            name: `${n} detection${n === 1 ? '' : 's'}`,
+            name: `${on.length} detection${on.length === 1 ? '' : 's'}`,
             max_b12: Math.max(0, ...on.map(([, l]) => l.flare.max_b12)),
             detection_count: n, passes: looks.length,
             observations: clear.length,
