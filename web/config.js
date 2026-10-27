@@ -411,13 +411,13 @@ mount({
         onLive(() => soon ??= setTimeout(redraw, 1000));
         // the live reads in the status line, while any in reach of the view remain
         // and kept up for 3 s after, as the queue empties between sweeps
-        // counted from the first read after a quiet spell
-        let last = 0, from = 0;
+        let last = 0;
         setInterval(() => {
-            const [made, left] = liveProgress(), now = Date.now();
-            if (liveBusy()) now - last >= 3000 && (from = made), last = now;
-            ctx.status('live', now - last < 3000 && `Read ${made - from}/${
-                made - from + left} S2 scenes`);
+            const date = liveProgress(), now = Date.now();
+            if (liveBusy()) last = now;
+            ctx.status('live', now - last < 3000 && (date
+                ? `Read S2 scene of ${formatDate(date)}`
+                : 'Reading S2 scenes…'));
         }, 500);
 
         // an outline is drawn while a drawn detection is inside it: after
