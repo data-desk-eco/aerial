@@ -138,7 +138,7 @@ for (let i = 0; i < N; i++) {
         if (data[0] === 'ahead') return ahead(data[1], data[2]);
         const j = w.job, t = performance.now();
         if (data !== 'ready') log.push([t | 0, j.args, t - j.t | 0,
-            data[1].flares?.length, !!j.sweep]), j.done(data[1]),
+            data[1].hotspots?.length, !!j.sweep]), j.done(data[1]),
             j.scene && read(j.scene.date);
         if (log.length > 4000) log.splice(0, 2000);
         pump(w);
@@ -278,7 +278,7 @@ function land(scene, held, r) {
     if (r.error) return console.warn('burnoff:', scene.url, r.error);
     const touched = new Set(held);
     held.forEach((s, i) => r.cloud[i] >= 0 && look(s, scene, r.cloud[i]));
-    for (const f of r.flares) {
+    for (const f of r.hotspots) {
         let s = near(f);
         if (!s) probe(s = add({ id: `live:${f.lat.toFixed(5)},${
             f.lon.toFixed(5)}`, lat: f.lat, lon: f.lon, tile: scene.tile,
