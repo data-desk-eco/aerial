@@ -40,9 +40,14 @@ export async function ensureTag(map, text, color) {
 // (pdf:62), fading in over the basemap from z7.5
 export const addSatellite = map => imagery(map, { id: 'satellite' });
 
+// what the reader sees: the canvas less its padding, which the table drawer
+// sets over the right of it
 export function viewportBbox(map) {
-    const b = map.getBounds();
-    return [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+    const { top, right, bottom, left } = map.getPadding(),
+        c = map.getContainer(),
+        sw = map.unproject([left, c.clientHeight - bottom]),
+        ne = map.unproject([c.clientWidth - right, top]);
+    return [sw.lng, sw.lat, ne.lng, ne.lat];
 }
 
 // the worldmap with the live viewport as its box (pdf:83)

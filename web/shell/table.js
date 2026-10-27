@@ -59,8 +59,9 @@ export function initTable(ctx) {
         drawer.style.borderLeftWidth = w ? '1px' : '0';
         handle.style.right = w + 'px';
         ctx.map.setPadding({ right: w });
-        document.getElementById('detail')
-            ?.style.setProperty('right', w ? w + 'px' : '');
+        for (const id of ['detail', 'status'])
+            document.getElementById(id)
+                ?.style.setProperty('right', w ? w + 'px' : '');
         // search only once there is room beside the tabs. visibility, not
         // display, so the head never changes height
         el('.fx-drawer-q').style.visibility =
@@ -151,6 +152,8 @@ export function initTable(ctx) {
         handle.addEventListener('pointerup', () => {
             handle.removeEventListener('pointermove', move);
             if (width < MIN) setWidth(0); else render();
+            // the view's reads follow what is left in sight
+            if (width !== sw) ctx.map.fire('moveend');
         }, { once: true });
     });
 }

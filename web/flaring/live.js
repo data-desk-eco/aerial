@@ -22,6 +22,7 @@
 
 import { dateInQuarters, quarterOf } from '../shell/util.js';
 import { MODE } from './render.js';
+import { viewportBbox } from '../shell/map.js';
 
 const BUCKET = 'gcp-public-data-sentinel-2';
 const LIST = `https://storage.googleapis.com/storage/v1/b/${BUCKET}/o`;
@@ -98,7 +99,9 @@ const jobs = [], idle = [];
 // SETTLE ms, so a run of drags does not set every worker decoding between
 // two of them
 const SETTLE = 500;
-let moving = false, still;
+// nor while the view is out past LIVE_ZOOM: a read in flight finishes, and
+// the rest wait until it is back
+let moving = false, still, off = false;
 export const hold = h => {
     clearTimeout(still), moving = true;
     if (!h) still = setTimeout(() => (moving = false, kick()), SETTLE);
@@ -106,7 +109,7 @@ export const hold = h => {
 const pump = w => {
     for (;;) {
         let i = -1, best = -Infinity;
-        if (!moving) jobs.forEach((j, k) => {
+        if (!moving && !off) jobs.forEach((j, k) => {
             const p = j.pri;
             if (p > best) best = p, i = k;
         });
@@ -119,12 +122,13 @@ const pump = w => {
 };
 // reads still to make in reach of the view, or in flight: a worker not
 // idle is reading, or not yet ready to
-export const busy = () => idle.length < N || jobs.some(j => j.pri > -Infinity);
+export const busy = () => !off
+    && (idle.length < N || jobs.some(j => j.pri > -Infinity));
 // what the status line says: the date of the last scene read
 let last;
 export const progress = () => last;
 const kick = () => {
-    while (!moving && idle.length && jobs.some(j => j.pri > -Infinity))
+    while (!moving && !off && idle.length && jobs.some(j => j.pri > -Infinity))
         pump(idle.pop());
 };
 for (let i = 0; i < N; i++) {
@@ -357,8 +361,8 @@ async function owners(i0, j0, i1, j1) {
 
 export async function view(map) {
     await loaded;
-    const b = map.getBounds(), e = ++epoch;
-    shown = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], ver++;
+    const e = ++epoch;
+    shown = viewportBbox(map), ver++, off = map.getZoom() < LIVE_ZOOM;
     // the old view's whole-scene reads that have not started are dropped,
     // and its sites' reads wait unless they are near this one
     for (let i = jobs.length; i--;)

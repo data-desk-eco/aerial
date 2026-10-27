@@ -135,7 +135,11 @@ in view, while reads in reach of the view remain (`busy`; a live redraw
 sends `fx-rows`). one line at the map's top right says what is still being
 read, the newest read's (`status`, `shell/ui.js`): the engine at start, each
 layer's read, and the date of the last live scene read (Processed S2 scene for 3 Mar 2026),
-kept up 3 s past the last. a hotspot card dims the imagery around its site, not each
+kept up 3 s past the last, and its lines carry no ellipsis. the reads
+for a view ask `viewportBbox` (`shell/map.js`), the canvas less the table
+drawer's padding, and a drag of the drawer reads again as a move does. no
+live read starts out past LIVE_ZOOM: one in flight finishes, and the rest
+wait until the view is back. a hotspot card dims the imagery around its site, not each
 date's own point, which lit some dates and darkened others.
 
 from z10 each hotspot carries its instrument, S2 or VNF, up and right of

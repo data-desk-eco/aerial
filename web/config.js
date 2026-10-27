@@ -131,7 +131,7 @@ const refresh = id => {
     return async () => {
         const range = CTX.quarters.range(), e = ++epoch;
         if (!range) return;
-        if (LOG[id]) CTX.status(id, `Loading ${LOG[id]}…`);
+        if (LOG[id]) CTX.status(id, `Loading ${LOG[id]}`);
         try {
             const features = await READS[id](range);
             if (!features || e !== epoch) return;
@@ -417,7 +417,7 @@ mount({
             if (liveBusy()) last = now;
             ctx.status('live', now - last < 3000 && (date
                 ? `Processed S2 scene for ${formatDate(date)}`
-                : 'Reading S2 scenes…'));
+                : 'Reading S2 scenes'));
         }, 500);
 
         // an outline is drawn while a drawn detection is inside it: after
