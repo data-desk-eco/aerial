@@ -8,7 +8,8 @@
 // it works back from today. a tile's newest scenes are read over the view
 // until enough of them saw it mostly clear: FRESH over a z10 view, more as
 // the view narrows (DEPTH), so a flare is drawn as soon as its scene is
-// read; every other scene is read only around the sites found,
+// read, and then a clear one of each month before them;
+// every other scene is read only around the sites found,
 // so a site's dates fill in behind it, newest first and nearest the view's
 // centre first. what a scene has read is kept as squares of a G degree
 // grid, so a view inside one already read reads nothing, and a pan reads
@@ -116,6 +117,9 @@ const pump = w => {
                 w.postMessage([0, ...j.args]);
     }
 };
+// reads still to make in reach of the view, or in flight: a worker not
+// idle is reading, or not yet ready to
+export const busy = () => idle.length < N || jobs.some(j => j.pri > -Infinity);
 const kick = () => {
     while (!moving && idle.length && jobs.some(j => j.pri > -Infinity))
         pump(idle.pop());
@@ -372,30 +376,42 @@ export async function view(map) {
                 if (t === own) by.get(t)[1].push([i, j]);
             }
         }
-    // a quarter of the clear looks wanted at a time, two at least: most of
-    // a scene's reads finish at once, cloud or no data, and a few hold the
-    // rest of the workers' time
     const km2 = (i1 - i0 + 1) * (j1 - j0 + 1) * (G * 111) ** 2
         * Math.cos((j0 + j1 + 1) * G * Math.PI / 360);
     const need = Math.max(FRESH, Math.round(DEPTH / km2));
     for (const [tile, [all, own]] of by) (async () => {
-        let clear = 0;
-        const flight = [];
-        for (const scene of await scenes(tile)) {
-            if (e !== epoch || clear >= need) return;
-            flight.push(sweep(scene, all).then(c => clear += c != null
-                && own.filter(([i, j]) => c.get(sq(i, j)) >= 0
-                    && c.get(sq(i, j)) < CLEAR).length >= own.length / 2));
-            if (flight.length >= Math.max(2, need >> 2)) await flight.shift();
-        }
+        // a look saw the view when most of the squares its tile owns were
+        // clear. scenes are read in order until n looks did, a quarter of n
+        // at a time, two at least: most of a scene's reads finish at once,
+        // cloud or no data, and a few hold the rest of the workers' time.
+        // the index reached
+        const saw = c => c != null && own.filter(([i, j]) => c.get(sq(i, j))
+            >= 0 && c.get(sq(i, j)) < CLEAR).length >= own.length / 2;
+        const until = async (list, n, low) => {
+            let at = 0, seen = 0;
+            const flight = [];
+            for (; at < list.length && seen < n && e === epoch; at++) {
+                flight.push(sweep(list[at], all, low).then(c =>
+                    seen += saw(c)));
+                if (flight.length >= Math.max(2, n >> 2)) await flight.shift();
+            }
+            return at;
+        };
+        // the newest looks first; then one clear look in each month of the
+        // rest of the year, as a flare that went out before them was found
+        // only near a lit site
+        const list = await scenes(tile), at = await until(list, need);
+        Map.groupBy(list.slice(at), s => s.date.slice(0, 7))
+            .forEach(m => until(m, 1, true));
     })();
 }
 
 // the squares a scene has not read yet, read; its squares' clouds, or null
 // if a read was dropped. they are read as rectangles mostly of them, each
 // split across the workers by 6.4 km cell columns, with the centre of each
-// square for its cloud
-async function sweep(scene, squares) {
+// square for its cloud. a low sweep waits behind the newest looks' sweeps,
+// and the view's site reads behind it
+async function sweep(scene, squares, low) {
     const c = cover.get(scene.url) ?? new Map();
     const rs = await Promise.all(rects(squares.filter(([i, j]) =>
         !c.has(sq(i, j)))).map(async r => {
@@ -409,7 +425,8 @@ async function sweep(scene, squares) {
         const mid = { lon: (w + e) / 2, lat: (s + n) / 2 };
         const got = await Promise.all(Array.from({ length: parts }, (_, k) =>
             run({ get pri() {
-                return 1e9 + day(scene) + (weight(mid) % 1e8 || 0);
+                return (low ? 5e8 : 1e9) + day(scene)
+                    + (weight(mid) % 1e8 || 0);
             }, scene, sweep: true,
                   args: ['detect', scene.url, w, s, e, n, k, parts, pts] })));
         if (got.some(g => g.dropped)) return null;

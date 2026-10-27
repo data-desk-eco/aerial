@@ -26,8 +26,8 @@ import { initMask } from './methane/mask.js';
 import { loadAttributions } from './methane/attribution.js';
 import { SITE_LAYERS, SITE_ZOOM, holdSites, drawSites } from './sites.js';
 import { view as liveView, features as liveFeatures, site as liveSite,
-    quarters as liveQuarters, onChange as onLive, hold as holdLive }
-    from './flaring/live.js';
+    quarters as liveQuarters, onChange as onLive, hold as holdLive,
+    busy as liveBusy } from './flaring/live.js';
 
 // the bucket every layer reads. index.json names each table's objects, so no
 // module names one
@@ -361,6 +361,7 @@ mount({
           cols: ['id', 'name', 'country', 'max_rh', 'detection_count',
                  'observations', 'persistence', 'lat', 'lon'] },
         { label: 'Hotspots (S2)', rows: props('live'),
+          empty: () => liveBusy() && 'Detections loading',
           cols: ['id', 'name', 'max_b12', 'detection_count', 'observations',
                  'persistence', 'lat', 'lon'] },
     ],
@@ -404,7 +405,8 @@ mount({
         // second while they do, and never while the map moves
         let soon;
         const redraw = () => ctx.map.isMoving() ? ctx.map.once('moveend',
-            redraw) : (soon = null, REFRESH.live());
+            redraw) : (soon = null, REFRESH.live(),
+            dispatchEvent(new Event('fx-rows')));
         onLive(() => soon ??= setTimeout(redraw, 1000));
 
         // an outline is drawn while a drawn detection is inside it: after

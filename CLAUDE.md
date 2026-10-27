@@ -91,10 +91,13 @@ over a phone's view, up to 135 MB over a desktop's), and sixteen crashed a
 phone's tab.
 
 from z10 each tile under the view has its newest scenes read over the view
-until enough came back mostly clear: two over a z10 view, more as it
-narrows (`DEPTH`, ~40 at z13), as an intermittent refinery flare was missed
-when only the newest two were swept. every other scene of the last year is
-read only around the sites found: newest date first, the view's sites first
+until enough came back mostly clear: two over a z10 view, more as it narrows
+(`DEPTH`, ~40 at z13), as an intermittent refinery flare was missed when
+only the newest two were swept; then a clear look in each month of the rest
+of the year, ahead of the site reads, as a flare that went out before the
+newest looks was found only near a lit site (at isab at z11 that took the
+drawn sites from one to five). every other scene of the last year is read
+only around the sites found: newest date first, the view's sites first
 (those not yet drawn before the rest), nearest its centre first, and work
 beyond a view's width (at least 0.5°) paused. the view is followed at every
 zoom, though no sweep starts below z10. what each scene has read is kept as
@@ -114,21 +117,23 @@ each time one lands, so each site's weight and each scene's most are kept
 until the view, a site's being drawn or the scene's set changes.
 
 a site is the detections within 135 m of its first, and a look is clear
-under 0.6 cloud, as in the archive. it is drawn as the archive's are, lit
-on two dates with its mean b12 over MODE.s2.floor, unless lit only in its
+under 0.6 cloud, as in the archive. it is drawn as the archive's are, lit on
+two dates with its mean b12 over MODE.s2.floor, unless lit only in its
 hemisphere's summer (the archive's `seasonal`, april to august in the
 north): roofs and solar panels that catch a high sun, which the detector's
-heat test (b8a against b12, burnoff's AGENTS.md) cannot tell from a fire.
-in a year of scenes the heat test took london from ~2000 drawn sites to 87
-and the summer rule to 54; madrid 704, 114, 43; the permian's sites by a
-viirs flare 327, 308, 301. kind `live` draws, clusters and filters as an s2
-site (`key.js`, `layers.js` band, FAMILIES) and opens the s2 card
+heat test (b8a against b12, burnoff's AGENTS.md) cannot tell from a fire. in
+a year of scenes the heat test took london from ~2000 drawn sites to 87 and
+the summer rule to 54; madrid 704, 114, 43; the permian's sites by a viirs
+flare 327, 308, 301. kind `live` draws, clusters and filters as an s2 site
+(`key.js`, `layers.js` band, FAMILIES) and opens the s2 card
 (`card/flare.js`), named by its clear detections, whose title says Loading…
 in grey until every scene of the year has looked at the site (`loading`:
 scenes waiting and reads in flight), and where a date draws the detector's
 own pixels, each on the ramp by its b12 inside a hairline outline, as a
-plume mask is drawn. a hotspot card dims the imagery around its site, not
-each date's own point, which lit some dates and darkened others.
+plume mask is drawn. the table's s2 tab says Detections loading, not No rows
+in view, while reads in reach of the view remain (`busy`; a live redraw
+sends `fx-rows`). a hotspot card dims the imagery around its site, not each
+date's own point, which lit some dates and darkened others.
 
 from z10 each hotspot carries its instrument, S2 or VNF, up and right of
 it: an image set in the page's inter at 300 (`ensureTag`, `shell/map.js`)
