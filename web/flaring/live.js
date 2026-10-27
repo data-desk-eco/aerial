@@ -124,9 +124,9 @@ const pump = w => {
 // idle is reading, or not yet ready to
 export const busy = () => !off
     && (idle.length < N || jobs.some(j => j.pri > -Infinity));
-// what the status line says: the date of the last scene read
-let last;
-export const progress = () => last;
+// told the date of each scene read as it lands
+let read = () => {};
+export const onRead = fn => read = fn;
 const kick = () => {
     while (!moving && !off && idle.length && jobs.some(j => j.pri > -Infinity))
         pump(idle.pop());
@@ -137,8 +137,9 @@ for (let i = 0; i < N; i++) {
     w.onmessage = ({ data }) => {
         if (data[0] === 'ahead') return ahead(data[1], data[2]);
         const j = w.job, t = performance.now();
-        if (data !== 'ready') last = j.scene?.date ?? last, log.push([t | 0, j.args, t - j.t | 0,
-            data[1].flares?.length, !!j.sweep]), j.done(data[1]);
+        if (data !== 'ready') log.push([t | 0, j.args, t - j.t | 0,
+            data[1].flares?.length, !!j.sweep]), j.done(data[1]),
+            j.scene && read(j.scene.date);
         if (log.length > 4000) log.splice(0, 2000);
         pump(w);
     };

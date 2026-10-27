@@ -12,9 +12,10 @@ const SEARCH = `<input type="search" class="fx-search" id="search"
     placeholder="Address or lat, lon" spellcheck="false" autocomplete="off">`;
 const QUARTERS = `<div class="fx-quarters" id="quarters"></div>`;
 
-// a line at the map's top right saying what is still being read, the newest
-// read's (a read's update keeps its place): on a slow line an empty map and a loading one look the same.
-// status(k) takes read k down, and the start goes once the first settle
+// a line at the map's top right saying what is still being read: the newest
+// read's, and an update keeps its place. on a slow line an empty map and a
+// loading one look the same. status(k) takes read k down, and the start
+// goes once the first reads settle
 const lines = new Map([['start', 'Loading the engine and archive']]);
 export function status(k, text) {
     text ? lines.set(k, text) : lines.delete(k);

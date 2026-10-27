@@ -28,7 +28,7 @@ import { loadAttributions } from './methane/attribution.js';
 import { SITE_LAYERS, SITE_ZOOM, holdSites, drawSites } from './sites.js';
 import { view as liveView, features as liveFeatures, site as liveSite,
     quarters as liveQuarters, onChange as onLive, hold as holdLive,
-    busy as liveBusy, progress as liveProgress } from './flaring/live.js';
+    busy as liveBusy, onRead } from './flaring/live.js';
 
 // the bucket every layer reads. index.json names each table's objects, so no
 // module names one
@@ -409,16 +409,13 @@ mount({
             redraw) : (soon = null, REFRESH.live(),
             dispatchEvent(new Event('fx-rows')));
         onLive(() => soon ??= setTimeout(redraw, 1000));
-        // the live reads in the status line, while any in reach of the view remain
-        // and kept up for 3 s after, as the queue empties between sweeps
-        let last = 0;
-        setInterval(() => {
-            const date = liveProgress(), now = Date.now();
-            if (liveBusy()) last = now;
-            ctx.status('live', now - last < 3000 && (date
-                ? `Processed S2 scene for ${formatDate(date)}`
-                : 'Reading S2 scenes'));
-        }, 500);
+        // each live read in the status line, taken down 3 s after the last
+        // once none in reach of the view remain: the queue empties a moment
+        // between sweeps
+        const quiet = debounce(() => liveBusy() ? quiet() : ctx.status('live'),
+            3000);
+        onRead(date => (ctx.status('live',
+            `Processed S2 scene for ${formatDate(date)}`), quiet()));
 
         // an outline is drawn while a drawn detection is inside it: after
         // any layer is re-set, and after the key re-filters them
