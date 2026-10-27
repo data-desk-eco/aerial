@@ -77,15 +77,19 @@ function put(id, features) {
 }
 // the clusters, the outlines and the table follow a layer only when its
 // set of points changes: the live layer is re-set at every read, and
-// re-clustering 60k points each time made the map judder
+// re-clustering 60k points each time made the map judder. the clusters are
+// drawn only below NEAR, so nearer in they are re-set on the way out
 const drawn = {};
+let stale = false;
+const cluster = () => (stale = false, put('everything',
+    FAMILIES.flatMap(f => CTX.sources[f].features)));
 function setSource(id, features) {
     put(id, features);
     const k = features.map(f => `${f.properties.id}:${f.properties[
         f.properties.kind === 'vnf' ? MODE.vnf.prop : MODE.s2.prop]}`).join();
     if (k === drawn[id]) return;
     drawn[id] = k;
-    put('everything', FAMILIES.flatMap(f => CTX.sources[f].features));
+    CTX.map.getZoom() < NEAR ? cluster() : stale = true;
     dispatchEvent(new Event('fx-filters'));   // the table drawer re-renders
 }
 
@@ -391,11 +395,14 @@ mount({
         ctx.map.on('movestart', () => holdLive(true));
         ctx.map.on('moveend', () => { scheduleDots(); SCHEDULED.sites();
             holdLive(false); liveView(ctx.map); });
-        // the live reads land a scene at a time: redrawn at most twice a
-        // second while they do
+        ctx.map.on('zoomend', () => stale && ctx.map.getZoom() < NEAR
+            && cluster());
+        // the live reads land a scene at a time: redrawn at most once a
+        // second while they do, and never while the map moves
         let soon;
-        onLive(() => soon ??= setTimeout(() => (soon = null, REFRESH.live()),
-            1000));
+        const redraw = () => ctx.map.isMoving() ? ctx.map.once('moveend',
+            redraw) : (soon = null, REFRESH.live());
+        onLive(() => soon ??= setTimeout(redraw, 1000));
 
         // an outline is drawn while a drawn detection is inside it: after
         // any layer is re-set, and after the key re-filters them

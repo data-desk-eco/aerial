@@ -26,13 +26,19 @@ const LIST = `https://storage.googleapis.com/storage/v1/b/${BUCKET}/o`;
 export const LIVE_ZOOM = 10;
 const DAYS = 365, FRESH = 2, SITE_M = 135, CLEAR = 0.6, MIN_LOOKS = 10;
 // a site is drawn as the archive's are: lit on LIT dates, and over the
-// floor aerial holds the archive's sites to on their mean b12
+// floor aerial holds the archive's sites to on their mean b12. nor is one
+// lit only in its hemisphere's summer, april to august in the north (the
+// archive's `seasonal`): a solar panel or a sawtooth roof that catches a
+// high sun. of the sites the detector's heat test left lit in a year, that
+// was 71 of 114 in madrid, 33 of 87 in london, and 7 of 308 by a viirs
+// flare in the permian
 const LIT = 2;
-const lit = s => [...s.looks.values()].filter(l => l.flare);
+const summer = (d, lat) => (+d.slice(5, 7) + (lat < 0 ? 2 : 8)) % 12 < 5;
 const drawn = s => {
-    const l = lit(s);
-    return l.length >= LIT && l.reduce((a, x) => a + x.flare.max_b12, 0)
-        / l.length >= MODE.s2.floor;
+    const l = [...s.looks].filter(([, x]) => x.flare);
+    return l.length >= LIT && !l.every(([d]) => summer(d, s.lat))
+        && l.reduce((a, [, x]) => a + x.flare.max_b12, 0) / l.length
+        >= MODE.s2.floor;
 };
 const G = 0.05;       // the coverage grid, degrees
 const GROUP = 0.03;   // a site read takes the sites this close, degrees
@@ -53,6 +59,14 @@ function weight(p) {
     return inside(p, shown) ? (p.looks && !p.ok ? 2e8 : 1e8) + 1 - off / 2
         : inside(p, shown, d) ? 1 - off / 4 : -Infinity;
 }
+// a site's weight changes only with the view or its being drawn, so each
+// is kept until either changes (ver), and so is the most a set of sites
+// waiting on a scene weighs, until the set changes too (v = -1): the
+// next read is chosen every time a read lands, over every scene waiting
+let ver = 0;
+const weigh = p => p.v === ver ? p.w : (p.v = ver, p.w = weight(p));
+const most = set => set.v === ver ? set.w
+    : (set.v = ver, set.w = Math.max(...[...set].map(weigh)));
 
 // ── the pool: jobs run highest priority first, one per worker, and one
 // whose priority is -Infinity waits. a job's start, when it has one, fills
@@ -63,8 +77,15 @@ const N = Math.min(2 * (navigator.hardwareConcurrency || 4), 16);
 // whether a sweep]
 const log = [];
 const jobs = [], idle = [];
-let moving = false;   // while the map moves, no job starts
-export const hold = h => { moving = h; if (!h) kick(); };
+// while the map moves no job starts, nor until it has been still for
+// SETTLE ms, so a run of drags does not set every worker decoding between
+// two of them
+const SETTLE = 500;
+let moving = false, still;
+export const hold = h => {
+    clearTimeout(still), moving = true;
+    if (!h) still = setTimeout(() => (moving = false, kick()), SETTLE);
+};
 const pump = w => {
     for (;;) {
         let i = -1, best = -Infinity;
@@ -159,10 +180,15 @@ const scenes = tile => listed.get(tile) ?? listed.set(tile, (async () => {
 const sites = [], byId = new Map(), bucket = new Map();
 const cover = new Map();   // scene url -> Map(square -> cloud at its centre)
 const dirty = { sites: new Set(), cover: new Set() };
+// the version is the detector's: bumped when what it finds changes, so a
+// reload forgets what an older one found (2: the b8a heat test)
 const db = new Promise(ok => {
-    const q = indexedDB.open('burnoff-live', 1);
-    q.onupgradeneeded = () => ['sites', 'cover']
-        .forEach(s => q.result.createObjectStore(s));
+    const q = indexedDB.open('burnoff-live', 2);
+    q.onupgradeneeded = () => ['sites', 'cover'].forEach(s => {
+        if (q.result.objectStoreNames.contains(s))
+            q.result.deleteObjectStore(s);
+        q.result.createObjectStore(s);
+    });
     q.onsuccess = () => ok(q.result);
     q.onerror = () => ok(null);
 });
@@ -190,7 +216,7 @@ async function flush() {
     if (!d) return;
     const t = d.transaction(['sites', 'cover'], 'readwrite');
     for (const id of dirty.sites) {
-        const { probed, ok, ...s } = byId.get(id);
+        const { probed, ok, v, w, ...s } = byId.get(id);
         t.objectStore('sites').put({ ...s, looks: [...s.looks] }, id);
     }
     for (const u of dirty.cover)
@@ -233,7 +259,7 @@ function land(scene, held, r) {
         if (!(l.flare?.max_b12 >= f.max_b12)) l.flare = f, save('sites', s.id);
         touched.add(s);
     }
-    touched.forEach(s => s.ok = drawn(s));
+    touched.forEach(s => s.ok !== (s.ok = drawn(s)) && ver++);
     changed();
 }
 function look(s, scene, cloud) {
@@ -250,22 +276,21 @@ async function probe(s) {
     s.probed = true;
     for (const scene of await scenes(s.tile))
         if (!s.looks.has(scene.date))
-            pending.get(scene.url)?.add(s)
-                ?? (pending.set(scene.url, new Set([s])), queue(scene));
+            pending.has(scene.url) ? (pending.get(scene.url).add(s).v = -1)
+                : (pending.set(scene.url, new Set([s])), queue(scene));
 }
 function queue(scene) {
     let held;
     run({ get pri() {
         const wait = pending.get(scene.url);
-        return wait ? day(scene) + Math.max(...[...wait].map(weight))
-            : -Infinity;
+        return wait ? day(scene) + most(wait) : -Infinity;
     }, scene, start: job => {
         const wait = pending.get(scene.url);
         if (!wait) return false;
         const a = [...wait].reduce((a, s) => weight(s) > weight(a) ? s : a);
         held = [...wait].filter(t => Math.abs(t.lat - a.lat) < GROUP
             && Math.abs(t.lon - a.lon) < GROUP);
-        held.forEach(t => wait.delete(t));
+        held.forEach(t => wait.delete(t)), wait.v = -1;
         wait.size ? queue(scene) : pending.delete(scene.url);
         held = held.filter(t => !t.looks.has(scene.date));
         job.args = ['detect', scene.url, ...box(held, SITE_M / 111320), 0, 1,
@@ -303,7 +328,7 @@ async function owners(i0, j0, i1, j1) {
 export async function view(map) {
     await loaded;
     const b = map.getBounds(), e = ++epoch;
-    shown = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+    shown = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], ver++;
     // the old view's whole-scene reads that have not started are dropped,
     // and its sites' reads wait unless they are near this one
     for (let i = jobs.length; i--;)
@@ -396,7 +421,7 @@ export function onChange(fn) { changed = fn; loaded.then(fn); }
 globalThis.burnoff = { sites, jobs, log, cover };
 
 export function features(keys) {
-    return sites.filter(drawn).map(s => {
+    return sites.filter(s => s.ok).map(s => {
         const looks = [...s.looks].filter(([d]) => dateInQuarters(d, keys));
         const clear = looks.filter(([, l]) => l.cloud < CLEAR);
         const on = looks.filter(([, l]) => l.flare);
