@@ -80,50 +80,57 @@ so a table that starts partitioning does not break a reader. its `sizes` say
 what each object weighs and which partitions a table holds (`bytes()`,
 `shell/archive.js`): a hint, listed as the archive publishes.
 
-**live s2 (experimental, branch burnoff-live).** `flaring/live.js` is the
-one exception to "detects nothing": burnoff's detector, as wasm in
-`vendor/burnoff/` (built by `make wasm` in `~/Tools/burnoff`), runs in two
-workers per core (at most two per GB of `deviceMemory`, and four on a
-touch-first device, whose tab crashed under sixteen: each worker's wasm heap
-keeps its largest read, 25-40 MB over a phone's view and up to 135 MB over a
-desktop's) over google's sentinel-2 mirror. from z10 each tile under the
-view has its newest scenes read over the view until two came back mostly
-clear, and every other scene of the last year read only around the sites
-found: newest date first, the view's sites first (those not yet drawn before
-the rest) and nearest its centre first, work further than a view's width (at
-least 0.5°) away paused. the view is followed at every zoom, so the work is
-the view's even below z10, where no new sweep starts. the page's thread is
-the map's: no read starts while it moves or until it has been still for half
-a second (a read started between two drags held every core through the
-second), the read-ahead fetches run in their own worker
-(`flaring/ahead.js`), a live update waits for the map to stop and re-sets
-only its own source unless its set of points changed (`setSource`), as
-re-clustering 60k points at every read made pans judder, and the clusters,
-drawn only below NEAR, are re-set on the way out. the next read is chosen
-each time one lands, over every scene a site waits on, so each site's weight
-and each scene's most is kept until the view, a site's being drawn or the
-scene's set changes. what each scene has read is kept as 0.05° squares, so
-zooming in reads nothing and a pan reads only what it uncovers. sites, their
-looks and those squares are in indexeddb (`burnoff-live`, its version the
-detector's: bump it when what the detector finds changes, and a reload
-forgets the old finds); a reload reads only new scenes. a site is the
-detections within 135 m of its first, a look is clear under 0.6 cloud, as in
-the archive. a site is drawn as the archive's are: lit on two dates, with
-its mean b12 over MODE.s2.floor (aerial's gate on archive sites), and named
-by its clear detections. like aerial, it does not hide likely_glint, but it
-does hide a site lit only in its hemisphere's summer (the archive's
-`seasonal`, april to august in the north): roofs and solar panels that catch
-a high sun, which the detector's own heat test (b8a against b12, burnoff's
-AGENTS.md) cannot tell from a fire. in a year of scenes the heat test took
-london from ~2000 drawn sites to 87, and the summer rule to 54; madrid 704,
-114, 43; the permian's sites by a viirs flare 327, 308, 301. kind `live`
-draws, clusters and filters as an s2 site (`key.js`, `layers.js` band,
-FAMILIES) and opens the s2 card over its own dates (`card/live.js`), where a
-date draws the detector's own pixels, each on the ramp by its b12 inside a
-hairline outline, as a plume mask is drawn, in place of the archive's halo.
-the old burnoff map (`~/Tools/burnoff-map`) did this with l2a cogs, a stac
-search, every band of every 256 px block of every scene, and a crdt shared
-over webrtc.
+**live s2 (experimental, branch burnoff-live).** on this branch s2 is the
+live layer alone: the archive's s2 sites are not read or drawn, and the ui
+says hotspots, not flares. `flaring/live.js` is the one exception to
+"detects nothing": burnoff's detector, as wasm in `vendor/burnoff/` (built
+by `make wasm` in `~/Tools/burnoff`), runs in two workers per core (at most
+two per GB of `deviceMemory`, and four on a touch-first device, whose tab
+crashed under sixteen: each worker's wasm heap keeps its largest read, 25-40
+MB over a phone's view and up to 135 MB over a desktop's) over google's
+sentinel-2 mirror. from z10 each tile under the view has its newest scenes
+read over the view until two came back mostly clear, and every other scene
+of the last year read only around the sites found: newest date first, the
+view's sites first (those not yet drawn before the rest) and nearest its
+centre first, work further than a view's width (at least 0.5°) away paused.
+the view is followed at every zoom, so the work is the view's even below
+z10, where no new sweep starts. the page's thread is the map's: no read
+starts while it moves or until it has been still for half a second (a read
+started between two drags held every core through the second), the
+read-ahead fetches run in their own worker (`flaring/ahead.js`), a live
+update waits for the map to stop and re-sets only its own source unless its
+set of points changed (`setSource`), as re-clustering 60k points at every
+read made pans judder, and the clusters, drawn only below NEAR, are re-set
+on the way out. the next read is chosen each time one lands, over every
+scene a site waits on, so each site's weight and each scene's most is kept
+until the view, a site's being drawn or the scene's set changes. what each
+scene has read is kept as 0.05° squares, so zooming in reads nothing and a
+pan reads only what it uncovers. sites, their looks and those squares are in
+indexeddb (`burnoff-live`, its version the detector's: bump it when what the
+detector finds changes, and a reload forgets the old finds); a reload reads
+only new scenes. a site is the detections within 135 m of its first, a look
+is clear under 0.6 cloud, as in the archive. a site is drawn as the
+archive's are: lit on two dates, with its mean b12 over MODE.s2.floor
+(aerial's gate on archive sites), and named by its clear detections. like
+aerial, it does not hide likely_glint, but it does hide a site lit only in
+its hemisphere's summer (the archive's `seasonal`, april to august in the
+north): roofs and solar panels that catch a high sun, which the detector's
+own heat test (b8a against b12, burnoff's AGENTS.md) cannot tell from a
+fire. in a year of scenes the heat test took london from ~2000 drawn sites
+to 87, and the summer rule to 54; madrid 704, 114, 43; the permian's sites
+by a viirs flare 327, 308, 301. kind `live` draws, clusters and filters as
+an s2 site (`key.js`, `layers.js` band, FAMILIES) and opens the s2 card over
+its own dates (`card/live.js`), whose title says Loading… in grey until
+every scene of the year has looked at the site (`loading`, from each site's
+scenes waiting and reads in flight), where a date draws the detector's own
+pixels, each on the ramp by its b12 inside a hairline outline, as a plume
+mask is drawn, in place of the archive's halo. the old burnoff map
+(`~/Tools/burnoff-map`) did this with l2a cogs, a stac search, every band of
+every 256 px block of every scene, and a crdt shared over webrtc. from z12
+each hotspot marking carries its instrument, S2 or VNF, up and right of it
+in the basemap's montserrat (`tag`, `layers.js`; the audit allows those two
+layers' glyphs). a hotspot card dims the imagery around the site, not around
+each date's own point, which lit some dates and darkened others.
 
 ## layout
 

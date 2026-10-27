@@ -10,14 +10,15 @@ import { RAMP, DD } from '../layers.js';
 
 const FOOTPRINT = 'detection-footprint';   // the layer id and its source
 const PIXELS = 'detection-pixels';         // the source, and its layers' stem
+const UNDER = 'live';   // the lowest flaring layer, which overlays sit under
 let map = null;
 export const initOverlays = m => { map = m; };
 
 // both flaring layers: imagery under one is imagery under the other
 export function greyCircles(grey) {
-    for (const id of ['detections', 'live', 'vnf'])
-        if (map.getLayer(id))
-            map.setPaintProperty(id, 'icon-opacity', grey ? 0.35 : 1);
+    for (const id of ['live', 'vnf'])
+        if (map.getLayer(id)) for (const k of ['icon-opacity', 'text-opacity'])
+            map.setPaintProperty(id, k, grey ? 0.35 : 1);
 }
 
 function clearFootprint() {
@@ -33,7 +34,7 @@ export function clearOverlays() {
     greyCircles(false);
 }
 
-// a radial gradient, in under 'detections' so both families' markings stay
+// a radial gradient, in under UNDER so both families' markings stay
 // above it. the same one again, as a re-rendered card asks, is left as it is
 let halo = null;
 export function heatFootprint({ lon, lat, val, radiusM, cfg }) {
@@ -58,16 +59,15 @@ export function heatFootprint({ lon, lat, val, radiusM, cfg }) {
         coordinates: [[lon - dLon, lat + dLat], [lon + dLon, lat + dLat],
                       [lon + dLon, lat - dLat], [lon - dLon, lat - dLat]] });
     map.addLayer({ id: FOOTPRINT, type: 'raster', source: FOOTPRINT,
-        paint: { 'raster-opacity': 1 } }, 'detections');
+        paint: { 'raster-opacity': 1 } }, UNDER);
     greyCircles(true);
-    dim(lon, lat);
 }
 
 // a live detection's own pixels, drawn as the plume mask draws a plume: each
 // pixel filled on the family's ramp by its own b12, and a hairline round
 // them all, along the edges no two of them share. px is [b12, then each
 // corner's lon and lat]
-export function pixelFootprint({ px, raw_lon, raw_lat }, cfg) {
+export function pixelFootprint({ px }, cfg) {
     const k = JSON.stringify(px);
     if (k === halo && map.getLayer(`${PIXELS}-fill`)) return;
     halo = k;
@@ -91,18 +91,20 @@ export function pixelFootprint({ px, raw_lon, raw_lat }, cfg) {
     map.addLayer({ id: `${PIXELS}-fill`, type: 'fill', source: PIXELS,
         filter: ['has', 'v'], paint: { 'fill-opacity': 0.5,
             'fill-color': ['interpolate', ['linear'], ['get', 'v'],
-                lo, RAMP[0], mid, RAMP[1], hi, RAMP[2]] } }, 'detections');
+                lo, RAMP[0], mid, RAMP[1], hi, RAMP[2]] } }, UNDER);
     map.addLayer({ id: `${PIXELS}-line`, type: 'line', source: PIXELS,
         filter: ['!', ['has', 'v']], paint: { 'line-color': DD.white,
-            'line-width': 1, 'line-opacity': 0.8 } }, 'detections');
+            'line-width': 1, 'line-opacity': 0.8 } }, UNDER);
     greyCircles(true);
-    dim(raw_lon, raw_lat);
 }
 
 // the imagery darkened while a card is open, bar the outline of the site the
 // detection sits in, which stays lit: the world less that site, in sql. no
 // site, no row: nothing is darkened. a new outline replaces the old in
-// place: taking the layer down while the statement ran flashed the map
+// place: taking the layer down while the statement ran flashed the map. a
+// hotspot card dims around the site, not each date's own point, which near
+// REACH lit some dates and darkened others; and a failed statement (the
+// outlines are re-read after a pan) leaves the dim as it was
 const DIM = 'dim', REACH = 0.005;
 let dimEpoch = 0, dimmed = null;
 export async function dim(lon, lat) {
@@ -112,7 +114,7 @@ export async function dim(lon, lat) {
             ST_Union_Agg(geometry))) AS g
         FROM site_view
         WHERE ST_DWithin(geometry, ST_Point(${+lon}, ${+lat}), ${REACH})
-        HAVING count(*) > 0`).catch(() => []);   // no site_view yet: no site
+        HAVING count(*) > 0`).catch(() => [{ g: dimmed }]);
     if (e !== dimEpoch || g === dimmed) return;
     dimmed = g;
     if (!g) {

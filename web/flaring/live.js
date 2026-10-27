@@ -18,7 +18,7 @@
 // two dates found it and its mean b12 is over aerial's floor, so a new site
 // waits for its reads to confirm it, and is named by its clear detections.
 
-import { dateInQuarters } from '../shell/util.js';
+import { dateInQuarters, quarterOf } from '../shell/util.js';
 import { MODE } from './render.js';
 
 const BUCKET = 'gcp-public-data-sentinel-2';
@@ -225,7 +225,7 @@ async function flush() {
     if (!d) return;
     const t = d.transaction(['sites', 'cover'], 'readwrite');
     for (const id of dirty.sites) {
-        const { probed, ok, v, w, ...s } = byId.get(id);
+        const { probed, ok, v, w, wait, reads, ...s } = byId.get(id);
         t.objectStore('sites').put({ ...s, looks: [...s.looks] }, id);
     }
     for (const u of dirty.cover)
@@ -279,14 +279,19 @@ function look(s, scene, cloud) {
 
 // every scene of a site's tile that has not looked at it. a read takes the
 // most wanted site waiting on its scene and those within GROUP of it, so a
-// cluster of sites is one read
+// cluster of sites is one read. a site counts the scenes it waits on (wait)
+// and its reads in flight (reads): its card says it is still loading
+// until both are 0
 const pending = new Map();   // scene url -> the sites waiting on it
 async function probe(s) {
     s.probed = true;
-    for (const scene of await scenes(s.tile))
-        if (!s.looks.has(scene.date))
+    const all = await scenes(s.tile);
+    s.wait = s.reads = 0;
+    for (const scene of all)
+        if (!s.looks.has(scene.date) && ++s.wait)
             pending.has(scene.url) ? (pending.get(scene.url).add(s).v = -1)
                 : (pending.set(scene.url, new Set([s])), queue(scene));
+    changed();
 }
 function queue(scene) {
     let held;
@@ -299,13 +304,15 @@ function queue(scene) {
         const a = [...wait].reduce((a, s) => weight(s) > weight(a) ? s : a);
         held = [...wait].filter(t => Math.abs(t.lat - a.lat) < GROUP
             && Math.abs(t.lon - a.lon) < GROUP);
-        held.forEach(t => wait.delete(t)), wait.v = -1;
+        held.forEach(t => (wait.delete(t), t.wait--)), wait.v = -1;
         wait.size ? queue(scene) : pending.delete(scene.url);
         held = held.filter(t => !t.looks.has(scene.date));
+        held.forEach(t => t.reads++);
         job.args = ['detect', scene.url, ...box(held, SITE_M / 111320), 0, 1,
             held.flatMap(t => [t.lon, t.lat])];
-        return held.length > 0;
-    } }).then(r => land(scene, held, r));
+        return held.length > 0 || (changed(), false);
+    } }).then(r => (held.forEach(t => t.reads--), land(scene, held, r),
+        changed()));
 }
 const box = (ps, d) => [Math.min(...ps.map(p => p.lon)) - d,
     Math.min(...ps.map(p => p.lat)) - d, Math.max(...ps.map(p => p.lon)) + d,
@@ -429,6 +436,16 @@ function rects(squares) {
 export function onChange(fn) { changed = fn; loaded.then(fn); }
 globalThis.burnoff = { sites, jobs, log, cover, workers: N };
 
+// a site's feature, once the sites a reload restores are in (a #flare= link)
+export const site = (id, keys) => loaded.then(() =>
+    features(keys).find(f => f.properties.id === id) ?? null);
+
+// the quarters a drawn site in a lon/lat box was lit in
+export const quarters = ([w, s, e, n]) => new Set(sites.filter(p => p.ok
+    && p.lon >= w && p.lon <= e && p.lat >= s && p.lat <= n)
+    .flatMap(p => [...p.looks].filter(([, l]) => l.flare)
+        .map(([d]) => quarterOf(d))));
+
 export function features(keys) {
     return sites.filter(s => s.ok).map(s => {
         const looks = [...s.looks].filter(([d]) => dateInQuarters(d, keys));
@@ -438,6 +455,7 @@ export function features(keys) {
         return { type: 'Feature', geometry: { type: 'Point',
             coordinates: [s.lon, s.lat] }, properties: {
             id: s.id, kind: 'live', lat: s.lat, lon: s.lon,
+            loading: !(s.wait === 0 && s.reads === 0),
             name: `${n} detection${n === 1 ? '' : 's'}`,
             max_b12: Math.max(0, ...on.map(([, l]) => l.flare.max_b12)),
             detection_count: n, passes: looks.length,

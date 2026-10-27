@@ -7,7 +7,8 @@
 import { showDetail, closeDetail } from '../shell/detail.js';
 import { dateInQuarters, formatDate } from '../shell/util.js';
 import { renderChart } from './chart.js';
-import { initOverlays, greyCircles, clearOverlays } from './overlays.js';
+import { initOverlays, greyCircles, clearOverlays, dim }
+    from './overlays.js';
 import flare from './flare.js';
 import vnf from './vnf.js';
 import plume from './plume.js';
@@ -151,6 +152,7 @@ function seriesHtml(p, b) {
 
 function seriesShow(p, el, b, keep) {
     greyCircles(true);
+    dim(...coords(p));
     // the series is read per site on open, then windowed to the ticked
     // quarters; a failed read lists nothing rather than loading for good
     const qKeys = quarterKeys();

@@ -20,7 +20,7 @@ export default {
     cfg: MODE.vnf,
     instrument: 'VNF',
     passLabel: 'Nights read',
-    title: p => siteTitle(p, `Flare #${p.id}`),
+    title: p => siteTitle(p, `Hotspot #${p.id}`),
     fetch: vnfSeries,
     select: footprint,
 };

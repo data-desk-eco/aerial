@@ -79,8 +79,12 @@ export const MARK = {
 // live detection's pixels and the probability
 // surface, which are data, not imagery; and the intro heading at 600, the
 // title weight of datadesk.eco, where the guidelines' 750 read heavy
+// the hotspot layers carry their instrument's name, in the basemap's
+// montserrat (RATE_LABEL): from TAG_ZOOM a reader looking at one marking
+// has no key to tell s2's scale from vnf's
 export const AUDIT = {
     skip: '.fx-modal-content [slot=title], .fx-modal-content [slot=title] *',
+    glyphs: ['live', 'vnf'],
     graded: ['detection-footprint', 'detection-pixels-fill',
         'dd-plume-probability', 'plume-mask-image'],
 };
@@ -105,3 +109,8 @@ export const RATE_LABEL = {
     'text-font': ['Montserrat Regular'], 'text-size': 11,
     'text-anchor': 'bottom-left', 'text-offset': [0.7, -0.7],
 };
+// a hotspot's instrument, up and right of it from TAG_ZOOM, never dropped
+const TAG_ZOOM = 12;
+export const tag = t => ({ ...RATE_LABEL,
+    'text-field': ['step', ['zoom'], '', TAG_ZOOM, t],
+    'text-allow-overlap': true, 'text-ignore-placement': true });

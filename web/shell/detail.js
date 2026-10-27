@@ -9,7 +9,8 @@
 //   idProp: 'id',
 //   flyZoom: 15,               zoom floor on select
 //   highlightZoom: 10,         zoom the highlight box appears from
-//   title: p => ({text}),       never a link: the heading collapses the card
+//   title: p => ({text, note}), never a link: the heading collapses the card;
+//                               a note follows the text in grey
 //   stats: p => rows html,      under the heading rule, after the coordinates
 //   html: p => body html,
 //   onShow: (p, el) => {},
@@ -105,7 +106,8 @@ function render(feature, fromPermalink) {
     const el = panel();
     el.innerHTML = `
         <span slot="title" title="${escapeHtml(t.text)
-            }">${escapeHtml(t.text)}</span>
+            }">${escapeHtml(t.text)}${t.note ? ` <span class="fx-secondary">${
+            escapeHtml(t.note)}</span>` : ''}</span>
         <div slot="subtitle" class="fx-sub"><span>${fmtCoords(lat, lon)
             }${nav}</span><div class="fx-stats">${cfg.stats?.(p) || ''
             }</div></div>

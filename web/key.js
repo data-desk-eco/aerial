@@ -20,7 +20,7 @@ const inPlumeBand = (lo, hi) => p => p.rate_kg_h != null
 // no infrastructure group: candidates belong to an open plume card alone
 export const keySections = () => [
     {
-        label: `S2/VNF flaring\n(${MODE.s2.unit}/${MODE.vnf.unit})`,
+        label: `S2/VNF hotspots\n(${MODE.s2.unit}/${MODE.vnf.unit})`,
         rows: s2.map(([a, color, inS2], i) => {
             const [b, , inVNF] = vnf[i];
             const [x, y] = [of('flare', inS2), of('vnf', inVNF)];
