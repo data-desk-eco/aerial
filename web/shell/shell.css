@@ -79,10 +79,11 @@ d='M0 0 8 8M8 0 0 8' stroke='%23000' stroke-width='1.4'/%3E%3C/svg%3E")
 .fx-quarters dd-dot { margin-left: var(--dd-dot-inset); }
 .fx-quarters > span:nth-child(5n) { text-align: right; }
 
-/* what is still being read, one line under the quarters */
+/* what is still being read, one line of plain text at the map's top
+   right, under an open card */
 .fx-status {
-    margin-top: var(--dd-dot-row-gap);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    position: absolute; top: 0; right: 0; margin: var(--dd-margin);
+    color: var(--dd-ui-text); white-space: nowrap; pointer-events: none;
 }
 .fx-status:empty { display: none; }
 

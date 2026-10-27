@@ -12,7 +12,7 @@ const SEARCH = `<input type="search" class="fx-search" id="search"
     placeholder="Address or lat, lon" spellcheck="false" autocomplete="off">`;
 const QUARTERS = `<div class="fx-quarters" id="quarters"></div>`;
 
-// a line under the quarters saying what is still being read, the newest
+// a line at the map's top right saying what is still being read, the newest
 // read's (a read's update keeps its place): on a slow line an empty map and a loading one look the same.
 // status(k) takes read k down, and the start goes once the first settle
 const lines = new Map([['start', 'Loading the engine and archive…']]);
@@ -38,9 +38,10 @@ export function buildShell(config) {
         <svg id="worldmap"></svg>
         ${config.search ? SEARCH : ''}
         ${config.quarters ? QUARTERS : ''}
-        <div class="fx-status fx-secondary" id="status">${
-            escapeHtml(lines.get('start'))}</div>
     </dd-panel>
+
+    <div class="fx-status" id="status">${
+        escapeHtml(lines.get('start'))}</div>
 
     <dd-key class="fx-key" id="key-panel"></dd-key>
 

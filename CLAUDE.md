@@ -132,7 +132,7 @@ scenes waiting and reads in flight), and where a date draws the detector's
 own pixels, each on the ramp by its b12 inside a hairline outline, as a
 plume mask is drawn. the table's s2 tab says Detections loading, not No rows
 in view, while reads in reach of the view remain (`busy`; a live redraw
-sends `fx-rows`). one line under the quarters says what is still being
+sends `fx-rows`). one line at the map's top right says what is still being
 read, the newest read's (`status`, `shell/ui.js`): the engine at start, each
 layer's read, and the date of the last live scene read (Processed S2 scene for 3 Mar 2026),
 kept up 3 s past the last. a hotspot card dims the imagery around its site, not each
