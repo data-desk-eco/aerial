@@ -6,8 +6,9 @@
 // reads the bytes it needs and decodes only clear sky.
 //
 // it works back from today. a tile's newest scenes are read over the view
-// until FRESH of them saw it mostly clear, so a flare is drawn as soon as
-// its scene is read; every other scene is read only around the sites found,
+// until enough of them saw it mostly clear: FRESH over a z10 view, more as
+// the view narrows (DEPTH), so a flare is drawn as soon as its scene is
+// read; every other scene is read only around the sites found,
 // so a site's dates fill in behind it, newest first and nearest the view's
 // centre first. what a scene has read is kept as squares of a G degree
 // grid, so a view inside one already read reads nothing, and a pan reads
@@ -25,6 +26,12 @@ const BUCKET = 'gcp-public-data-sentinel-2';
 const LIST = `https://storage.googleapis.com/storage/v1/b/${BUCKET}/o`;
 export const LIVE_ZOOM = 10;
 const DAYS = 365, FRESH = 2, SITE_M = 135, CLEAR = 0.6, MIN_LOOKS = 10;
+// km² of clear looks a view is swept to: FRESH over a z10 view, ~40 at
+// z13, most of the year nearer in. a read costs by its area, and a flare found only around the
+// sites the newest looks lit was missed where it burns on few days: at the
+// isab refinery the two newest clear looks lit nothing, a year of them
+// five sites
+const DEPTH = 12000;
 // a site is drawn as the archive's are: lit on LIT dates, and over the
 // floor aerial holds the archive's sites to on their mean b12. nor is one
 // lit only in its hemisphere's summer, april to august in the north (the
@@ -365,17 +372,21 @@ export async function view(map) {
                 if (t === own) by.get(t)[1].push([i, j]);
             }
         }
-    // two scenes at a time: most of a scene's reads finish at once, cloud or
-    // no data, and a few hold the rest of the workers' time
+    // a quarter of the clear looks wanted at a time, two at least: most of
+    // a scene's reads finish at once, cloud or no data, and a few hold the
+    // rest of the workers' time
+    const km2 = (i1 - i0 + 1) * (j1 - j0 + 1) * (G * 111) ** 2
+        * Math.cos((j0 + j1 + 1) * G * Math.PI / 360);
+    const need = Math.max(FRESH, Math.round(DEPTH / km2));
     for (const [tile, [all, own]] of by) (async () => {
         let clear = 0;
         const flight = [];
         for (const scene of await scenes(tile)) {
-            if (e !== epoch || clear >= FRESH) return;
+            if (e !== epoch || clear >= need) return;
             flight.push(sweep(scene, all).then(c => clear += c != null
                 && own.filter(([i, j]) => c.get(sq(i, j)) >= 0
                     && c.get(sq(i, j)) < CLEAR).length >= own.length / 2));
-            if (flight.length > 1) await flight.shift();
+            if (flight.length >= Math.max(2, need >> 2)) await flight.shift();
         }
     })();
 }

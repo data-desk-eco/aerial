@@ -89,14 +89,16 @@ two per GB of `deviceMemory`, and four on a touch-first device, whose tab
 crashed under sixteen: each worker's wasm heap keeps its largest read, 25-40
 MB over a phone's view and up to 135 MB over a desktop's) over google's
 sentinel-2 mirror. from z10 each tile under the view has its newest scenes
-read over the view until two came back mostly clear, and every other scene
-of the last year read only around the sites found: newest date first, the
-view's sites first (those not yet drawn before the rest) and nearest its
-centre first, work further than a view's width (at least 0.5°) away paused.
-the view is followed at every zoom, so the work is the view's even below
-z10, where no new sweep starts. the page's thread is the map's: no read
-starts while it moves or until it has been still for half a second (a read
-started between two drags held every core through the second), the
+read over the view until enough came back mostly clear: two over a z10 view
+and more as the view narrows (`DEPTH`, ~40 at z13), as an intermittent
+refinery flare was missed when only the two newest looks were swept, and
+every other scene of the last year read only around the sites found: newest
+date first, the view's sites first (those not yet drawn before the rest) and
+nearest its centre first, work further than a view's width (at least 0.5°)
+away paused. the view is followed at every zoom, so the work is the view's
+even below z10, where no new sweep starts. the page's thread is the map's:
+no read starts while it moves or until it has been still for half a second
+(a read started between two drags held every core through the second), the
 read-ahead fetches run in their own worker (`flaring/ahead.js`), a live
 update waits for the map to stop and re-sets only its own source unless its
 set of points changed (`setSource`), as re-clustering 60k points at every
@@ -127,10 +129,16 @@ pixels, each on the ramp by its b12 inside a hairline outline, as a plume
 mask is drawn, in place of the archive's halo. the old burnoff map
 (`~/Tools/burnoff-map`) did this with l2a cogs, a stac search, every band of
 every 256 px block of every scene, and a crdt shared over webrtc. from z12
-each hotspot marking carries its instrument, S2 or VNF, up and right of it
-in the basemap's montserrat (`tag`, `layers.js`; the audit allows those two
-layers' glyphs). a hotspot card dims the imagery around the site, not around
-each date's own point, which lit some dates and darkened others.
+each hotspot marking carries its instrument, S2 or VNF, up and right of it:
+an image set in the page's own inter at 300 (`ensureTag`, `shell/map.js`),
+in a layer of its own over the family's source (`tagLayer`, `layers.js`), as
+gl text takes only the basemap's sdf glyphs, which are not inter. a hotspot
+card dims the imagery around the site, not around each date's own point,
+which lit some dates and darkened others. the intro counts the facilities
+whose outlines the map holds, in four groups and thousands, and its worldmap
+marks each outline's centre a pixel square: `web/facilities.json`, written
+by `make facilities` (`scripts/facilities.sql`, which projects them in sql),
+so no first load reads the archive for it.
 
 ## layout
 

@@ -16,9 +16,9 @@ export const initOverlays = m => { map = m; };
 
 // both flaring layers: imagery under one is imagery under the other
 export function greyCircles(grey) {
-    for (const id of ['live', 'vnf'])
-        if (map.getLayer(id)) for (const k of ['icon-opacity', 'text-opacity'])
-            map.setPaintProperty(id, k, grey ? 0.35 : 1);
+    for (const id of ['live', 'vnf', 'live-tag', 'vnf-tag'])
+        if (map.getLayer(id))
+            map.setPaintProperty(id, 'icon-opacity', grey ? 0.35 : 1);
 }
 
 function clearFootprint() {

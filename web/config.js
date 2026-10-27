@@ -4,14 +4,15 @@
 // does nothing else.
 
 import { mount } from './shell/app.js';
-import { viewportBbox, boxesWorldmap, ensureMark } from './shell/map.js';
+import { viewportBbox, pointsWorldmap, ensureMark, ensureTag }
+    from './shell/map.js';
 import { canon, padBbox, escapeHtml, formatDate, debounce }
     from './shell/util.js';
 import { initArchive, objects } from './shell/archive.js';
 import { prefetchData, fc, from } from './shell/data.js';
 import { MODE } from './flaring/render.js';
-import { DD, MARKS, PIN, AUDIT, RAMP, band, flareIcon, plumeIcon, tag }
-    from './layers.js';
+import { DD, MARKS, PIN, AUDIT, RAMP, band, flareIcon, plumeIcon, TAGS,
+    tagLayer } from './layers.js';
 import { keySections } from './key.js';
 import { readVNF, readSite, quarters, loadTerminals }
     from './flaring/flares.js';
@@ -193,8 +194,8 @@ mount({
     map: { ...VIEW, minZoom: 1.5, maxZoom: 18 },
     about: `
         <div class="region-row">
-            <div class="fx-fine"><div class="fx-secondary">Sentinel-2 coverage:
-                </div><div>Global, read live from zoom 10</div></div>
+            <div class="fx-fine"><div class="fx-secondary">Facilities covered:
+                </div><div id="facilities"></div></div>
             <svg id="modal-worldmap"></svg>
         </div>
         <div class="fx-intro">
@@ -278,6 +279,8 @@ mount({
         CTX = ctx;
         // before the layers, or maplibre logs the expression-only ids missing
         MARKS.forEach(id => ensureMark(ctx.map, id));
+        await Promise.all(Object.values(TAGS)
+            .map(t => ensureTag(ctx.map, t, DD.white)));
         return {
             sites: empty,
             live: empty,
@@ -295,16 +298,14 @@ mount({
         {
             // read from z10, drawn from NEAR and clustered below it
             id: 'live', type: 'symbol', source: 'live', minzoom: NEAR,
-            layout: { ...PIN, ...tag('S2'), 'icon-image': flareIcon(MODE.s2) },
-            paint: { 'text-color': DD.white },
+            layout: { ...PIN, 'icon-image': flareIcon(MODE.s2) },
         },
         {
             // above s2, so the card's heat footprint stays under both
             id: 'vnf', type: 'symbol', source: 'vnf', minzoom: NEAR,
-            layout: { ...PIN, ...tag('VNF'),
-                'icon-image': flareIcon(MODE.vnf) },
-            paint: { 'text-color': DD.white },
+            layout: { ...PIN, 'icon-image': flareIcon(MODE.vnf) },
         },
+        tagLayer('live'), tagLayer('vnf'),
         {
             // no value label: colour already says how much, and the card
             // carries the number
@@ -381,10 +382,16 @@ mount({
         initCard({ map: ctx.map, archive: ARCHIVE,
                    quarterKeys: () => ctx.quarters.keys() });
         initProbabilityOverlay(ctx.map);
+        // the intro's facility counts and their points on its worldmap, a
+        // file of this app's (make facilities), not a read of the archive
+        fetch('facilities.json').then(r => r.json()).then(f => {
+            document.getElementById('facilities').innerHTML =
+                f.counts.map(escapeHtml).join('<br>');
+            pointsWorldmap(document.getElementById('modal-worldmap'),
+                f.points);
+        }).catch(err => console.error('facilities:', err));
         initMask(ctx.map, ARCHIVE);
         addCandidateLayers(ctx.map);
-        boxesWorldmap(document.getElementById('modal-worldmap'),
-            () => null);
 
         // no live read starts while the map moves, so its frames keep the
         // cores the workers would take
