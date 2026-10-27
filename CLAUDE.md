@@ -139,11 +139,8 @@ from z10 each hotspot carries its instrument, S2 or VNF, up and right of
 it: an image set in the page's inter at 300 (`ensureTag`, `shell/map.js`)
 in a layer of its own over the family's source (`tagLayer`, `layers.js`),
 as gl text takes only the basemap's sdf glyphs, which are not inter. the
-intro counts the facilities whose outlines the map holds, in four groups
-and thousands, and its worldmap marks each outline's centre a pixel square:
-`web/facilities.json`, written by `make facilities`
-(`scripts/facilities.sql`, which projects them in sql), so no first load
-reads the archive for it. the old burnoff map (`~/Tools/burnoff-map`) did
+intro names the four groups of facilities whose outlines the map holds, as
+text. the old burnoff map (`~/Tools/burnoff-map`) did
 this with l2a cogs, a stac search, every band of every 256 px block of every
 scene, and a crdt shared over webrtc.
 

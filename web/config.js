@@ -4,9 +4,10 @@
 // does nothing else.
 
 import { mount } from './shell/app.js';
-import { viewportBbox, pointsWorldmap, ensureMark, ensureTag }
+import { drawWorldmap } from './vendor/dd/worldmap.js';
+import { viewportBbox, ensureMark, ensureTag }
     from './shell/map.js';
-import { canon, padBbox, escapeHtml, formatDate, debounce }
+import { canon, padBbox, formatDate, debounce }
     from './shell/util.js';
 import { initArchive, objects } from './shell/archive.js';
 import { prefetchData, fc, from } from './shell/data.js';
@@ -194,8 +195,9 @@ mount({
     map: { ...VIEW, minZoom: 1.5, maxZoom: 18 },
     about: `
         <div class="region-row">
-            <div class="fx-fine"><div class="fx-secondary">Facilities covered:
-                </div><div id="facilities"></div></div>
+            <div class="fx-fine"><div class="fx-secondary">Coverage:</div>
+                Refineries<br>Oil and gas<br>Landfills and wastewater<br>
+                Heavy industry and power</div>
             <svg id="modal-worldmap"></svg>
         </div>
         <div class="fx-intro">
@@ -383,14 +385,7 @@ mount({
         initCard({ map: ctx.map, archive: ARCHIVE,
                    quarterKeys: () => ctx.quarters.keys() });
         initProbabilityOverlay(ctx.map);
-        // the intro's facility counts and their points on its worldmap, a
-        // file of this app's (make facilities), not a read of the archive
-        fetch('facilities.json').then(r => r.json()).then(f => {
-            document.getElementById('facilities').innerHTML =
-                f.counts.map(escapeHtml).join('<br>');
-            pointsWorldmap(document.getElementById('modal-worldmap'),
-                f.points);
-        }).catch(err => console.error('facilities:', err));
+        drawWorldmap(document.getElementById('modal-worldmap'));
         initMask(ctx.map, ARCHIVE);
         addCandidateLayers(ctx.map);
 
