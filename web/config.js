@@ -195,9 +195,8 @@ mount({
     map: { ...VIEW, minZoom: 1.5, maxZoom: 18 },
     about: `
         <div class="region-row">
-            <div class="fx-fine"><div class="fx-secondary">Coverage:</div>
-                Oil and gas<br>Landfills and wastewater<br>
-                Heavy industry and power</div>
+            <div class="fx-fine"><div class="fx-secondary">Facility coverage:
+                </div>Fossil fuels<br>Industrial<br>Waste</div>
             <svg id="modal-worldmap"></svg>
         </div>
         <div class="fx-intro">
