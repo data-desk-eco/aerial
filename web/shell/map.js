@@ -51,3 +51,10 @@ export function wireWorldmap(map, el) {
     drawWorldmap(el).then(update);
     map.on('move', update);
 }
+
+// the worldmap with points: d is an svg path of zero-length segments in its
+// own mollweide units, each drawn a pixel square
+export const pointsWorldmap = (el, d) => drawWorldmap(el).then(() =>
+    el.insertAdjacentHTML('beforeend', `<path d="${d}" fill="none"
+        stroke="#FFFFFF" stroke-width="1" stroke-linecap="square"
+        vector-effect="non-scaling-stroke"/>`));
