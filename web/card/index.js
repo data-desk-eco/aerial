@@ -123,10 +123,12 @@ export function reselectCurrentFeature(id) {
 const pct = v => `${Math.round(v * 100)}%`;
 
 // the feature carries the window's numbers, so nothing here recomputes a
-// rate. "(clear)" only where a cloud mask says which passes were clear
+// rate. "(clear)" only where a cloud mask says which passes were clear; a
+// live site counts every detection it lists
 const seriesStats = (p, b) => [
     ['Instrument', b.instrument],
-    [p.observations == null ? 'Detections' : 'Detections (clear)',
+    [p.observations == null || p.kind === 'live'
+        ? 'Detections' : 'Detections (clear)',
         p.detection_count],
     ['Persistence', p.persistence != null ? pct(p.persistence) : '—'],
     [b.passLabel, p.passes ?? '—'],

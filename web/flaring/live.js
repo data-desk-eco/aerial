@@ -495,7 +495,7 @@ export function features(keys) {
             loading: !(s.wait === 0 && s.reads === 0),
             name: `${on.length} detection${on.length === 1 ? '' : 's'}`,
             max_b12: Math.max(0, ...on.map(([, l]) => l.flare.max_b12)),
-            detection_count: n, passes: looks.length,
+            detection_count: on.length, passes: looks.length,
             observations: clear.length,
             persistence: clear.length >= MIN_LOOKS
                 ? Math.min(1, n / clear.length) : null } };
