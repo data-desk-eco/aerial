@@ -24,8 +24,7 @@ FROM (SELECT lon, list_reduce(range(8), lambda t, i: t - (2 * t + sin(2 * t)
       FROM (SELECT lon, radians(greatest(-89.9, least(89.9, lat))) AS f
             FROM s));
 SELECT to_json({
-  counts: (SELECT list(if(n >= 1e4, round(n / 1e3)::INT || 'k',
-                          printf('%.1fk', n / 1e3)) || ' ' || g ORDER BY o)
+  counts: (SELECT list(round(n / 1e3)::INT || 'k ' || g ORDER BY o)
            FROM (SELECT g.o, g.g, count(*) AS n
                  FROM s JOIN g ON list_contains(g.kinds, s.kind)
                    OR (g.kinds IS NULL AND NOT EXISTS (SELECT 1 FROM g h
