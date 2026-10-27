@@ -83,8 +83,11 @@ what each object weighs and which partitions a table holds (`bytes()`,
 **live s2 (experimental, branch burnoff-live).** `flaring/live.js` is the
 one exception to "detects nothing": burnoff's detector, as wasm in
 `vendor/burnoff/` (built by `make wasm` in `~/Tools/burnoff`), runs in two
-workers per core over google's sentinel-2 mirror. from z10 each tile under
-the view has its newest scenes read over the view until two came back mostly
+workers per core (at most two per GB of `deviceMemory`, and four on a
+touch-first device, whose tab crashed under sixteen: each worker's wasm heap
+keeps its largest read, 25-40 MB over a phone's view and up to 135 MB over a
+desktop's) over google's sentinel-2 mirror. from z10 each tile under the
+view has its newest scenes read over the view until two came back mostly
 clear, and every other scene of the last year read only around the sites
 found: newest date first, the view's sites first (those not yet drawn before
 the rest) and nearest its centre first, work further than a view's width (at

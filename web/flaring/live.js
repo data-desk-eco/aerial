@@ -72,7 +72,16 @@ const most = set => set.v === ver ? set.w
 // whose priority is -Infinity waits. a job's start, when it has one, fills
 // its args as it leaves the queue, or returns false to be dropped ──
 
-const N = Math.min(2 * (navigator.hardwareConcurrency || 4), 16);
+// two workers per core, but each holds a wasm heap that grows to its
+// largest read and never shrinks: 25-40 MB over a phone's view, up to
+// 135 MB over a desktop's at z10, and sixteen crashed a phone's tab. a
+// touch-first device gets PHONE, as a mobile tab is killed long before
+// the device runs out; elsewhere at most two per GB the browser reports
+// (chrome's deviceMemory, which stops at 8)
+const PHONE = 4;
+const N = matchMedia('(pointer: coarse)').matches ? PHONE
+    : Math.min(2 * (navigator.hardwareConcurrency || 4),
+        2 * (navigator.deviceMemory || 8), 16);
 // every finished read, for the console: [ms since load, args, ms, flares,
 // whether a sweep]
 const log = [];
@@ -418,7 +427,7 @@ function rects(squares) {
 // fn redraws the layer: at once for the sites a reload restored, which land
 // before the map is ready to be told, and after every read
 export function onChange(fn) { changed = fn; loaded.then(fn); }
-globalThis.burnoff = { sites, jobs, log, cover };
+globalThis.burnoff = { sites, jobs, log, cover, workers: N };
 
 export function features(keys) {
     return sites.filter(s => s.ok).map(s => {
