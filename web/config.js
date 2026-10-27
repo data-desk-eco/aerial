@@ -203,7 +203,9 @@ mount({
                 attribution of satellite emissions observations. Use it to
                 investigate a specific facility or to browse point source
                 emissions globally.</p>
-            <p>In addition to Data Desk's Sentinel-2 hotspot detections, the map
+            <p>In addition to Data Desk's Sentinel-2 ${link(
+                'https://github.com/data-desk-eco/burnoff',
+                'hotspot detections')}, the map
                 aggregates methane plumes and detections published by ${link('https://methanedata.unep.org/',
                 'UN IMEO')}, ${link('https://data.carbonmapper.org/',
                 'Carbon Mapper')}, ${link(
