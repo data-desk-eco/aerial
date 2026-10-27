@@ -416,7 +416,7 @@ mount({
             const date = liveProgress(), now = Date.now();
             if (liveBusy()) last = now;
             ctx.status('live', now - last < 3000 && (date
-                ? `Processing S2 scene for ${formatDate(date)}`
+                ? `Processed S2 scene for ${formatDate(date)}`
                 : 'Reading S2 scenes…'));
         }, 500);
 
