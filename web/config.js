@@ -196,7 +196,7 @@ mount({
     about: `
         <div class="region-row">
             <div class="fx-fine"><div class="fx-secondary">Coverage:</div>
-                Refineries<br>Oil and gas<br>Landfills and wastewater<br>
+                Oil and gas<br>Landfills and wastewater<br>
                 Heavy industry and power</div>
             <svg id="modal-worldmap"></svg>
         </div>
