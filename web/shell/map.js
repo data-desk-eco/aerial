@@ -58,11 +58,3 @@ export const pointsWorldmap = (el, d) => drawWorldmap(el).then(() =>
     el.insertAdjacentHTML('beforeend', `<path d="${d}" fill="none"
         stroke="#FFFFFF" stroke-width="1" stroke-linecap="square"
         vector-effect="non-scaling-stroke"/>`));
-
-// the worldmap with fixed boxes (pdf:86); getBoxes resolves to bboxes or null
-export function boxesWorldmap(el, getBoxes, minSize) {
-    drawWorldmap(el).then(async () => {
-        const boxes = await getBoxes();
-        if (boxes) setBoxes(el, boxes, minSize);
-    });
-}

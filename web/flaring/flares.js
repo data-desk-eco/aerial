@@ -108,26 +108,15 @@ const src = provider => Promise.all([held(),
 const inWindow = ({ startDate, endDate }) =>
     `f.last_seen >= ${quote(startDate)} AND f.first_seen <= ${quote(endDate)}`;
 
-// `floor` is MODE.s2.floor, the published quality gate on a site's average
-// (render.js). the negation lets a cluster the table gives no intensity for
-// through. an unrated s2 site passes: its null persistence is no finding
-export const readS2 = async (range, keys, floor) => sql(s2(await src(
-    'data-desk'), keys, `${inWindow(range)}
-    AND NOT coalesce(f.avg_b12 < ${+floor}, false)`));
-
 // a vnf site with no rate is dropped: no clear night is a finding. here, not
 // in a layer filter, as a cluster counts what its source holds
 export const readVNF = async (range, keys) => sql(`SELECT * FROM (${vnf(
     await src('eog'), keys, inWindow(range), true)})
     WHERE persistence IS NOT NULL`);
 
-// #flare= names a flare of either family. the two id spaces are disjoint by
-// accident, not contract, so both tables are asked rather than the id's shape
-export async function readSite(id, keys) {
-    const where = `f.id = ${quote(String(id))}`;
-    const [s] = await sql(s2(await src('data-desk'), keys, where));
-    return s ?? (await sql(vnf(await src('eog'), keys, where)))[0] ?? null;
-}
+// #flare= names a vnf site; on this branch an s2 one is live.js's
+export const readSite = async (id, keys) => (await sql(vnf(await src('eog'),
+    keys, `f.id = ${quote(String(id))}`)))[0] ?? null;
 
 // the quarter keys with any detection in the box over [start, end]
 export const quarters = async (provider, [w, s, e, n], start, end) =>
@@ -136,12 +125,6 @@ export const quarters = async (provider, [w, s, e, n], start, end) =>
         WHERE q.detections > 0 AND q.quarter BETWEEN ${quote(start)}
             AND ${quote(end)} AND f.lon BETWEEN ${+w} AND ${+e}
             AND f.lat BETWEEN ${+s} AND ${+n}`)).map(r => r.k));
-
-// what the s2 archive covers, for the intro's worldmap: a tenth of a degree
-// holding a site, which minSize then draws as a box
-export const coverage = async () => (await sql(`SELECT DISTINCT
-    round(lon, 1) AS x, round(lat, 1) AS y FROM ${await src('data-desk')}`))
-    .map(({ x, y }) => [x, y, x, y]);
 
 // the export lng terminals a flare is named after, off gem's infrastructure
 // table, on the card lane: a ranged read of a big object, which no flare dot
@@ -170,12 +153,6 @@ const series = (provider, cols, also = () => '') => async p => {
         FROM ${await from(u)} WHERE site_id = ${quote(String(p.id))}
         ${also(cell)} ORDER BY date`, { lane: 'card' });
 };
-
-// rows are in (kind, cell, site_id, date) order, so the cell and id prune
-// row groups off the footer; `kind` because plumes share the table
-export const s2Series = series('data-desk', `max_b12::DOUBLE AS max_b12,
-    pixels::DOUBLE AS pixels, lon AS raw_lon, lat AS raw_lat`,
-    cell => `AND kind = 'flare' AND cell = ${quote(cell)}`);
 
 // every row is a night the site was seen lit, so there is nothing to filter
 export const vnfSeries = series('eog', 'coalesce(rh_mw, 0)::DOUBLE AS rh_mw');

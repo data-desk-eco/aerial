@@ -8,9 +8,7 @@ import { PLUME_BANDS, flareBands } from './layers.js';
 import { MODE } from './flaring/render.js';
 
 const [s2, vnf] = [MODE.s2, MODE.vnf].map(flareBands);
-// a live site is an s2 one, read in the browser
-const family = p => p.kind === 'live' ? 'flare' : p.kind;
-const of = (kind, inBand) => p => family(p) !== kind || inBand(p);
+const of = (kind, inBand) => p => p.kind !== kind || inBand(p);
 
 // no row for a plume with no rate: it is drawn, in grey, but in no band. the
 // null test matters, as `null >= 0` is true
@@ -23,7 +21,7 @@ export const keySections = () => [
         label: `S2/VNF hotspots\n(${MODE.s2.unit}/${MODE.vnf.unit})`,
         rows: s2.map(([a, color, inS2], i) => {
             const [b, , inVNF] = vnf[i];
-            const [x, y] = [of('flare', inS2), of('vnf', inVNF)];
+            const [x, y] = [of('live', inS2), of('vnf', inVNF)];
             return { swatch: { mark: 'flare', color }, label: `${a} / ${b}`,
                 pred: p => x(p) && y(p) };
         }),

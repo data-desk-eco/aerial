@@ -27,10 +27,10 @@ const LIST = `https://storage.googleapis.com/storage/v1/b/${BUCKET}/o`;
 export const LIVE_ZOOM = 10;
 const DAYS = 365, FRESH = 2, SITE_M = 135, CLEAR = 0.6, MIN_LOOKS = 10;
 // km² of clear looks a view is swept to: FRESH over a z10 view, ~40 at
-// z13, most of the year nearer in. a read costs by its area, and a flare found only around the
-// sites the newest looks lit was missed where it burns on few days: at the
-// isab refinery the two newest clear looks lit nothing, a year of them
-// five sites
+// z13, most of the year nearer in. a read costs by its area, and a flare
+// found only around the sites the newest looks lit was missed where it
+// burns on few days: at the isab refinery the two newest clear looks lit
+// nothing, a year of them five sites
 const DEPTH = 12000;
 // a site is drawn as the archive's are: lit on LIT dates, and over the
 // floor aerial holds the archive's sites to on their mean b12. nor is one

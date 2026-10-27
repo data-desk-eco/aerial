@@ -12,10 +12,9 @@ import { initOverlays, greyCircles, clearOverlays, dim }
 import flare from './flare.js';
 import vnf from './vnf.js';
 import plume from './plume.js';
-import live from './live.js';
 
-const BODIES = { flare, vnf, plume, live };
-const bodyOf = p => BODIES[p.kind] ?? BODIES.flare;
+const BODIES = { live: flare, vnf, plume };
+const bodyOf = p => BODIES[p.kind] ?? BODIES.live;
 
 export let map = null;
 let quarterKeys = () => new Set();

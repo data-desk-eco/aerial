@@ -6,8 +6,9 @@
 -- for it at load
 .mode list
 .headers off
+SET VARIABLE bucket = 'https://s3.WAW3-2.cloudferro.com/data-desk-archive';
 CREATE TEMP TABLE s AS SELECT kind, lon, lat
-FROM 'https://s3.WAW3-2.cloudferro.com/data-desk-archive/data-desk/sites/data.parquet';
+FROM read_parquet(getvariable('bucket') || '/data-desk/sites/data.parquet');
 CREATE TEMP TABLE g(o INT, g VARCHAR, kinds VARCHAR[]);
 INSERT INTO g VALUES
     (1, 'refineries', ['refinery']),
@@ -30,5 +31,6 @@ SELECT to_json({
                    OR (g.kinds IS NULL AND NOT EXISTS (SELECT 1 FROM g h
                        WHERE list_contains(h.kinds, s.kind)))
                  GROUP BY g.o, g.g)),
-  points: (SELECT string_agg(printf('M%g %gh0', x * .02, y * .02), '')
+  points: (SELECT string_agg(printf('M%g %gh0', x * .02, y * .02), ''
+                             ORDER BY y, x)
            FROM p)});
