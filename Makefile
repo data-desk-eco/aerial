@@ -1,4 +1,4 @@
-.PHONY: serve test audit dist review-deploy vendor help facilities
+.PHONY: serve test audit dist review-deploy vendor help
 
 vendor: web/vendor/.ok
 
@@ -25,10 +25,6 @@ test:
 
 # the page against the brand guidelines, through vendor/dd/audit.js: any
 # deviation not declared in config.audit (layers.js AUDIT) fails it
-# the intro's worldmap points, off data-desk/sites
-facilities:
-	duckdb < scripts/facilities.sql > web/facilities.json
-
 audit:
 	@bash scripts/audit.sh
 

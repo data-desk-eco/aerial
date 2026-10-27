@@ -4,7 +4,8 @@
 // does nothing else.
 
 import { mount } from './shell/app.js';
-import { viewportBbox, pointsWorldmap, ensureMark, ensureTag }
+import { drawWorldmap } from './vendor/dd/worldmap.js';
+import { viewportBbox, ensureMark, ensureTag }
     from './shell/map.js';
 import { canon, padBbox, formatDate, debounce }
     from './shell/util.js';
@@ -385,11 +386,7 @@ mount({
         initCard({ map: ctx.map, archive: ARCHIVE,
                    quarterKeys: () => ctx.quarters.keys() });
         initProbabilityOverlay(ctx.map);
-        // the intro worldmap's points, a file of this app's (make
-        // facilities), not a read of the archive
-        fetch('facilities.json').then(r => r.json()).then(f =>
-            pointsWorldmap(document.getElementById('modal-worldmap'),
-                f.points)).catch(err => console.error('facilities:', err));
+        drawWorldmap(document.getElementById('modal-worldmap'));
         initMask(ctx.map, ARCHIVE);
         addCandidateLayers(ctx.map);
 
