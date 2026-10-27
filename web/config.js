@@ -410,10 +410,13 @@ mount({
             dispatchEvent(new Event('fx-rows')));
         onLive(() => soon ??= setTimeout(redraw, 1000));
         // the live reads in the log, while any in reach of the view remain
+        // and kept up for 3 s after, as the queue empties between sweeps
+        let last = 0;
         setInterval(() => {
-            const [wait, run] = liveProgress();
-            ctx.status('live', liveBusy() && `Sentinel-2: ${run} scenes reading, ${
-                wait} queued`);
+            const [wait, run] = liveProgress(), now = Date.now();
+            if (liveBusy()) last = now;
+            ctx.status('live', now - last < 3000 && `Sentinel-2: ${
+                run} scenes reading, ${wait} queued`);
         }, 500);
 
         // an outline is drawn while a drawn detection is inside it: after
