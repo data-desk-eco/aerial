@@ -12,10 +12,16 @@ const SEARCH = `<input type="search" class="fx-search" id="search"
     placeholder="Address or lat, lon" spellcheck="false" autocomplete="off">`;
 const QUARTERS = `<div class="fx-quarters" id="quarters"></div>`;
 
-// the subtitle says the first reads are still out, and the app takes it
-// down (ctx.loaded()) once they settle: on a slow line an empty map and a
-// loading one look the same, and the subtitle shows contracted too
-export const loaded = () => document.getElementById('loading')?.remove();
+// a line under the quarters saying what is still being read, the newest
+// read's: on a slow line an empty map and a loading one look the same.
+// status(k) takes read k down, and the start goes once the first settle
+const lines = new Map([['start', 'Loading the engine and archive…']]);
+export function status(k, text) {
+    lines.delete(k), text && lines.set(k, text);
+    const el = document.getElementById('status');
+    if (el) el.textContent = [...lines.values()].at(-1) ?? '';
+}
+export const loaded = () => status('start');
 
 export function buildShell(config) {
     const title = escapeHtml(config.title);
@@ -28,11 +34,12 @@ export function buildShell(config) {
     <dd-panel class="fx-main" id="main-panel" collapsible${
         config.about ? ' info' : ''}>
         <span slot="title">${title}${badge}</span>
-        <span slot="subtitle">${escapeHtml(config.subtitle || '')}<span
-            class="fx-secondary" id="loading"> Loading…</span></span>
+        <span slot="subtitle">${escapeHtml(config.subtitle || '')}</span>
         <svg id="worldmap"></svg>
         ${config.search ? SEARCH : ''}
         ${config.quarters ? QUARTERS : ''}
+        <div class="fx-status fx-secondary" id="status">${
+            escapeHtml(lines.get('start'))}</div>
     </dd-panel>
 
     <dd-key class="fx-key" id="key-panel"></dd-key>

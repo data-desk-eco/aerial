@@ -120,6 +120,9 @@ const pump = w => {
 // reads still to make in reach of the view, or in flight: a worker not
 // idle is reading, or not yet ready to
 export const busy = () => idle.length < N || jobs.some(j => j.pri > -Infinity);
+// what the log says: scene reads waiting in reach of the view, and in flight
+export const progress = () => [jobs.filter(j => j.pri > -Infinity).length,
+    N - idle.length];
 const kick = () => {
     while (!moving && idle.length && jobs.some(j => j.pri > -Infinity))
         pump(idle.pop());

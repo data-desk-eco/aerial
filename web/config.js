@@ -28,7 +28,7 @@ import { loadAttributions } from './methane/attribution.js';
 import { SITE_LAYERS, SITE_ZOOM, holdSites, drawSites } from './sites.js';
 import { view as liveView, features as liveFeatures, site as liveSite,
     quarters as liveQuarters, onChange as onLive, hold as holdLive,
-    busy as liveBusy } from './flaring/live.js';
+    busy as liveBusy, progress as liveProgress } from './flaring/live.js';
 
 // the bucket every layer reads. index.json names each table's objects, so no
 // module names one
@@ -124,11 +124,14 @@ const READS = {
 // numbers for the window it was opened in, so it is re-opened from the new
 // features. a read overtaken by a newer one draws nothing. a failure goes to
 // the console.
+const LOG = { vnf: 'VIIRS Nightfire sites', plumes: 'methane plumes',
+              sites: 'facility outlines' };
 const refresh = id => {
     let epoch = 0;
     return async () => {
         const range = CTX.quarters.range(), e = ++epoch;
         if (!range) return;
+        if (LOG[id]) CTX.status(id, `Loading ${LOG[id]}…`);
         try {
             const features = await READS[id](range);
             if (!features || e !== epoch) return;
@@ -136,6 +139,8 @@ const refresh = id => {
             reselectCurrentFeature(id);
         } catch (err) {
             console.error(`${id} read failed:`, err);
+        } finally {
+            if (e === epoch) CTX.status(id);
         }
     };
 };
@@ -404,6 +409,12 @@ mount({
             redraw) : (soon = null, REFRESH.live(),
             dispatchEvent(new Event('fx-rows')));
         onLive(() => soon ??= setTimeout(redraw, 1000));
+        // the live reads in the log, while any in reach of the view remain
+        setInterval(() => {
+            const [wait, run] = liveProgress();
+            ctx.status('live', liveBusy() && `Sentinel-2: ${run} scenes reading, ${
+                wait} queued`);
+        }, 500);
 
         // an outline is drawn while a drawn detection is inside it: after
         // any layer is re-set, and after the key re-filters them
