@@ -140,7 +140,7 @@ const refresh = id => {
         } catch (err) {
             console.error(`${id} read failed:`, err);
         } finally {
-            if (e === epoch) CTX.status(id);
+            if (e === epoch && LOG[id]) CTX.status(id);
         }
     };
 };
@@ -409,14 +409,15 @@ mount({
             redraw) : (soon = null, REFRESH.live(),
             dispatchEvent(new Event('fx-rows')));
         onLive(() => soon ??= setTimeout(redraw, 1000));
-        // the live reads in the log, while any in reach of the view remain
+        // the live reads in the status line, while any in reach of the view remain
         // and kept up for 3 s after, as the queue empties between sweeps
-        let last = 0;
+        // counted from the first read after a quiet spell
+        let last = 0, from = 0;
         setInterval(() => {
-            const [wait, run] = liveProgress(), now = Date.now();
-            if (liveBusy()) last = now;
-            ctx.status('live', now - last < 3000 && `Sentinel-2: ${
-                run} scenes reading, ${wait} queued`);
+            const [made, left] = liveProgress(), now = Date.now();
+            if (liveBusy()) now - last >= 3000 && (from = made), last = now;
+            ctx.status('live', now - last < 3000 && `Read ${made - from}/${
+                made - from + left} S2 scenes`);
         }, 500);
 
         // an outline is drawn while a drawn detection is inside it: after

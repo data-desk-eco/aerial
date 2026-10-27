@@ -134,7 +134,8 @@ plume mask is drawn. the table's s2 tab says Detections loading, not No rows
 in view, while reads in reach of the view remain (`busy`; a live redraw
 sends `fx-rows`). one line under the quarters says what is still being
 read, the newest read's (`status`, `shell/ui.js`): the engine at start, each
-layer's read, and the live scene reads in flight and queued, kept up 3 s past the last. a hotspot card dims the imagery around its site, not each
+layer's read, and the live reads as made of made and left (Read 45/948 S2 scenes),
+kept up 3 s past the last. a hotspot card dims the imagery around its site, not each
 date's own point, which lit some dates and darkened others.
 
 from z10 each hotspot carries its instrument, S2 or VNF, up and right of

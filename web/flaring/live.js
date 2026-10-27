@@ -120,9 +120,11 @@ const pump = w => {
 // reads still to make in reach of the view, or in flight: a worker not
 // idle is reading, or not yet ready to
 export const busy = () => idle.length < N || jobs.some(j => j.pri > -Infinity);
-// what the log says: scene reads waiting in reach of the view, and in flight
-export const progress = () => [jobs.filter(j => j.pri > -Infinity).length,
-    N - idle.length];
+// what the status line says: reads made, and reads in flight or waiting in
+// reach of the view
+let made = 0;
+export const progress = () => [made, N - idle.length
+    + jobs.filter(j => j.pri > -Infinity).length];
 const kick = () => {
     while (!moving && idle.length && jobs.some(j => j.pri > -Infinity))
         pump(idle.pop());
@@ -133,7 +135,7 @@ for (let i = 0; i < N; i++) {
     w.onmessage = ({ data }) => {
         if (data[0] === 'ahead') return ahead(data[1], data[2]);
         const j = w.job, t = performance.now();
-        if (data !== 'ready') log.push([t | 0, j.args, t - j.t | 0,
+        if (data !== 'ready') made++, log.push([t | 0, j.args, t - j.t | 0,
             data[1].flares?.length, !!j.sweep]), j.done(data[1]);
         if (log.length > 4000) log.splice(0, 2000);
         pump(w);
