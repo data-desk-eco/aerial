@@ -411,13 +411,10 @@ mount({
             dispatchEvent(new Event('fx-rows')));
         onLive(() => soon ??= setTimeout(redraw, 1000));
         // the view's search in the status line as it changes, or a view is
-        // new, taken down 1 s after it is done, so its 100% shows a moment
-        // first, but only if this view saw it short of done: a view already
-        // searched says nothing. reads further out change nothing it says,
-        // and do not hold it up. out of reach of the live reads, a line says
-        // to zoom in
-        const quiet = debounce(() => liveBusy() ? quiet() : ctx.status('live'),
-            1000);
+        // new, taken down once it is done, but only if this view saw it short
+        // of done: a view already searched says nothing. reads further out
+        // change nothing it says, and do not hold it up. out of reach of the
+        // live reads, a line says to zoom in
         // the numbers are padded with figure spaces, as wide as a digit in
         // tabular figures (shell.css), so the line keeps its width
         const pad = v => String(Math.floor(100 * v)).padStart(3, '\u2007');
@@ -432,8 +429,9 @@ mount({
                 : `Older S2 hotspots: ${pad(b)}%`;
             if (fresh) ran = a < 1 || b < 1;
             if (!ran) return said = null, ctx.status('live');
+            if (!liveBusy()) return said = null, ctx.status('live');
             if (fresh || say !== said)
-                said = say, ctx.status('live', say, a < 1 ? a : b), quiet();
+                said = say, ctx.status('live', say, a < 1 ? a : b);
         });
 
         // an outline is drawn while a drawn detection is inside it: after
