@@ -90,21 +90,24 @@ touch-first device: a worker's wasm heap keeps its largest read (25-40 MB
 over a phone's view, up to 135 MB over a desktop's), and sixteen crashed a
 phone's tab.
 
-from z10 each tile under the view has its newest scenes read over the view
-until enough came back mostly clear: two over a z10 view, more as it narrows
-(`DEPTH`, ~40 at z13), as an intermittent refinery flare was missed when
-only the newest two were swept; then a clear look in each month of the rest
-of the year, ahead of the site reads, as a flare that went out before the
-newest looks was found only near a lit site (at isab at z11 that took the
-drawn sites from one to five). every other scene of the last year is read
-only around the sites found: newest date first, the view's sites first
-(those not yet drawn before the rest), nearest its centre first, and work
-beyond a view's width (at least 0.5°) paused. the view is followed at every
-zoom, though no sweep starts below z10. what each scene has read is kept as
-0.05° squares, so zooming in reads nothing and a pan only what it uncovers.
-sites, their looks and those squares are in indexeddb (`burnoff-live`,
-versioned with the detector: bump it when what the detector finds changes,
-and a reload forgets the old finds).
+the search belongs to the ground, not the view. from z12 (LIVE_ZOOM) each
+0.05° square in view wants every scene of its tiles in the last year: the
+last 30 days' first, then the rest coarse to fine in time (the newest of
+each month, then the middle of the month, then halving the gaps), so most
+flares are drawn early and the last reads only complete the year (`ranks`).
+reads are scored by place (in view, then within a view's width, at least
+0.5°, then paused), then rank, then rings out from the centre, then newest;
+one scene is read over every square wanting it. a found site has its year
+read around it too, a small read ranked just behind the sweeps of the same
+rank, and a scene its square was swept in counts as a look at it. a pan or
+zoom re-scores the wants and drops only sweeps now beyond the margin.
+what was read is kept as mergeable facts in indexeddb (`burnoff-live`,
+version 1 + the detector's): per square, scene url -> cloud at its centre;
+per site, date -> {cloud, flare}. the queue and the progress are computed
+from them alone, and `facts(bbox)`/`absorb(facts)` are the seam for a
+central store of many users' reads (schema in live.js). a z12 permian view
+read its recent scenes in ~12 s and the year in ~130 s (360 sweeps, ~10 MB
+each over a clear view), headless on an m2.
 
 the page's thread is the map's. no read starts while the map moves or until
 it has been still for half a second (a read started between two drags held
@@ -113,8 +116,8 @@ worker (`flaring/ahead.js`); a live update waits for the map to stop and
 re-sets only its own source unless its set of points changed (`setSource`:
 re-clustering 60k points at every read made pans judder), and the clusters,
 drawn only below NEAR, are re-set on the way out. the next read is chosen
-each time one lands, so each site's weight and each scene's most are kept
-until the view, a site's being drawn or the scene's set changes.
+as a worker comes free, the squares' wants kept by scene until a sweep
+lands, a tile is listed or the view moves.
 
 a site is the detections within 135 m of its first, and a look is clear
 under 0.6 cloud, as in the archive. it is drawn as the archive's are, lit on
@@ -127,15 +130,18 @@ the summer rule to 54; madrid 704, 114, 43; the permian's sites by a viirs
 flare 327, 308, 301. kind `live` draws, clusters and filters as an s2 site
 (`key.js`, `layers.js` band, FAMILIES) and opens the s2 card
 (`card/flare.js`), named by every detection it lists, cloudy ones too, whose title says Loading…
-in grey until every scene of the year has looked at the site (`loading`:
-scenes waiting and reads in flight), and where a date draws the detector's
+in grey until every scene of the year has looked at the site (`loading`), and where a date draws the detector's
 own pixels, each on the ramp by its b12 inside a hairline outline, as a
 plume mask is drawn. the table's s2 tab says Detections loading, not No rows
-in view, while reads in reach of the view remain (`busy`; a live redraw
+in view, while the view's search is not done (`busy`; a live redraw
 sends `fx-rows`). one line at the map's top right says what is still being
 read, the newest read's (`status`, `shell/ui.js`): the engine at start, each
-layer's read, and the date of the last live scene read (Processed S2 scene for 3 Mar 2026),
-kept up 3 s past the last, and its lines carry no ellipsis. the reads
+layer's read, and the view's live search, Recent S2 hotspots: x%, then Older
+S2 hotspots: x% (each the mean over the view's squares of their scenes read,
+so it moves with every read, never falls while the view is still and is the
+same at every zoom), kept up 3 s once both are done; at z10-11 it says Zoom
+in to detect S2 hotspots. its lines carry no ellipsis. the ground not yet
+read through is hatched (layer `unread`), fainter as its scenes are read. the reads
 for a view ask `viewportBbox` (`shell/map.js`), the canvas less the table
 drawer's padding, and a drag of the drawer reads again as a move does. no
 live read starts out past LIVE_ZOOM: one in flight finishes, and the rest

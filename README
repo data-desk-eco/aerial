@@ -19,7 +19,7 @@ Three detection layers, all drawn at once, one quarter grid over all of them:
     in place of a rate so it is never read as a mass.
 
 A fourth, experimental layer, live S2, runs the burnoff detector in the
-browser from zoom 10 (web/flaring/live.js).
+browser from zoom 12 (web/flaring/live.js).
 
 Aerial reads. It publishes nothing, and except for live S2 it detects nothing: the archive it
 draws is built by the etl repo, and the methodology behind the Sentinel-2 tables
