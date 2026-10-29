@@ -84,6 +84,7 @@ d='M0 0 8 8M8 0 0 8' stroke='%23000' stroke-width='1.4'/%3E%3C/svg%3E")
 .fx-status {
     position: absolute; top: 0; right: 0; margin: var(--dd-margin);
     color: var(--dd-ui-text); white-space: nowrap; pointer-events: none;
+    font-variant-numeric: tabular-nums;
     /* a bar beneath, as wide as the share done (ui.js status) */
     padding-bottom: 4px; background: linear-gradient(currentColor,
         currentColor) 0 100% / calc(var(--p, 0) * 100%) 2px no-repeat;

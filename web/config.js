@@ -415,12 +415,15 @@ mount({
         const quiet = debounce(() => liveBusy() ? quiet() : ctx.status('live'),
             3000);
         // the search's share, then the sites': fixed totals, unlike the
-        // reads, which each site found adds a year of
+        // reads, which each site found adds a year of. the numbers are
+        // padded with figure spaces, as wide as a digit in tabular figures
+        // (shell.css), so the line keeps its width as they change
+        const pad = (v, w) => String(v).padStart(w, '\u2007');
         onRead(() => {
             const [f, n, c, t] = progress();
             ctx.status('live', f < n
-                ? `Searching the past year here: ${Math.round(100 * f / n)}%`
-                : `Site histories loaded: ${c} of ${t}`,
+                ? `Detecting S2 hotspots: ${pad(Math.round(100 * f / n), 3)}%`
+                : `Loaded ${pad(c, String(t).length)} of ${t} S2 site histories`,
                 f < n ? f / n : c / (t || 1)), quiet();
         });
 
