@@ -191,24 +191,30 @@ async function list(prefix) {
 }
 
 // listed holds each tile's listing as it is made, lists the scenes once in;
-// a listing that failed is made again when next asked
-const listed = new Map(), lists = new Map();
-const scenes = tile => listed.get(tile) ?? listed.set(tile, (async () => {
-    const since = new Date(Date.now() - DAYS * 864e5), now = new Date();
+// a listing that failed is made again when next asked. all, the tile's
+// every scene the detector reads, from baseline n0400 (FIRST) on, under
+// the key tile + '*'
+const listed = new Map(), lists = new Map(), FIRST = '2022-01-25';
+const scenes = (tile, all) => listed.get(tile + (all ? '*' : ''))
+    ?? listed.set(tile + (all ? '*' : ''), (async () => {
+    const since = new Date(all ? FIRST : Date.now() - DAYS * 864e5);
+    const now = new Date();
     const dir = `tiles/${tile.slice(0, 2)}/${tile[2]}/${tile.slice(3)}`;
-    const years = [...new Set([since, now].map(d => d.getUTCFullYear()))];
+    const years = Array.from({ length: now.getUTCFullYear()
+        - since.getUTCFullYear() + 1 }, (_, i) => since.getUTCFullYear() + i);
     const items = (await Promise.all(['S2A', 'S2B', 'S2C'].flatMap(s =>
         years.map(y => list(`${dir}/${s}_MSIL1C_${y}`))))).flat();
     const by = new Map();
     for (const { name } of items) {
         const t = name.split('_')[2];
         const date = `${t.slice(0, 4)}-${t.slice(4, 6)}-${t.slice(6, 8)}`;
-        if (new Date(date) >= since)
+        if (new Date(date) >= since && +name.match(/_N(\d{4})_/)?.[1] >= 400)
             by.set(t, { date, tile, url: `gs://${BUCKET}/${name}` });
     }
     return [...by.values()].sort((a, b) => b.date < a.date ? -1 : 1);
-})().then(l => (lists.set(tile, l), stale = true, kick(), l),
-    () => void listed.delete(tile))).get(tile);
+})().then(l => (lists.set(tile + (all ? '*' : ''), l), stale = true, kick(),
+    l), () => void listed.delete(tile + (all ? '*' : ''))))
+    .get(tile + (all ? '*' : ''));
 
 // ── facts: what was read, keyed by what was read and not by whom or for
 // which view, so two sets of them merge as a union, and a store of many
@@ -346,8 +352,8 @@ function look(s, date, cloud, flare) {
 // at passes those done, which only grow
 const order = new WeakMap();
 function due(s, all) {
-    const L = lists.get(s.tile);
-    if (!L) return void scenes(s.tile);
+    const L = lists.get(s.tile + (s.deep ? '*' : ''));
+    if (!L) return void scenes(s.tile, s.deep);
     const r = ranks(L, x => x.date), g = ground.get(sq(Math.floor(s.lon / G),
         Math.floor(s.lat / G)));
     const q = order.get(L) ?? order.set(L, L.map((_, i) => i)
@@ -367,8 +373,8 @@ function reads() {
     let b = -Infinity, a, x;
     for (const s of sites) {
         const y = score(s, 901, 0) > b - 1e5 && due(s);
-        const p = y ? score(s, s.ok || s.looks.size >= SURE ? y[1] - 6 : 901,
-            day(y[0])) : b;
+        const p = y ? score(s, s.deep || !s.ok && s.looks.size < SURE ? 901
+            : y[1] - 6, day(y[0])) : b;
         if (p > b) b = p, a = s, x = y[0];
     }
     return [b, () => {
@@ -600,6 +606,13 @@ export function features(keys) {
 }
 
 // a site's dated detections, oldest first, as the card lists them
+// a site whose card is open reads every scene of its tile the detector
+// can, back to FIRST, before anything else: its history to the full
+// extent, newest first and then coarse to fine, a small read a scene
+export const deepen = id => {
+    const s = byId.get(id);
+    if (s && !s.deep) s.deep = true, s.at = 0, stale = true, kick();
+};
 export const series = id => [...byId.get(id)?.looks ?? []]
     .filter(([, l]) => l.flare).sort(([a], [b]) => a < b ? -1 : 1)
     .map(([date, { flare: f }]) => ({ date, max_b12: f.max_b12,

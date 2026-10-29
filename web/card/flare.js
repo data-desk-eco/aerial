@@ -1,11 +1,12 @@
 // the s2 hotspot body: the series card over the dates this browser's own
 // reads found (flaring/live.js), so it fills in as they land, its title
-// saying Loading… until every scene of the year has looked at the site. a
+// saying Loading… until every scene it can has looked at the site (its card
+// open, live.js deepen() reads back to the first it can). a
 // date draws the pixels the detector found; and only this family has the
 // copernicus scene for the selected date, and a csv of the series listed.
 
 import { MODE } from '../flaring/render.js';
-import { series } from '../flaring/live.js';
+import { series, deepen } from '../flaring/live.js';
 import { map, current, currentDets, selectedDetection, coords, siteTitle }
     from './index.js';
 import { pixelFootprint } from './overlays.js';
@@ -54,7 +55,7 @@ export default {
     passLabel: 'Passes',
     title: p => ({ ...siteTitle(p, 'Unknown facility'),
                    note: p.loading && 'Loading…' }),
-    fetch: p => Promise.resolve(series(p.id)),
+    fetch: p => (deepen(p.id), Promise.resolve(series(p.id))),
     select: det => det && pixelFootprint(det, MODE.s2),
     actions: `<dd-btn id="open-image-btn">Open image</dd-btn>
               <dd-btn id="download-btn">Download CSV</dd-btn>`,
