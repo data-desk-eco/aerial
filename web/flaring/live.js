@@ -66,6 +66,11 @@ const drawn = s => {
         && l.reduce((a, [, x]) => a + x.flare.max_b12, 0) / l.length
         >= MODE.s2.floor;
 };
+// a site not yet drawn has its next looks read before any sweep, up to
+// SURE of them, so the second lit date that draws it comes at once, not
+// after the recent search: a site lit once in that many stays undrawn
+// and waits its turn
+const SURE = 12;
 const G = 0.05;       // the ground's grid, degrees
 const GROUP = 0.03;   // a site read takes the sites this close, degrees
 
@@ -359,8 +364,9 @@ function due(s, all) {
 function reads() {
     let b = -Infinity, a, x;
     for (const s of sites) {
-        const y = score(s, 900, 0) > b - 1e5 && due(s);
-        const p = y ? score(s, y[1] - (s.ok ? 6 : 5), day(y[0])) : b;
+        const y = score(s, 901, 0) > b - 1e5 && due(s);
+        const p = y ? score(s, s.ok || s.looks.size >= SURE ? y[1] - 6 : 901,
+            day(y[0])) : b;
         if (p > b) b = p, a = s, x = y[0];
     }
     return [b, () => {
@@ -551,15 +557,6 @@ export const busy = () => {
     const p = !off && progress();
     return !off && (!p || p[0] < 1 || p[1] < 1);
 };
-// the view's squares not yet read through, each a box with the share of
-// its scenes read (p), for a layer over the ground still to read
-export const unread = () => ({ type: 'FeatureCollection', features: off ? []
-    : squares().flatMap(k => {
-        const p = square(k)?.[2] ?? 0, [w, s, e, n] = area(k);
-        return p < 1 ? [{ type: 'Feature', properties: { p }, geometry: {
-            type: 'Polygon', coordinates: [[[w, s], [e, s], [e, n], [w, n],
-                [w, s]]] } }] : [];
-    }) });
 
 // ── the map's features: a site each, rated over the ticked quarters ──
 

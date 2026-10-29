@@ -28,7 +28,7 @@ import { loadAttributions } from './methane/attribution.js';
 import { SITE_LAYERS, SITE_ZOOM, holdSites, drawSites } from './sites.js';
 import { view as liveView, features as liveFeatures, site as liveSite,
     quarters as liveQuarters, onChange as onLive, hold as holdLive,
-    busy as liveBusy, onRead, progress, unread, LIVE_ZOOM }
+    busy as liveBusy, onRead, progress, LIVE_ZOOM }
     from './flaring/live.js';
 
 // the bucket every layer reads. index.json names each table's objects, so no
@@ -188,18 +188,6 @@ async function resolvePlume(id) {
 // ── mount ──
 
 const empty = { type: 'FeatureCollection', features: [] };
-// white hairlines at 45 degrees, 6 px apart, to hatch the ground the live
-// layer has not read through. drawn at the screen's pixel ratio, and across
-// the corners too, so the tiles join
-function hatch(map) {
-    const r = devicePixelRatio || 1, n = Math.round(6 * r);
-    const g = Object.assign(document.createElement('canvas'),
-        { width: n, height: n }).getContext('2d');
-    g.strokeStyle = DD.white, g.lineWidth = r / 2;
-    [[0, n], [-n, n], [0, 2 * n]].forEach(([a, b]) => (g.beginPath(),
-        g.moveTo(a, b), g.lineTo(a + n, b - n), g.stroke()));
-    map.addImage('hatch', g.getImageData(0, 0, n, n), { pixelRatio: r });
-}
 const props = id => ({ sources }) =>
     sources[id].features.map(f => f.properties);
 const link = (href, text) => `<a href="${href}" target="_blank">${text}</a>`;
@@ -300,12 +288,10 @@ mount({
         CTX = ctx;
         // before the layers, or maplibre logs the expression-only ids missing
         MARKS.forEach(id => ensureMark(ctx.map, id));
-        hatch(ctx.map);
         await Promise.all(Object.values(TAGS)
             .map(t => ensureTag(ctx.map, t, DD.white)));
         return {
             sites: empty,
-            unread: empty,
             live: empty,
             vnf: empty,
             plumes: empty,
@@ -317,13 +303,6 @@ mount({
 
     // the outlines first, so every detection draws over them
     layers: [
-        {
-            // the ground the live layer has not read through, hatched
-            // fainter as more of its scenes are read, gone once all are
-            id: 'unread', type: 'fill', source: 'unread', minzoom: LIVE_ZOOM,
-            paint: { 'fill-pattern': 'hatch', 'fill-antialias': false,
-                     'fill-opacity': ['*', 0.4, ['-', 1, ['get', 'p']]] },
-        },
         ...SITE_LAYERS,
         {
             // read from LIVE_ZOOM, drawn from NEAR and clustered below it
@@ -429,7 +408,6 @@ mount({
         let soon;
         const redraw = () => ctx.map.isMoving() ? ctx.map.once('moveend',
             redraw) : (soon = null, REFRESH.live(),
-            ctx.map.getSource('unread')?.setData(unread()),
             dispatchEvent(new Event('fx-rows')));
         onLive(() => soon ??= setTimeout(redraw, 1000));
         // the view's search in the status line as it changes, or a view is
