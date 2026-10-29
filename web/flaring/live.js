@@ -375,9 +375,9 @@ function reads() {
     let b = -Infinity, a, x;
     for (const s of off ? sites.filter(s => s.deep) : sites) {
         const y = (s.deep || score(s, 901, 0) > b - 1e5) && due(s);
-        const p = !y ? b : s.deep ? 2e9 + y[1] * 1e6 + day(y[0])
-            : score(s, !s.ok && s.looks.size < SURE ? 901 : y[1] - 6,
-                day(y[0]));
+        const p = !y ? b : !s.deep ? score(s, !s.ok && s.looks.size < SURE
+            ? 901 : y[1] - 6, day(y[0])) : y[1] >= 900 ? 4e9 + day(y[0])
+            : 2e9 + (y[1] - 6) * 1e6 + 95e4 + day(y[0]);
         if (p > b) b = p, a = s, x = y[0];
     }
     return [b, () => {
@@ -611,9 +611,10 @@ export function features(keys) {
 // the site whose card was opened last reads every scene of its tile the
 // detector can, back to FIRST, at any zoom and wherever the view is: its
 // history to the full extent, newest first and then coarse to fine, a small
-// read a scene. it ranks as a site in view, not above everything, so its
-// older scenes wait on the view's recent ones and a card left open does not
-// hold the view at 0%
+// read a scene. its last RECENT days come before anything else, so the card
+// fills at once; its older scenes rank as a sure site's in view, first of
+// them, so they wait on the view's recent ones and a card left open does
+// not hold the view at 0%
 let deep;
 export const deepen = id => {
     const s = byId.get(id);
