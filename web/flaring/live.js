@@ -134,7 +134,7 @@ export const hold = h => {
     if (!h) still = setTimeout(() => (moving = false, kick()), SETTLE);
 };
 const pump = w => {
-    const j = !moving && !off && next();
+    const j = !moving && next();
     if (!j) return idle.push(w), false;
     w.jobs.set(++ids, j), j.t = performance.now();
     return w.postMessage([ids, ...j.args]), true;
@@ -166,10 +166,12 @@ const run = job => new Promise(done => jobs.push(Object.assign(job, { done })));
 function next() {
     for (;;) {
         let i = -1, b = -Infinity;
-        jobs.forEach((j, k) => j.pri > b && (b = j.pri, i = k));
+        // out past LIVE_ZOOM only an open card's history is read
+        jobs.forEach((j, k) => (!off || j.deep) && j.pri > b
+            && (b = j.pri, i = k));
         if (i >= 0) return jobs.splice(i, 1)[0];
-        const [p, go] = [sweeps(), reads()].reduce((a, c) => c[0] > a[0] ? c
-            : a);
+        const [p, go] = off ? reads() : [sweeps(), reads()]
+            .reduce((a, c) => c[0] > a[0] ? c : a);
         if (!(p > -Infinity)) return;
         go();
     }
@@ -371,10 +373,10 @@ function due(s, all) {
 // cluster of sites is one read
 function reads() {
     let b = -Infinity, a, x;
-    for (const s of sites) {
-        const y = score(s, 901, 0) > b - 1e5 && due(s);
-        const p = y ? score(s, s.deep || !s.ok && s.looks.size < SURE ? 901
-            : y[1] - 6, day(y[0])) : b;
+    for (const s of off ? sites.filter(s => s.deep) : sites) {
+        const y = (s.deep || score(s, 901, 0) > b - 1e5) && due(s);
+        const p = !y ? b : s.deep ? 4e9 + day(y[0]) : score(s, !s.ok
+            && s.looks.size < SURE ? 901 : y[1] - 6, day(y[0]));
         if (p > b) b = p, a = s, x = y[0];
     }
     return [b, () => {
@@ -382,7 +384,7 @@ function reads() {
             && !t.fly?.has(x.date) && Math.abs(t.lat - a.lat) < GROUP
             && Math.abs(t.lon - a.lon) < GROUP);
         held.forEach(t => (t.fly ??= new Set()).add(x.date));
-        run({ pri: b, scene: x, args: ['detect', x.url,
+        run({ pri: b, deep: a.deep, scene: x, args: ['detect', x.url,
             ...box(held, SITE_M / 111320), 0, 1,
             held.flatMap(t => [t.lon, t.lat])] }).then(r => {
             held.forEach(t => t.fly.delete(x.date)), land(x, held, r);
@@ -605,14 +607,18 @@ export function features(keys) {
     }).filter(f => f.properties.max_b12 > 0);
 }
 
-// a site's dated detections, oldest first, as the card lists them
-// a site whose card is open reads every scene of its tile the detector
-// can, back to FIRST, before anything else: its history to the full
-// extent, newest first and then coarse to fine, a small read a scene
+// the site whose card was opened last reads every scene of its tile the
+// detector can, back to FIRST, before anything else, at any zoom and
+// wherever the view is: its history to the full extent, newest first and
+// then coarse to fine, a small read a scene
+let deep;
 export const deepen = id => {
     const s = byId.get(id);
-    if (s && !s.deep) s.deep = true, s.at = 0, stale = true, kick();
+    if (!s || s === deep) return;
+    if (deep) deep.deep = false, deep.at = 0;
+    deep = s, s.deep = true, s.at = 0, stale = true, kick();
 };
+// a site's dated detections, oldest first, as the card lists them
 export const series = id => [...byId.get(id)?.looks ?? []]
     .filter(([, l]) => l.flare).sort(([a], [b]) => a < b ? -1 : 1)
     .map(([date, { flare: f }]) => ({ date, max_b12: f.max_b12,

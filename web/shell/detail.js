@@ -183,8 +183,8 @@ export function initDetail(m, config, getFeatures) {
         const features = featuresAt(e.point, e.lngLat);
         if (!features.length) return closeDetail();
         setOverlapping(features);
+        // the zoom stays the user's: a click opens the card, not a flight
         showDetail(features[0]);
-        flyTo(coordsOf(features[0]), features[0].properties);
     });
 
     const cursor = c => () => { map.getCanvas().style.cursor = c; };
