@@ -434,14 +434,16 @@ mount({
         onLive(() => soon ??= setTimeout(redraw, 1000));
         // the view's search in the status line as it changes, or a view is
         // new, taken down 3 s after it is done, so its 100% shows a moment
-        // first: reads further out change nothing it says, and do not hold
-        // it up. out of reach of the live reads, a line says to zoom in
+        // first, but only if this view saw it short of done: a view already
+        // searched says nothing. reads further out change nothing it says,
+        // and do not hold it up. out of reach of the live reads, a line says
+        // to zoom in
         const quiet = debounce(() => liveBusy() ? quiet() : ctx.status('live'),
             3000);
         // the numbers are padded with figure spaces, as wide as a digit in
         // tabular figures (shell.css), so the line keeps its width
         const pad = v => String(Math.floor(100 * v)).padStart(3, '\u2007');
-        let said;
+        let said, ran;
         onRead(fresh => {
             const z = ctx.map.getZoom(), p = z >= LIVE_ZOOM && progress();
             ctx.status('zoom', z < LIVE_ZOOM && z >= LIVE_ZOOM - 2
@@ -450,6 +452,8 @@ mount({
             if (!p) return;
             const [a, b] = p, say = a < 1 ? `Recent S2 hotspots: ${pad(a)}%`
                 : `Older S2 hotspots: ${pad(b)}%`;
+            if (fresh) ran = a < 1 || b < 1;
+            if (!ran) return said = null, ctx.status('live');
             if (fresh || say !== said)
                 said = say, ctx.status('live', say, a < 1 ? a : b), quiet();
         });
