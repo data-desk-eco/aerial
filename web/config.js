@@ -414,10 +414,14 @@ mount({
         // between sweeps
         const quiet = debounce(() => liveBusy() ? quiet() : ctx.status('live'),
             3000);
+        // the search's share, then the sites': fixed totals, unlike the
+        // reads, which each site found adds a year of
         onRead(() => {
-            const [d, n] = progress();
-            ctx.status('live', `Read ${d} of ${d + n} S2 scenes in view`,
-                d / (d + n || 1)), quiet();
+            const [f, n, c, t] = progress();
+            ctx.status('live', f < n
+                ? `Searching the past year here: ${Math.round(100 * f / n)}%`
+                : `Site histories loaded: ${c} of ${t}`,
+                f < n ? f / n : c / (t || 1)), quiet();
         });
 
         // an outline is drawn while a drawn detection is inside it: after

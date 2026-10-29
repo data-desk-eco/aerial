@@ -103,12 +103,18 @@ const SETTLE = 500;
 // nor while the view is out past LIVE_ZOOM: a read in flight finishes, and
 // the rest wait until it is back
 let moving = false, still, off = false, ids = 0;
-// a job weighs IN or more while it reads in view (weight()): what the
-// view's progress counts, done of those since it was set, and the rest
-const IN = 1e8, pool = [];
-let done = 0;
-export const progress = () => [done, [...jobs, ...pool.flatMap(w =>
-    [...w.jobs.values()])].filter(j => j.pri >= IN).length];
+// the view's progress: its search, a slot per clear look wanted of each
+// tile, the newest ones and one a month for the year before them, each
+// filled by a clear look or once its scenes ran out, a total fixed once
+// the tiles are listed; then its sites, each done once no scene of it is
+// left to read
+const pool = [];
+let slots = 0, filled = 0;
+export const progress = () => {
+    const in_ = sites.filter(p => inside(p, shown));
+    return [filled, slots, in_.filter(p => p.probed && !p.wait && !p.reads)
+        .length, in_.length];
+};
 export const hold = h => {
     clearTimeout(still), moving = true;
     if (!h) still = setTimeout(() => (moving = false, kick()), SETTLE);
@@ -124,7 +130,6 @@ const pump = w => {
         const [j] = jobs.splice(i, 1);
         if (j.start?.(j) !== false)
             return w.jobs.set(++ids, j), j.t = performance.now(),
-                j.in = j.pri >= IN ? epoch : -1,
                 w.postMessage([ids, ...j.args]);
     }
 };
@@ -148,7 +153,7 @@ for (let i = 0; i < N; i++) {
             return;
         }
         const j = w.jobs.get(data[0]), t = performance.now();
-        w.jobs.delete(data[0]), done += j.in === epoch;
+        w.jobs.delete(data[0]);
         log.push([t | 0, j.args, t - j.t | 0, data[1].hotspots?.length,
             !!j.sweep]), j.done(data[1]), j.scene && read(j.scene.date);
         if (log.length > 4000) log.splice(0, 2000);
@@ -353,7 +358,7 @@ async function owners(i0, j0, i1, j1) {
 export async function view(map) {
     await loaded;
     const e = ++epoch;
-    done = 0;
+    slots = filled = 0;
     shown = viewportBbox(map), ver++, off = map.getZoom() < LIVE_ZOOM;
     // the old view's whole-scene reads are dropped, those in flight at
     // their next stage, and its sites' reads wait unless they are near this
@@ -392,18 +397,24 @@ export async function view(map) {
             let at = 0, seen = 0;
             const flight = [];
             for (; at < list.length && seen < n && e === epoch; at++) {
-                flight.push(sweep(list[at], all, low).then(c =>
-                    seen += saw(c)));
+                flight.push(sweep(list[at], all, low).then(c => saw(c)
+                    && seen++ < n && e === epoch && filled++));
                 if (flight.length >= Math.max(2, n >> 2)) await flight.shift();
             }
+            Promise.all(flight).then(() => e === epoch
+                && (filled += Math.max(n - seen, 0)));
             return at;
         };
         // the newest looks first; then one clear look in each month of the
         // rest of the year, as a flare that went out before them was found
         // only near a lit site
-        const list = await scenes(tile), at = await until(list, need);
-        Map.groupBy(list.slice(at), s => s.date.slice(0, 7))
-            .forEach(m => until(m, 1, true));
+        const list = await scenes(tile), months = Map.groupBy(list.slice(1),
+            s => s.date.slice(0, 7));
+        if (e === epoch) slots += need + months.size;
+        const at = await until(list, need);
+        months.forEach(m => m.some(s => list.indexOf(s) >= at)
+            ? until(m.filter(s => list.indexOf(s) >= at), 1, true)
+            : e === epoch && filled++);
     })();
 }
 
