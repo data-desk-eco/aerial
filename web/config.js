@@ -428,8 +428,8 @@ mount({
                 ? 'Zoom in to detect S2 hotspots' : null);
             if (z < LIVE_ZOOM) return said = null, ctx.status('live');
             if (!p) return;
-            const [a, b] = p, say = a < 1 ? `Recent S2 hotspots: ${pad(a)}%`
-                : `Older S2 hotspots: ${pad(b)}%`;
+            const [a, b] = p, say = a < 1 ? `Recent S2 flares: ${pad(a)}%`
+                : `Older S2 flares: ${pad(b)}%`;
             if (fresh) ran = a < 1 || b < 1;
             if (!ran) return said = null, ctx.status('live');
             if (fresh || say !== said)

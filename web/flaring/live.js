@@ -28,9 +28,9 @@ import { viewportBbox } from '../shell/map.js';
 const BUCKET = 'gcp-public-data-sentinel-2';
 const LIST = `https://storage.googleapis.com/storage/v1/b/${BUCKET}/o`;
 export const LIVE_ZOOM = 12;
-// three months: a year read every scene of a z12 view for ~0.9 GB, and
-// a year of each site's looks read site by site ~50 MB a site
-const DAYS = 90, SITE_M = 135, CLEAR = 0.6, MIN_LOOKS = 10;
+// six months, the last three every scene first (RECENT): a year read every
+// scene of a small z12 view for ~0.9 GB, three months ~0.11 GB
+const DAYS = 180, SITE_M = 135, CLEAR = 0.6, MIN_LOOKS = 10;
 // the order of the search: a rank for each date of a list, newest first.
 // every scene of the last RECENT days, 900, then those back to DAYS in
 // turn: the newest of each month, 800, then the middle of the month,
@@ -38,7 +38,7 @@ const DAYS = 90, SITE_M = 135, CLEAR = 0.6, MIN_LOOKS = 10;
 // a cheap read, as its mask skips it, and a flare that burns on few days
 // is found only by reading the days it burns: at the isab refinery the two
 // newest clear looks lit nothing, a year of them five sites. cached by list
-const RECENT = 30, ranked = new WeakMap();
+const RECENT = 90, ranked = new WeakMap();
 function ranks(L, date) {
     if (ranked.has(L)) return ranked.get(L);
     const since = new Date(Date.now() - RECENT * 864e5).toISOString()
