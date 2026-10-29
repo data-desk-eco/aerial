@@ -39,7 +39,8 @@ cp "$DD_DIST/dd.js" "$DD_DIST/audit.js" "$DD_DIST/style.dark.json" \
 
 echo "burnoff (from $BURNOFF/web) ..."
 mkdir -p "$VENDOR/burnoff"
-cp "$BURNOFF"/web/{burnoff.js,burnoff.wasm,worker.js} "$VENDOR/burnoff/"
+cp "$BURNOFF"/web/{burnoff.js,burnoff.wasm,worker.js,gpu.js,j2k.wgsl} \
+    "$VENDOR/burnoff/"
 
 echo "inter font ..."
 # a desktop chrome agent, so google serves woff2

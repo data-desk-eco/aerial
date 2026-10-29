@@ -78,23 +78,23 @@ const weigh = p => p.v === ver ? p.w : (p.v = ver, p.w = weight(p));
 const most = set => set.v === ver ? set.w
     : (set.v = ver, set.w = Math.max(...[...set].map(weigh)));
 
-// ── the pool: jobs run highest priority first, one per worker, and one
+// ── the pool: jobs run highest priority first, K per worker, and one
 // whose priority is -Infinity waits. a job's start, when it has one, fills
 // its args as it leaves the queue, or returns false to be dropped ──
 
-// two workers per core, but each holds a wasm heap that grows to its
-// largest read and never shrinks: 25-40 MB over a phone's view, up to
-// 135 MB over a desktop's at z10, and sixteen crashed a phone's tab. a
-// touch-first device gets PHONE, as a mobile tab is killed long before
-// the device runs out; elsewhere at most two per GB the browser reports
-// (chrome's deviceMemory, which stops at 8)
-const PHONE = 4;
+// a worker holds K scenes in flight: each makes a stage's reads at once,
+// with fetch(), and decodes in wasm while the others wait on theirs. four
+// workers of eight read 112 sites in 10.7 s, against 19.6 s for sixteen
+// that blocked on each read (m2, gs://). each holds a wasm heap that grows
+// to its largest read and never shrinks, and sixteen crashed a phone's
+// tab, so a touch-first device gets PHONE
+const PHONE = 2, K = 8;
 const N = matchMedia('(pointer: coarse)').matches ? PHONE
-    : Math.min(2 * (navigator.hardwareConcurrency || 4),
-        2 * (navigator.deviceMemory || 8), 16);
+    : Math.min(Math.max((navigator.hardwareConcurrency || 4) / 2, 2), 4);
 // every finished read, for the console: [ms since load, args, ms, flares,
 // whether a sweep]
 const log = [];
+// idle holds a worker once for each scene it could take on
 const jobs = [], idle = [];
 // while the map moves no job starts, nor until it has been still for
 // SETTLE ms, so a run of drags does not set every worker decoding between
@@ -102,7 +102,13 @@ const jobs = [], idle = [];
 const SETTLE = 500;
 // nor while the view is out past LIVE_ZOOM: a read in flight finishes, and
 // the rest wait until it is back
-let moving = false, still, off = false;
+let moving = false, still, off = false, ids = 0;
+// a job weighs IN or more while it reads in view (weight()): what the
+// view's progress counts, done of those since it was set, and the rest
+const IN = 1e8, pool = [];
+let done = 0;
+export const progress = () => [done, [...jobs, ...pool.flatMap(w =>
+    [...w.jobs.values()])].filter(j => j.pri >= IN).length];
 export const hold = h => {
     clearTimeout(still), moving = true;
     if (!h) still = setTimeout(() => (moving = false, kick()), SETTLE);
@@ -117,14 +123,14 @@ const pump = w => {
         if (i < 0) return idle.push(w);
         const [j] = jobs.splice(i, 1);
         if (j.start?.(j) !== false)
-            return w.job = j, j.t = performance.now(),
-                w.postMessage([0, ...j.args]);
+            return w.jobs.set(++ids, j), j.t = performance.now(),
+                j.in = j.pri >= IN ? epoch : -1,
+                w.postMessage([ids, ...j.args]);
     }
 };
-// reads still to make in reach of the view, or in flight: a worker not
-// idle is reading, or not yet ready to
+// reads still to make in reach of the view, or in flight
 export const busy = () => !off
-    && (idle.length < N || jobs.some(j => j.pri > -Infinity));
+    && (idle.length < N * K || jobs.some(j => j.pri > -Infinity));
 // told the date of each scene read as it lands
 let read = () => {};
 export const onRead = fn => read = fn;
@@ -135,42 +141,25 @@ const kick = () => {
 for (let i = 0; i < N; i++) {
     const w = new Worker(new URL('../vendor/burnoff/worker.js',
         import.meta.url), { type: 'module' });
+    w.jobs = new Map(), pool.push(w);
     w.onmessage = ({ data }) => {
-        if (data[0] === 'ahead') return ahead(data[1], data[2]);
-        const j = w.job, t = performance.now();
-        if (data !== 'ready') log.push([t | 0, j.args, t - j.t | 0,
-            data[1].hotspots?.length, !!j.sweep]), j.done(data[1]),
-            j.scene && read(j.scene.date);
+        if (data === 'ready') {
+            for (let k = 0; k < K; k++) pump(w);
+            return;
+        }
+        const j = w.jobs.get(data[0]), t = performance.now();
+        w.jobs.delete(data[0]), done += j.in === epoch;
+        log.push([t | 0, j.args, t - j.t | 0, data[1].hotspots?.length,
+            !!j.sweep]), j.done(data[1]), j.scene && read(j.scene.date);
         if (log.length > 4000) log.splice(0, 2000);
         pump(w);
     };
 }
 const run = job => new Promise(done => {
-    if (job.scene) warm(job.scene);
     jobs.push(Object.assign(job, { done }));
     kick();
 });
 const day = scene => +scene.date.replaceAll('-', '');
-
-// the detector's reads block its worker, one at a time. the small ones every
-// read of a scene starts with, its cloud mask and each band's header, are
-// fetched at once when the read is queued, and so is every read a worker
-// posts before making it: the browser's http cache answers the same ranged
-// read again, a worker's included, in under a ms. a worker of its own
-// fetches them, as tens of mb a minute through the page's thread made the
-// map judder
-const gcs = u => 'https://storage.googleapis.com/download/storage/v1/b/'
-    + `${BUCKET}/o/${encodeURIComponent(u.slice(6 + BUCKET.length))}?alt=media`;
-const fetcher = new Worker(new URL('./ahead.js', import.meta.url));
-const ahead = (u, range) => fetcher.postMessage([u, range]);
-const warmed = new Set();
-function warm({ url }) {
-    if (warmed.has(url) || !warmed.add(url)) return;
-    const get = (u, range) => ahead(gcs(u), range);
-    get(url.replace(/\/IMG_DATA\/.*/, '/QI_DATA/MSK_CLASSI_B00.jp2'));
-    for (const b of ['B12', 'B11', 'B8A'])
-        get(url.replace('B12.jp2', `${b}.jp2`), 'bytes=0-16383');
-}
 
 // ── scenes: a tile's last DAYS, newest first, one per sensing time ──
 
@@ -364,11 +353,14 @@ async function owners(i0, j0, i1, j1) {
 export async function view(map) {
     await loaded;
     const e = ++epoch;
+    done = 0;
     shown = viewportBbox(map), ver++, off = map.getZoom() < LIVE_ZOOM;
-    // the old view's whole-scene reads that have not started are dropped,
-    // and its sites' reads wait unless they are near this one
+    // the old view's whole-scene reads are dropped, those in flight at
+    // their next stage, and its sites' reads wait unless they are near this
     for (let i = jobs.length; i--;)
         if (jobs[i].sweep) jobs.splice(i, 1)[0].done({ dropped: true });
+    for (const w of pool) for (const [id, j] of w.jobs)
+        if (j.sweep) w.postMessage([id, 'drop']);
     sites.filter(s => !s.probed && weight(s) > -Infinity).forEach(probe);
     kick();
     if (map.getZoom() < LIVE_ZOOM) return;

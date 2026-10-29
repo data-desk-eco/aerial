@@ -15,12 +15,14 @@ const QUARTERS = `<div class="fx-quarters" id="quarters"></div>`;
 // a line at the map's top right saying what is still being read: the newest
 // read's, and an update keeps its place. on a slow line an empty map and a
 // loading one look the same. status(k) takes read k down, and the start
-// goes once the first reads settle
-const lines = new Map([['start', 'Loading the engine and archive']]);
-export function status(k, text) {
-    text ? lines.set(k, text) : lines.delete(k);
-    const el = document.getElementById('status');
-    if (el) el.textContent = [...lines.values()].at(-1) ?? '';
+// goes once the first reads settle. a line with a share done, p, draws it
+// as a bar beneath
+const lines = new Map([['start', ['Loading the engine and archive']]]);
+export function status(k, text, p) {
+    text ? lines.set(k, [text, p]) : lines.delete(k);
+    const el = document.getElementById('status'), [t, q] =
+        [...lines.values()].at(-1) ?? [''];
+    if (el) el.textContent = t, el.style.setProperty('--p', q ?? 0);
 }
 export const loaded = () => status('start');
 

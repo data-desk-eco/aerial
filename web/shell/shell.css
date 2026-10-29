@@ -84,6 +84,9 @@ d='M0 0 8 8M8 0 0 8' stroke='%23000' stroke-width='1.4'/%3E%3C/svg%3E")
 .fx-status {
     position: absolute; top: 0; right: 0; margin: var(--dd-margin);
     color: var(--dd-ui-text); white-space: nowrap; pointer-events: none;
+    /* a bar beneath, as wide as the share done (ui.js status) */
+    padding-bottom: 4px; background: linear-gradient(currentColor,
+        currentColor) 0 100% / calc(var(--p, 0) * 100%) 2px no-repeat;
 }
 .fx-status:empty { display: none; }
 
@@ -216,6 +219,8 @@ d='M0 0 8 8M8 0 0 8' stroke='%23000' stroke-width='1.4'/%3E%3C/svg%3E")
     /* the key moves to the opposite corner, so it sizes to its own content
        rather than sharing the main panel's width */
     .fx-key { bottom: auto; top: 0; right: 0; left: auto; width: auto; }
+    /* and the status line, which sat behind it there, to the bottom left */
+    .fx-status { top: auto; right: auto; bottom: 0; left: 0; }
     /* left and right, not width, so it sits inside the margins */
     .fx-detail {
         top: auto;
