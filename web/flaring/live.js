@@ -8,9 +8,9 @@
 // the search belongs to the ground, not to a view. each square of a G
 // degree grid keeps what each scene read of it saw, and a view, from
 // LIVE_ZOOM in, asks its squares for every scene: the last RECENT days',
-// then the year's before them, coarse to fine in time, so most flares are
-// drawn early and the last reads only complete the year. a site found gets
-// its history read around it as well, a small read, so its card fills in
+// then those back to DAYS, coarse to fine in time, so most flares are
+// drawn early and the last reads only complete the search. a site found
+// gets its DAYS read around it as well, a small read, so its card fills in
 // before the sweeps reach it. a pan or a zoom re-scores what is wanted, the
 // view first, and nothing is read twice. what was read is kept as facts
 // (below) in indexeddb, so a reload starts from them. a site is the
@@ -28,10 +28,12 @@ import { viewportBbox } from '../shell/map.js';
 const BUCKET = 'gcp-public-data-sentinel-2';
 const LIST = `https://storage.googleapis.com/storage/v1/b/${BUCKET}/o`;
 export const LIVE_ZOOM = 12;
-const DAYS = 365, SITE_M = 135, CLEAR = 0.6, MIN_LOOKS = 10;
+// three months: a year read every scene of a z12 view for ~0.9 GB, and
+// a year of each site's looks read site by site ~50 MB a site
+const DAYS = 90, SITE_M = 135, CLEAR = 0.6, MIN_LOOKS = 10;
 // the order of the search: a rank for each date of a list, newest first.
-// every scene of the last RECENT days, 900, then the year's before them
-// in turn: the newest of each month, 800, then the middle of the month,
+// every scene of the last RECENT days, 900, then those back to DAYS in
+// turn: the newest of each month, 800, then the middle of the month,
 // and halving the gaps (bit-reversed), 10 less a level. a cloudy scene is
 // a cheap read, as its mask skips it, and a flare that burns on few days
 // is found only by reading the days it burns: at the isab refinery the two
@@ -474,8 +476,10 @@ function sweep(scene, ks) {
     for (const r of rects(ks.map(k => k.split(',').map(Number)))) (async () => {
         const [w, s, e, n] = [r.i0 * G, r.j0 * G, (r.i1 + 1) * G,
             (r.j1 + 1) * G];
-        const km = (e - w) * 111 * Math.cos((s + n) * Math.PI / 360);
-        const parts = Math.max(1, Math.min(N, Math.round(km / 12.8)));
+        // one part: parts split a scene across workers by cell columns, but
+        // each read a margin of whole 6.4 km cells beside its own, and a
+        // worker holds K scenes anyway
+        const parts = 1;
         const held = sites.filter(p => inside(p, [w, s, e, n]));
         const pts = [...held.flatMap(p => [p.lon, p.lat]),
             ...r.sq.flatMap(([i, j]) => [(i + .5) * G, (j + .5) * G])];
