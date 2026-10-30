@@ -84,7 +84,7 @@ const inside = (p, [w, s, e, n]) =>
 // indexeddb; FLY at once, the most wanted first ──
 
 const db = new Promise(ok => {
-    const q = indexedDB.open('burnoff-live', 6);
+    const q = indexedDB.open('burnoff-live', 7);
     q.onupgradeneeded = () => ([...q.result.objectStoreNames].forEach(s =>
         q.result.deleteObjectStore(s)), q.result.createObjectStore('blocks'));
     q.onsuccess = () => ok(q.result), q.onerror = () => ok(null);
@@ -104,7 +104,10 @@ async function get(box, a, b) {
         .then(({ features }) => (idb(k, features), features));
     absorb(fs);
 }
-const fetchBlock = (box, a, b) => get(box, a, b).catch(e => (
+// a failed request is made once more, 5 s on (the service restarts on a
+// deploy), before the detector here reads the box
+const fetchBlock = (box, a, b) => get(box, a, b).catch(() => new Promise(ok =>
+    setTimeout(ok, 5000)).then(() => get(box, a, b))).catch(e => (
     console.warn('burnoff: service', e), import('./fallback.js')
         .then(m => m.detect(box, a, b)).then(x => land(box, x))));
 const want = (box, a, b, r, pri) => {
