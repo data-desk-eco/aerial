@@ -123,10 +123,11 @@ where it holds the scene and reads the jp2s in region where not; `?api=` on
 the page names another, empty reads here), and a scroll past its rows' end
 90 more once those are in (`older()`); the view's search reads here.
 
-a site is a top of the heap every date's detections build (burnoff's
-`serve/sites.sql`), named by the top's place (`live:<lat>,<lon>`), the
-same for any block or window once the store holds its history; as it
-fills, a top can move a pixel, so a site joins one held within 40 m (the
+a site is a hill of the heap every date's detections build, hills that
+never share a date joined (burnoff's `serve/sites.sql`), named by its
+detections' mean place rounded to 40 m (`live:<lat>,<lon>`), the same
+for any block or window; as the store fills, the mean can cross a
+rounding edge, so a site joins one held within 40 m (the
 fallback's detections, within 100 m; a link falls back to the site
 nearest its place), and a look is clear
 under 0.6 cloud, as in the archive. it is drawn as the archive's are, lit on

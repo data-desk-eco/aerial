@@ -5,9 +5,9 @@
 // RECENT days STEP at a time first, then the rest back to DAYS a month at
 // a time, the view's middle first. each site comes with its looks (the
 // cloud of the 640 m square under it, a date) and its detections, named by
-// the top of the heap the store's detections build (its sites.sql). a top
-// moves a pixel as the store fills, so a site joins one held within HEAP_M,
-// the heap's reach; the fallback's detections, one within SITE_M.
+// its detections' mean place rounded to 40 m (the service's sites.sql). the
+// mean can cross a rounding edge as the store fills, so a site joins one
+// held within HEAP_M; the fallback's detections, one within SITE_M.
 // the browser's http cache keeps what came back (the service's max-age), so
 // a reload starts from it. where
 // the service fails, burnoff's detector reads the block here (fallback.js),
