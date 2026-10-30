@@ -168,7 +168,7 @@ export async function view(map) {
 }
 // the view's share of blocks in, recent and older; null out past LIVE_ZOOM
 export const progress = () => off ? null : [0, 1].map(r => (b =>
-    b.reduce((a, j) => a + (j.done || j.t0 && 0.9 * (1 - Math.exp(
+    b.reduce((a, j) => a + (j.done || !!j.t0 && 0.9 * (1 - Math.exp(
         (j.t0 - performance.now()) / mean))), 0) / (b.length || 1))(blocks
         .filter(j => j.r === r)));
 export const busy = () => !off && progress().some(v => v < 1);
