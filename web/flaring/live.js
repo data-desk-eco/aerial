@@ -4,9 +4,10 @@
 // in, asks for fixed BLOCK degree blocks of sites (f=sites): the last
 // RECENT days STEP at a time first, then the rest back to DAYS a month at
 // a time, the view's middle first. each site comes with its looks (the
-// cloud of the 640 m square under it, a date) and its detections, under an
-// id the service gives it the same whatever block or window asks (its
-// sites.sql); the fallback's detections join a site within SITE_M.
+// cloud of the 640 m square under it, a date) and its detections, named by
+// the top of the heap the store's detections build (its sites.sql). a top
+// moves a pixel as the store fills, so a site joins one held within HEAP_M,
+// the heap's reach; the fallback's detections, one within SITE_M.
 // the browser's http cache keeps what came back (the service's max-age), so
 // a reload starts from it. where
 // the service fails, burnoff's detector reads the block here (fallback.js),
@@ -21,7 +22,8 @@ export const LIVE_ZOOM = 12;
 const API = new URLSearchParams(location.search).get('api')
     || 'https://dev.datadesk.eco/burnoff/hotspots';
 const DAYS = 180, RECENT = 30, BACK = 90, FIRST = '2022-01-25';
-const SITE_M = 100, CLEAR = 0.6, MIN_LOOKS = 10, BLOCK = 0.1, FLY = 4;
+const SITE_M = 100, HEAP_M = 40, CLEAR = 0.6, MIN_LOOKS = 10, BLOCK = 0.1;
+const FLY = 4;
 const ago = (d, n) => new Date(Date.parse(d) - n * 864e5).toISOString()
     .slice(0, 10);
 const today = () => ago(new Date(), 0);
@@ -46,14 +48,14 @@ const sites = [], byId = new Map(), bucket = new Map();
 const cell = p => `${Math.floor(p.lon * 100)},${Math.floor(p.lat * 100)}`;
 const metres = (a, b) => Math.hypot((a.lon - b.lon) * Math.cos(a.lat
     * Math.PI / 180), a.lat - b.lat) * 111320;
-const near = p => {
+const near = (p, r) => {
     const [x, y] = cell(p).split(',').map(Number);
     for (let d = 0; d < 9; d++)
         for (const s of bucket.get(`${x + d % 3 - 1},${y + (d / 3 | 0) - 1}`)
-            ?? []) if (metres(s, p) <= SITE_M) return s;
+            ?? []) if (metres(s, p) <= r) return s;
 };
-const found = (id, lat, lon, any = true) => byId.get(id)
-    ?? (any ? near({ lat, lon }) : null) ?? (s => {
+const found = (id, lat, lon, r = SITE_M) => byId.get(id)
+    ?? near({ lat, lon }, r) ?? (s => {
     sites.push(s), byId.set(id, s);
     bucket.set(cell(s), [...bucket.get(cell(s)) ?? [], s]);
     return s;
@@ -66,7 +68,7 @@ function look(s, date, cloud, flare) {
 // a block's sites as the service gives them, or the fallback's scenes
 function absorb(fs) {
     for (const { geometry: { coordinates: [lon, lat] }, properties: p } of fs) {
-        const s = found(p.id, lat, lon, false), c = new Map(p.looks);
+        const s = found(p.id, lat, lon, HEAP_M), c = new Map(p.looks);
         c.forEach((v, d) => look(s, d, v));
         p.detections.forEach(f => look(s, f.date, c.get(f.date) ?? 0, f));
         s.ok = drawn(s);

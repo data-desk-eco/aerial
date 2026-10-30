@@ -125,9 +125,10 @@ the page names another, empty reads here), and a scroll past its rows' end
 
 a site is a top of the heap every date's detections build (burnoff's
 `serve/sites.sql`), named by the top's place (`live:<lat>,<lon>`), the
-same for any block or window, so blocks and a card's reads join on the
-id alone (the fallback's detections join a site within 100 m; a link
-falls back to the site nearest its place), and a look is clear
+same for any block or window once the store holds its history; as it
+fills, a top can move a pixel, so a site joins one held within 40 m (the
+fallback's detections, within 100 m; a link falls back to the site
+nearest its place), and a look is clear
 under 0.6 cloud, as in the archive. it is drawn as the archive's are, lit on
 two dates with its mean b12 over MODE.s2.floor, unless lit only in its
 hemisphere's summer (the archive's `seasonal`, april to august in the
