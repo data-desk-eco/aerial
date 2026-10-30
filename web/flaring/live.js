@@ -7,7 +7,7 @@
 // cloud of the 640 m square under it, a date) and its detections, named by
 // its detections' mean place rounded to 40 m (the service's sites.sql). the
 // mean can cross a rounding edge as the store fills, so a site joins one
-// held within HEAP_M; the fallback's detections, one within SITE_M.
+// held within ID_M; the fallback's detections, one within SITE_M.
 // the browser's http cache keeps what came back (the service's max-age), so
 // a reload starts from it. where
 // the service fails, burnoff's detector reads the block here (fallback.js),
@@ -22,7 +22,7 @@ export const LIVE_ZOOM = 12;
 const API = new URLSearchParams(location.search).get('api')
     || 'https://dev.datadesk.eco/burnoff/hotspots';
 const DAYS = 180, RECENT = 30, BACK = 90, FIRST = '2022-01-25';
-const SITE_M = 100, HEAP_M = 40, CLEAR = 0.6, MIN_LOOKS = 10, BLOCK = 0.1;
+const SITE_M = 100, ID_M = 40, CLEAR = 0.6, MIN_LOOKS = 10, BLOCK = 0.1;
 const FLY = 4;
 const ago = (d, n) => new Date(Date.parse(d) - n * 864e5).toISOString()
     .slice(0, 10);
@@ -68,7 +68,7 @@ function look(s, date, cloud, flare) {
 // a block's sites as the service gives them, or the fallback's scenes
 function absorb(fs) {
     for (const { geometry: { coordinates: [lon, lat] }, properties: p } of fs) {
-        const s = found(p.id, lat, lon, HEAP_M), c = new Map(p.looks);
+        const s = found(p.id, lat, lon, ID_M), c = new Map(p.looks);
         c.forEach((v, d) => look(s, d, v));
         p.detections.forEach(f => look(s, f.date, c.get(f.date) ?? 0, f));
         s.ok = drawn(s);
