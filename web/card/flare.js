@@ -42,9 +42,8 @@ function downloadCSV() {
     const csv = [CSV_COLS, ...rows].map(r => r.join(',')).join('\n');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-    const slug = (p.name || 'hotspot').replace(/[^a-z0-9]/gi, '-')
-        .toLowerCase();
-    a.download = `${slug}-detections.csv`;
+    // the site's id, its colon (no filename takes one) as _
+    a.download = `${p.id.replace(/[:/\\]/g, '_')}.csv`;
     a.click();
     URL.revokeObjectURL(a.href);
 }
