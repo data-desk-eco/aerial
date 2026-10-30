@@ -60,7 +60,15 @@ const found = (id, lat, lon, r = SITE_M) => byId.get(id)
     bucket.set(cell(s), [...bucket.get(cell(s)) ?? [], s]);
     return s;
 })({ id, lat, lon, looks: new Map() });
+// a flare unsaturated and no brighter in b12 than RATIO times b11 is dropped:
+// a sunlit slope under snow at a low sun or a cloud top, by eye. on
+// today's burnoff, january 2025 (may in the permian), it cut 168 of 178 at
+// stavanger, 9 of 174 at ras laffan and 3 of 335 in the permian, all by eye
+// slopes or cloud bar one pad, 1 of 391 in the niger delta and none of 301
+// in the bakken's winter (data-desk-eco/slstr NOTES.md)
+const RATIO = 0.9;
 function look(s, date, cloud, flare) {
+    if (flare && !flare.saturated && flare.ratio < RATIO) flare = null;
     const l = s.looks.get(date) ?? s.looks.set(date, { cloud }).get(date);
     l.cloud = Math.min(l.cloud, cloud);
     if (flare && !(l.flare?.max_b12 >= flare.max_b12)) l.flare = flare;
