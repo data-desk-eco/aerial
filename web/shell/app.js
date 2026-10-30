@@ -51,8 +51,9 @@ function wireFilters(map, sources, keyPreds, ctx) {
 
 export async function mount(config) {
     buildShell(config);
-    // a card link with no view starts on the world, not the default view,
-    // and jumps to the card once it resolves
+    // a card link with no view (one from before views rode with cards)
+    // starts on the world, not the default view; any card link jumps to the
+    // card once it resolves, never flies
     const cold = !/[#&]map=/.test(location.hash) && readHashKeys(
         location.hash, Object.keys(config.detail?.hashKeys ?? {}))[1];
     const map = createMap({ hash: 'map', ...config.map,
@@ -96,7 +97,7 @@ export async function mount(config) {
 
     await config.ready?.(ctx);
     // after ready: onShow hooks use handles wired there
-    restorePermalink(cold);
+    restorePermalink(true);
     window.aerial = ctx;   // console handle
     return ctx;
 }

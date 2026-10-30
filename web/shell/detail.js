@@ -37,14 +37,10 @@ export const coordsOf = f => f.properties.lon != null
     ? [Number(f.properties.lon), Number(f.properties.lat)]
     : f.geometry.coordinates;
 
-// a card's position implies the view, so while one is open the hash carries
-// its id and not the map's own key, which comes back when it closes
-const view = () => map._hash?._hashName;
-const bare = h => view() ? writeHashKeys(h, [view()]) : h;
-
+// the map's own key stays beside a card's id, so a link starts on its place
+// before the card's data has loaded
 function setHash(id, key) {
-    let target = writeHashKeys(location.hash, keys(), key, id);
-    if (id != null) target = bare(target);
+    const target = writeHashKeys(location.hash, keys(), key, id);
     if (location.hash !== target) history.replaceState(null, '',
         target || location.pathname + location.search);
     if (id == null) map._hash?._updateHashUnthrottled();
@@ -153,7 +149,8 @@ export async function restorePermalink(jump) {
             ...features.filter((_, i) => i !== idx)]);
         showDetail(overlapping[0], true);
     });
-    jump ? map.jumpTo({ center: [lon, lat], zoom: zoomFor(cfg, match.properties) })
+    jump ? map.jumpTo({ center: [lon, lat],
+        zoom: Math.max(map.getZoom(), zoomFor(cfg, match.properties)) })
         : flyTo([lon, lat], match.properties);
 }
 
@@ -162,8 +159,6 @@ export function initDetail(m, config, getFeatures) {
     cfg = config.detail;
     allFeatures = getFeatures;
     if (!cfg) return;
-    const h = map._hash, full = h?.getHashString.bind(h);
-    if (h) h.getHashString = f => shown ? bare(full(f)) : full(f);
 
     // a hairline box round the selection, from highlightZoom: below it a
     // selection is carried by its own marking
