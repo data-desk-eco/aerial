@@ -230,6 +230,11 @@ d='M0 0 8 8M8 0 0 8' stroke='%23000' stroke-width='1.4'/%3E%3C/svg%3E")
         right: 0;
         width: auto;
         max-height: 45vh;
+        /* ios safari can let the panel's box outgrow this max-height, its
+           overflow then below the screen and nothing to drag: the panel
+           scrolls itself if so */
+        overflow-y: auto;
+        overscroll-behavior: contain;
     }
     .fx-logo { display: none; }
     .fx-drawer, .fx-drawer-handle { display: none; }
