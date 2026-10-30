@@ -11,9 +11,11 @@ const LIST = `https://storage.googleapis.com/storage/v1/b/${BUCKET}/o`;
 const K = 8, N = matchMedia('(pointer: coarse)').matches ? 2
     : Math.min(Math.max((navigator.hardwareConcurrency || 4) / 2, 2), 4);
 const queue = [], done = new Map();
+// its finds are not kept (?fresh), and those kept before are dropped
+indexedDB.deleteDatabase('burnoff');
 let ids = 0;
 const pool = Array.from({ length: N }, () => {
-    const w = new Worker(new URL('../vendor/burnoff/worker.js',
+    const w = new Worker(new URL('../vendor/burnoff/worker.js?fresh',
         import.meta.url), { type: 'module' });
     w.n = 0, w.onmessage = ({ data }) => {
         if (data === 'ready') return w.ready = true, pump();
