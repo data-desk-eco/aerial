@@ -165,9 +165,11 @@ function seriesShow(p, el, b, keep) {
         .then(dets => { if (current === p) renderEvents(el, dets, b, keep); });
     b.wire?.(el);
     // a scroll down past the dated rows' end asks for older dates (an s2
-    // site's history is read 90 days at a time)
+    // site's history is read 90 days at a time). on a phone the card scrolls
+    // and not the list, so either may be the one at its end
+    const end = e => e.scrollTop + e.clientHeight >= e.scrollHeight - 1;
     const list = el.querySelector('#events-list'), more = () => b.more
-        && list.scrollTop + list.clientHeight >= list.scrollHeight - 1
+        && end(list) && end(el.shadowRoot.querySelector('.box'))
         && b.more(p);
     let y = 0;
     el.onwheel = e => e.deltaY > 0 && more();
@@ -207,9 +209,12 @@ function renderEvents(el, detections, b, keep) {
         }
     });
 
-    const rows = window.innerWidth <= 768 ? 4 : 10;
+    // a phone has no room for a scroller in a scroller (ios will not hand
+    // the gesture on): there the list runs whole and the card scrolls
+    const rows = window.innerWidth <= 768 ? 0 : 10;
     const items = list.querySelectorAll('.event-item');
-    if (items.length) {
+    if (items.length && !rows) list.style.maxHeight = '';
+    else if (items.length) {
         const n = Math.min(items.length, rows);
         const gap = parseFloat(getComputedStyle(list).rowGap) || 0;
         // unrounded, or the list scrolls by a fraction and clips the top row

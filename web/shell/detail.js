@@ -104,6 +104,10 @@ function render(feature, fromPermalink) {
         + `${overlapIndex + 1} / ${n} `
         + `<button class="fx-nav" data-nav="1">›</button></span>`;
     const el = panel();
+    // a phone opens a card shut, so it does not hide the map; ‹ › keeps it
+    if (!el.classList.contains('visible'))
+        el.toggleAttribute('collapsed',
+            matchMedia('(max-width: 768px)').matches);
     el.innerHTML = `
         <span slot="title" title="${escapeHtml(t.text)
             }">${escapeHtml(t.text)}${t.note ? ` <span class="fx-secondary">${
