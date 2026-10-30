@@ -123,10 +123,11 @@ where it holds the scene and reads the jp2s in region where not; `?api=` on
 the page names another, empty reads here), and a scroll past its rows' end
 90 more once those are in (`older()`); the view's search reads here.
 
-a site is the detections within 100 m of its first (the archive's
-135 m merged neighbouring flares), named by that first detection's
-place, tile and date (`live:<lat>,<lon>@<tile>_<date>`; a link falls back
-to the site nearest its place), and a look is clear
+a site is a top of the heap every date's detections build (burnoff's
+`serve/sites.sql`), named by the top's place (`live:<lat>,<lon>`), the
+same for any block or window, so blocks and a card's reads join on the
+id alone (the fallback's detections join a site within 100 m; a link
+falls back to the site nearest its place), and a look is clear
 under 0.6 cloud, as in the archive. it is drawn as the archive's are, lit on
 two dates with its mean b12 over MODE.s2.floor, unless lit only in its
 hemisphere's summer (the archive's `seasonal`, april to august in the

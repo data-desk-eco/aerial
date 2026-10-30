@@ -4,8 +4,9 @@
 // in, asks for fixed BLOCK degree blocks of sites (f=sites): the last
 // RECENT days STEP at a time first, then the rest back to DAYS a month at
 // a time, the view's middle first. each site comes with its looks (the
-// cloud of the 640 m square under it, a date) and its detections; a site
-// within SITE_M of one held, as across a block's edge, is merged into it.
+// cloud of the 640 m square under it, a date) and its detections, under an
+// id the service gives it the same whatever block or window asks (its
+// sites.sql); the fallback's detections join a site within SITE_M.
 // the browser's http cache keeps what came back (the service's max-age), so
 // a reload starts from it. where
 // the service fails, burnoff's detector reads the block here (fallback.js),
@@ -51,7 +52,8 @@ const near = p => {
         for (const s of bucket.get(`${x + d % 3 - 1},${y + (d / 3 | 0) - 1}`)
             ?? []) if (metres(s, p) <= SITE_M) return s;
 };
-const found = (id, lat, lon) => byId.get(id) ?? near({ lat, lon }) ?? (s => {
+const found = (id, lat, lon, any = true) => byId.get(id)
+    ?? (any ? near({ lat, lon }) : null) ?? (s => {
     sites.push(s), byId.set(id, s);
     bucket.set(cell(s), [...bucket.get(cell(s)) ?? [], s]);
     return s;
@@ -64,7 +66,7 @@ function look(s, date, cloud, flare) {
 // a block's sites as the service gives them, or the fallback's scenes
 function absorb(fs) {
     for (const { geometry: { coordinates: [lon, lat] }, properties: p } of fs) {
-        const s = found(p.id, lat, lon), c = new Map(p.looks);
+        const s = found(p.id, lat, lon, false), c = new Map(p.looks);
         c.forEach((v, d) => look(s, d, v));
         p.detections.forEach(f => look(s, f.date, c.get(f.date) ?? 0, f));
         s.ok = drawn(s);
