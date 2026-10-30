@@ -169,7 +169,7 @@ const scheduleDots = debounce(quarterDots, 300);
 
 // ── deep links ──
 
-// #flare= names a live site (live:<lat>,<lon>) or a vnf one
+// #flare= names a live site (live:<lat>,<lon>@<tile>_<date>) or a vnf one
 async function resolveFlare(id) {
     await whenReady;
     if (id.startsWith('live:')) return liveSite(id, CTX.quarters.keys());

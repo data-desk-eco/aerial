@@ -28,9 +28,14 @@ import { viewportBbox } from '../shell/map.js';
 const BUCKET = 'gcp-public-data-sentinel-2';
 const LIST = `https://storage.googleapis.com/storage/v1/b/${BUCKET}/o`;
 export const LIVE_ZOOM = 12;
+// burnoff's service (its serve/, on the jump host), which reads an open
+// card's history in region, off its store where it holds it: ?api= on the
+// page names another, and ?api= alone reads the history here too
+const API = new URLSearchParams(location.search).get('api')
+    ?? 'https://dev.datadesk.eco/burnoff/hotspots';
 // six months, the last three every scene first (RECENT): a year read every
 // scene of a small z12 view for ~0.9 GB, three months ~0.11 GB
-const DAYS = 180, SITE_M = 135, CLEAR = 0.6, MIN_LOOKS = 10;
+const DAYS = 180, SITE_M = 100, CLEAR = 0.6, MIN_LOOKS = 10;
 // the order of the search: a rank for each date of a list, newest first.
 // every scene of the last RECENT days, 900, then those back to DAYS in
 // turn: the newest of each month, 800, then the middle of the month,
@@ -234,14 +239,14 @@ const scenes = (tile, all) => listed.get(tile + (all ? '*' : ''))
 // the search and the sites' reads are chosen and counted from these alone,
 // so what absorb() takes in is not read again. facts(bbox) gives a box's ──
 
-const V = 2;
+const V = 3;
 const sites = [], byId = new Map(), bucket = new Map();
 const ground = new Map();   // square -> Map(scene url -> cloud at its centre)
 const bad = new Set();      // scenes a read failed on, taken as read
 const dirty = { sites: new Set(), ground: new Set() };
 // the version is 1 + the detector's, and moves with it or the stores'
 // shape, so a reload forgets what an older one read (3: detector 2, the
-// b8a heat test, its sweeps kept by square)
+// b8a heat test, its sweeps kept by square; 4: sites 100 m, ids by scene)
 const db = new Promise(ok => {
     const q = indexedDB.open('burnoff-live', V + 1);
     q.onupgradeneeded = () => {
@@ -333,7 +338,8 @@ function land(scene, held, r) {
     held.forEach((s, i) => r.cloud[i] >= 0 && look(s, scene.date, r.cloud[i]));
     for (const f of r.hotspots) {
         const s = near(f) ?? add({ id: `live:${f.lat.toFixed(5)},${
-            f.lon.toFixed(5)}`, lat: f.lat, lon: f.lon, tile: scene.tile });
+            f.lon.toFixed(5)}@${scene.tile}_${scene.date.slice(0, 10)}`,
+            lat: f.lat, lon: f.lon, tile: scene.tile });
         look(s, scene.date, f.cloud, f), touched.add(s);
     }
     touched.forEach(s => s.ok = drawn(s));
@@ -352,10 +358,16 @@ function look(s, date, cloud, flare) {
 // looked at it, as a flare there would have started a site then: its
 // look is the square's cloud, if the square's centre was on the scene.
 // at passes those done, which only grow
-const order = new WeakMap();
+const order = new WeakMap(), cuts = new WeakMap();
+// a tile's every scene from a date on, one list for each date, so its order
+// is kept
+const since = (A, d) => (m => m.get(d) ?? m.set(d, A.filter(x => x.date >= d))
+    .get(d))(cuts.get(A) ?? cuts.set(A, new Map()).get(A));
 function due(s, all) {
-    const L = lists.get(s.tile + (s.deep ? '*' : ''));
-    if (!L) return void scenes(s.tile, s.deep);
+    if (s.deep && s.api) return null;   // the service reads it (history())
+    const A = lists.get(s.tile + (s.deep ? '*' : ''));
+    if (!A) return void scenes(s.tile, s.deep);
+    const L = s.deep ? since(A, s.since) : A;
     const r = ranks(L, x => x.date), g = ground.get(sq(Math.floor(s.lon / G),
         Math.floor(s.lat / G)));
     const q = order.get(L) ?? order.set(L, L.map((_, i) => i)
@@ -581,7 +593,12 @@ globalThis.burnoff = { sites, jobs, log, ground, target, workers: N,
 
 // a site's feature, once the sites a reload restores are in (a #flare= link)
 export const site = (id, keys) => loaded.then(() =>
-    features(keys).find(f => f.properties.id === id) ?? null);
+    (f => f.find(f => f.properties.id === id) ?? f.find(f => metres(f
+        .properties, at(id)) <= SITE_M) ?? null)(features(keys)));
+// a link's site: its own id, else the one held near where it was found,
+// since the first scene to find a site depends on the order of the reads
+const at = id => (([lat, lon]) => ({ lat, lon }))(id.slice(5).split(/[,@]/)
+    .map(Number));
 
 // the quarters a drawn site in a lon/lat box was lit in
 export const quarters = ([w, s, e, n]) => new Set(sites.filter(p => p.ok
@@ -598,7 +615,7 @@ export function features(keys) {
         return { type: 'Feature', geometry: { type: 'Point',
             coordinates: [s.lon, s.lat] }, properties: {
             id: s.id, kind: 'live', lat: s.lat, lon: s.lon,
-            loading: due(s, true) !== null,
+            loading: s.fetching > 0 || due(s, true) !== null,
             name: `${on.length} detection${on.length === 1 ? '' : 's'}`,
             max_b12: Math.max(0, ...on.map(([, l]) => l.flare.max_b12)),
             detection_count: on.length, passes: looks.length,
@@ -608,20 +625,58 @@ export function features(keys) {
     }).filter(f => f.properties.max_b12 > 0);
 }
 
-// the site whose card was opened last reads every scene of its tile the
-// detector can, back to FIRST, at any zoom and wherever the view is: its
-// history to the full extent, newest first and then coarse to fine, a small
-// read a scene. its last RECENT days come before anything else, so the card
-// fills at once; its older scenes rank as a sure site's in view, first of
-// them, so they wait on the view's recent ones and a card left open does
-// not hold the view at 0%
+// the site whose card was opened last has its last BACK days read, and
+// BACK more each time older() is asked, back to FIRST (its whole history,
+// read here, was 2.7 GB in venezuela): by the service, one request a
+// window (history()), at any zoom and wherever the view is. where the
+// service fails it is read here, a small read a scene, newest first and
+// then coarse to fine; its last RECENT days before anything else, so the
+// card fills at once, and its older scenes as a sure site's in view, first
+// of them, so a card left open does not hold the view at 0%
 let deep;
+const BACK = 90, ago = (d, n) => new Date(Date.parse(d) - n * 864e5)
+    .toISOString().slice(0, 10);
 export const deepen = id => {
     const s = byId.get(id);
     if (!s || s === deep) return;
     if (deep) deep.deep = false, deep.at = 0;
-    deep = s, s.deep = true, s.at = 0, stale = true, kick();
+    deep = s, s.deep = true, s.at = 0, s.since = ago(new Date(), BACK);
+    history(s, s.since, ago(new Date(), 0)), stale = true, kick();
 };
+// the open card's history BACK days further back once what it holds is
+// read, false while it is not or once at FIRST
+export const older = id => deep?.id === id && deep.since > FIRST
+    && !deep.fetching && due(deep, true) === null && (history(deep,
+        [ago(deep.since, BACK), FIRST].sort()[1], ago(deep.since, 1)),
+        deep.since = [ago(deep.since, BACK), FIRST].sort()[1], deep.at = 0,
+        stale = true, kick(), true);
+
+// a site's history from a to b in one request of the service: each scene's
+// look at the site (the obscured share of its squares within D) and the
+// hotspots within SITE_M, drawn as they land; a failed request leaves the
+// site to the reads here
+const D = 0.004;
+function history(s, a, b) {
+    if (!API) return;
+    const k = D / Math.cos(s.lat * Math.PI / 180);
+    s.api = true, s.fetching = (s.fetching ?? 0) + 1;
+    fetch(`${API}?bbox=${[s.lon - k, s.lat - D, s.lon + k, s.lat + D]
+        .map(v => v.toFixed(5))}&datetime=${a}/${b}`)
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(({ features }) => {
+            for (const { properties: p } of features)
+                if (p.kind === 'look' && p.cloud >= 0)
+                    look(s, p.date, p.cloud);
+            for (const { geometry: g, properties: p } of features)
+                if (p.kind === 'hotspot' && metres(s, p) <= SITE_M)
+                    look(s, p.date, s.looks.get(p.date)?.cloud ?? 0, {
+                        ...p, px: g.coordinates.map(([r], i) =>
+                            [p.pixel_b12[i], ...r.slice(0, 4).flat()]) });
+        })
+        .catch(e => (console.warn('burnoff: history', e), s.api = false))
+        .finally(() => (s.fetching--, s.ok = drawn(s), stale = true,
+                         changed(), kick()));
+}
 // a site's dated detections, oldest first, as the card lists them
 export const series = id => [...byId.get(id)?.looks ?? []]
     .filter(([, l]) => l.flare).sort(([a], [b]) => a < b ? -1 : 1)

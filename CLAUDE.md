@@ -119,7 +119,16 @@ drawn only below NEAR, are re-set on the way out. the next read is chosen
 as a worker comes free, the squares' wants kept by scene until a sweep
 lands, a tile is listed or the view moves.
 
-a site is the detections within 135 m of its first, and a look is clear
+an open card reads its site's last 90 days in one request of burnoff's
+service (`API`, its `serve/` on the jump host, which answers off the archive
+where it holds the scene and reads the jp2s in region where not; `?api=` on
+the page names another, empty reads here), and a scroll past its rows' end
+90 more once those are in (`older()`); the view's search reads here.
+
+a site is the detections within 100 m of its first (the archive's
+135 m merged neighbouring flares), named by that first detection's
+place, tile and date (`live:<lat>,<lon>@<tile>_<date>`; a link falls back
+to the site nearest its place), and a look is clear
 under 0.6 cloud, as in the archive. it is drawn as the archive's are, lit on
 two dates with its mean b12 over MODE.s2.floor, unless lit only in its
 hemisphere's summer (the archive's `seasonal`, april to august in the

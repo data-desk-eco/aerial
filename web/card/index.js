@@ -164,6 +164,15 @@ function seriesShow(p, el, b, keep) {
         .catch(err => (console.error('detection series:', err), []))
         .then(dets => { if (current === p) renderEvents(el, dets, b, keep); });
     b.wire?.(el);
+    // a scroll down past the dated rows' end asks for older dates (an s2
+    // site's history is read 90 days at a time)
+    const list = el.querySelector('#events-list'), more = () => b.more
+        && list.scrollTop + list.clientHeight >= list.scrollHeight - 1
+        && b.more(p);
+    let y = 0;
+    el.onwheel = e => e.deltaY > 0 && more();
+    el.ontouchstart = e => y = e.touches[0].clientY;
+    el.ontouchmove = e => e.touches[0].clientY < y - 30 && more();
 }
 
 function renderEvents(el, detections, b, keep) {
