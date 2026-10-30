@@ -97,6 +97,9 @@ const idb = (k, v) => db.then(d => d && new Promise(ok => {
 })).catch(() => {});
 const got = new Map(), queue = [];
 let fly = 0, moving = false, still, changed = () => {}, read = () => {};
+// a request's mean time, ms, learnt as they come back; a block in flight is
+// credited its share of it so far, short of done, the bar ticking meanwhile
+let mean = 4000, tick;
 async function get(box, a, b) {
     const k = `${box.map(v => v.toFixed(4))} ${a} ${b}`;
     const fs = await idb(k) ?? await fetch(`${API}?bbox=${box.map(v =>
@@ -124,7 +127,10 @@ function pump() {
         if (x.pri() < -1e8 || x.r && [...got.values()].some(j => !j.r
             && !j.done && j.pri() > -1e8)) return;
         const j = queue.pop();
-        fly++, fetchBlock(j.box, j.a, j.b).finally(() => (fly--, j.done = true,
+        fly++, j.t0 = performance.now(), tick ??= setInterval(() => fly
+            ? read() : (clearInterval(tick), tick = null), 250);
+        fetchBlock(j.box, j.a, j.b).finally(() => (fly--, j.done = true,
+            mean = Math.max(1e3, mean + (performance.now() - j.t0 - mean) / 8),
             changed(), read(), pump()));
     }
 }
@@ -162,8 +168,9 @@ export async function view(map) {
 }
 // the view's share of blocks in, recent and older; null out past LIVE_ZOOM
 export const progress = () => off ? null : [0, 1].map(r => (b =>
-    b.filter(j => j.done).length / (b.length || 1))(blocks.filter(j =>
-    j.r === r)));
+    b.reduce((a, j) => a + (j.done || j.t0 && 0.9 * (1 - Math.exp(
+        (j.t0 - performance.now()) / mean))), 0) / (b.length || 1))(blocks
+        .filter(j => j.r === r)));
 export const busy = () => !off && progress().some(v => v < 1);
 export const onRead = fn => read = fn;
 export function onChange(fn) { changed = fn; }
