@@ -6,7 +6,8 @@
 // a time, the view's middle first. each site comes with its looks (the
 // cloud of the 640 m square under it, a date) and its detections; a site
 // within SITE_M of one held, as across a block's edge, is merged into it.
-// what came back is kept in indexeddb, so a reload starts from it. where
+// the browser's http cache keeps what came back (the service's max-age), so
+// a reload starts from it. where
 // the service fails, burnoff's detector reads the block here (fallback.js),
 // loaded only then.
 
@@ -81,33 +82,20 @@ const land = (box, scenes) => scenes.forEach(x => {
 const inside = (p, [w, s, e, n]) =>
     p.lon >= w && p.lon <= e && p.lat >= s && p.lat <= n;
 
-// ── requests: a box's sites from a to b, kept by key in memory and
-// indexeddb; FLY at once, the most wanted first ──
+// ── requests: a box's sites from a to b, kept by key in memory; FLY at
+// once, the most wanted first ──
 
-const db = new Promise(ok => {
-    const q = indexedDB.open('burnoff-live', 7);
-    q.onupgradeneeded = () => ([...q.result.objectStoreNames].forEach(s =>
-        q.result.deleteObjectStore(s)), q.result.createObjectStore('blocks'));
-    q.onsuccess = () => ok(q.result), q.onerror = () => ok(null);
-});
-const idb = (k, v) => db.then(d => d && new Promise(ok => {
-    const s = d.transaction('blocks', v ? 'readwrite' : 'readonly')
-        .objectStore('blocks'), r = v ? s.put(v, k) : s.get(k);
-    r.onsuccess = () => ok(r.result), r.onerror = () => ok();
-})).catch(() => {});
+// the store an older build kept here, cleared
+indexedDB.deleteDatabase('burnoff-live');
 const got = new Map(), queue = [];
 let fly = 0, moving = false, still, changed = () => {}, read = () => {};
 // a request's mean time, ms, learnt as they come back; a block in flight is
 // credited its share of it so far, short of done, the bar ticking meanwhile
 let mean = 4000, tick;
-async function get(box, a, b) {
-    const k = `${box.map(v => v.toFixed(4))} ${a} ${b}`;
-    const fs = await idb(k) ?? await fetch(`${API}?bbox=${box.map(v =>
-        v.toFixed(5))}&datetime=${a}/${b}&f=sites`)
-        .then(r => r.ok ? r.json() : Promise.reject(r.status))
-        .then(({ features }) => (idb(k, features), features));
-    absorb(fs);
-}
+const get = (box, a, b) => fetch(`${API}?bbox=${box.map(v =>
+    v.toFixed(5))}&datetime=${a}/${b}&f=sites`)
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(({ features }) => absorb(features));
 // a failed request is made once more, 5 s on (the service restarts on a
 // deploy), before the detector here reads the box
 const fetchBlock = (box, a, b) => get(box, a, b).catch(() => new Promise(ok =>

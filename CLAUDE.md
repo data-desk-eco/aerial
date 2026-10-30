@@ -101,11 +101,9 @@ one scene is read over every square wanting it. a found site has its year
 read around it too, a small read ranked just behind the sweeps of the same
 rank, and a scene its square was swept in counts as a look at it. a pan or
 zoom re-scores the wants and drops only sweeps now beyond the margin.
-what was read is kept as mergeable facts in indexeddb (`burnoff-live`,
-version 1 + the detector's): per square, scene url -> cloud at its centre;
-per site, date -> {cloud, flare}. the queue and the progress are computed
-from them alone, and `facts(bbox)`/`absorb(facts)` are the seam for a
-central store of many users' reads (schema in live.js). a z12 permian view
+nothing is kept in indexeddb: the service's store is the cache, and the
+browser's http cache keeps its answers (max-age a day for a window closed
+before today, else an hour). a z12 permian view
 read its recent scenes in ~12 s and the year in ~130 s (360 sweeps, ~10 MB
 each over a clear view), headless on an m2.
 
