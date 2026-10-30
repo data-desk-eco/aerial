@@ -171,10 +171,11 @@ function seriesShow(p, el, b, keep) {
     const list = el.querySelector('#events-list'), more = () => b.more
         && end(list) && end(el.shadowRoot.querySelector('.box'))
         && b.more(p);
+    // braced: an on-handler returning false cancels the scroll itself
     let y = 0;
-    el.onwheel = e => e.deltaY > 0 && more();
-    el.ontouchstart = e => y = e.touches[0].clientY;
-    el.ontouchmove = e => e.touches[0].clientY < y - 30 && more();
+    el.onwheel = e => { e.deltaY > 0 && more(); };
+    el.ontouchstart = e => { y = e.touches[0].clientY; };
+    el.ontouchmove = e => { e.touches[0].clientY < y - 30 && more(); };
 }
 
 function renderEvents(el, detections, b, keep) {
