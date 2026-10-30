@@ -93,7 +93,15 @@ export function onCardClose() {
 // ── selection across re-renders ──
 
 const rerender = fn => { skipAuto = true; fn(); skipAuto = false; };
-const reopen = p => rerender(() => showDetail(featureOf(p), true, moved));
+// a redraw keeps where the list and the card were scrolled to: a live read
+// landing with the card open re-renders it, and put both back at the top
+let scrolled = null;
+const box = l => l.closest('.visible')?.shadowRoot?.querySelector('.box');
+const reopen = p => {
+    const l = document.getElementById('events-list');
+    if (l?.querySelector('.event-item')) scrolled = [l.scrollTop, box(l)?.scrollTop];
+    rerender(() => showDetail(featureOf(p), true, moved));
+};
 
 // a new quarter window: the card's own layer re-reads and reselect re-renders
 // it once, forced, since its series is windowed even where the properties
@@ -228,6 +236,12 @@ function renderEvents(el, detections, b, keep) {
 
     const pick = dateToItem.get(keep) ?? firstItem;
     if (pick) selectDetection(pick.det, pick.item, b);
+    if (scrolled) {
+        const c = box(list);
+        [list.scrollTop] = scrolled;
+        if (c) c.scrollTop = scrolled[1] ?? 0;
+        scrolled = null;
+    }
 }
 
 function selectDetection(det, item, b) {
