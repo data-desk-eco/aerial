@@ -107,15 +107,18 @@ async function get(box, a, b) {
 const fetchBlock = (box, a, b) => get(box, a, b).catch(e => (
     console.warn('burnoff: service', e), import('./fallback.js')
         .then(m => m.detect(box, a, b)).then(x => land(box, x))));
-const want = (box, a, b, pri) => {
+const want = (box, a, b, r, pri) => {
     const k = `${box} ${a} ${b}`;
-    got.has(k) || queue.push(got.set(k, { box, a, b, pri }).get(k)), pump();
+    got.has(k) || queue.push(got.set(k, { box, a, b, r, pri }).get(k)), pump();
     return got.get(k);
 };
 function pump() {
     while (!moving && fly < FLY && queue.length) {
         queue.sort((x, y) => x.pri() - y.pri());
-        if (queue.at(-1).pri() < -1e8) return;   // out of reach
+        // out of reach, or older while the view's recent are not all in
+        const x = queue.at(-1);
+        if (x.pri() < -1e8 || x.r && [...got.values()].some(j => !j.r
+            && !j.done && j.pri() > -1e8)) return;
         const j = queue.pop();
         fly++, fetchBlock(j.box, j.a, j.b).finally(() => (fly--, j.done = true,
             changed(), read(), pump()));
@@ -137,7 +140,7 @@ export async function view(map) {
     blocks = [];
     if (!off) for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++)
         windows().forEach(([a, b], r) => blocks.push(want([i, j, i + 1, j + 1]
-            .map(v => +(v * BLOCK).toFixed(4)), a, b, function () {
+            .map(v => +(v * BLOCK).toFixed(4)), a, b, r, function () {
             const [w, s, e, n] = shown, [x, y] = this.box;
             return !inside({ lon: x + BLOCK / 2, lat: y + BLOCK / 2 },
                 [w - BLOCK, s - BLOCK, e, n]) ? -1e9 : (1 - r) * 1e3
