@@ -1,13 +1,14 @@
 // live sentinel-2 flaring from burnoff's service (data-desk-eco/burnoff,
 // its serve/ on the jump host), which reads the view's scenes off eodata
 // in region, off its store where it holds them. the view, from LIVE_ZOOM
-// in, asks for fixed BLOCK degree blocks of sites (f=sites): each block's
-// last RECENT days first, then the rest back to DAYS, the view's middle
-// first. each site comes with its looks (the cloud of the 640 m square
-// under it, a date) and its detections; a site within SITE_M of one held,
-// as across a block's edge, is merged into it. what came back is kept in
-// indexeddb, so a reload starts from it. where the service fails, burnoff's
-// detector reads the block here (fallback.js), loaded only then.
+// in, asks for fixed BLOCK degree blocks of sites (f=sites): the last
+// RECENT days STEP at a time first, then the rest back to DAYS a month at
+// a time, the view's middle first. each site comes with its looks (the
+// cloud of the 640 m square under it, a date) and its detections; a site
+// within SITE_M of one held, as across a block's edge, is merged into it.
+// what came back is kept in indexeddb, so a reload starts from it. where
+// the service fails, burnoff's detector reads the block here (fallback.js),
+// loaded only then.
 
 import { dateInQuarters, quarterOf } from '../shell/util.js';
 import { MODE } from './render.js';
@@ -135,27 +136,34 @@ export const hold = h => {
 // ── the view: its blocks, the recent window first, then by distance ──
 
 let shown = [0, 0, 0, 0], off = true, blocks = [];
-const windows = () => [[ago(today(), RECENT), today()],
-    [ago(today(), DAYS), ago(today(), RECENT + 1)]];
+// the windows asked for, newest first: RECENT days in STEP days, r 0, then
+// back to DAYS in months, r 1, each a step of the view's progress
+const STEP = 10;
+const windows = () => Array.from({ length: (DAYS - RECENT) / 30
+    + RECENT / STEP }, (_, k) => {
+    const [x, n] = k < RECENT / STEP ? [k * STEP, STEP]
+        : [RECENT + (k - RECENT / STEP) * 30, 30];
+    return [ago(today(), x + n - 1), ago(today(), x), +(x >= RECENT), k];
+});
 export async function view(map) {
     shown = viewportBbox(map), off = map.getZoom() < LIVE_ZOOM;
     const [i0, j0, i1, j1] = shown.map(v => Math.floor(v / BLOCK));
     blocks = [];
+    // in reach while the block meets the view; newest first, then nearest
+    // the view's middle
     if (!off) for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++)
-        windows().forEach(([a, b], r) => blocks.push(want([i, j, i + 1, j + 1]
-            .map(v => +(v * BLOCK).toFixed(4)), a, b, r, function () {
-            const [w, s, e, n] = shown, [x, y] = this.box;
-            return !inside({ lon: x + BLOCK / 2, lat: y + BLOCK / 2 },
-                [w - BLOCK, s - BLOCK, e, n]) ? -1e9 : (1 - r) * 1e3
-                - Math.hypot(x + BLOCK / 2 - (w + e) / 2, y + BLOCK / 2
-                    - (s + n) / 2);
-        })));
+        for (const [a, b, r, k] of windows()) blocks.push(want([i, j, i + 1,
+            j + 1].map(v => +(v * BLOCK).toFixed(4)), a, b, r, function () {
+            const [w, s, e, n] = shown, [x, y, X, Y] = this.box;
+            return x > e || X < w || y > n || Y < s ? -1e9 : -1e3 * k
+                - Math.hypot((x + X - w - e) / 2, (y + Y - s - n) / 2);
+        }));
     read(true);
 }
 // the view's share of blocks in, recent and older; null out past LIVE_ZOOM
 export const progress = () => off ? null : [0, 1].map(r => (b =>
-    b.filter(j => j.done).length / (b.length || 1))(blocks.filter((_, i) =>
-    i % 2 === r)));
+    b.filter(j => j.done).length / (b.length || 1))(blocks.filter(j =>
+    j.r === r)));
 export const busy = () => !off && progress().some(v => v < 1);
 export const onRead = fn => read = fn;
 export function onChange(fn) { changed = fn; }
