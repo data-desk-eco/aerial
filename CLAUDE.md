@@ -123,8 +123,8 @@ where it holds the scene and reads the jp2s in region where not; `?api=` on
 the page names another, empty reads here), and a scroll past its rows' end
 90 more once those are in (`older()`); the view's search reads here.
 
-a site is a hill of the heap every date's detections build, hills that
-never share a date joined (burnoff's `serve/sites.sql`), named by its
+a site is every date's detections linked within 40 m, never two of one
+date over 30 m apart (burnoff's `serve/sites.sql`), named by its
 detections' mean place rounded to 40 m (`live:<lat>,<lon>`), the same
 for any block or window; as the store fills, the mean can cross a
 rounding edge, so a site joins one held within 40 m (the
