@@ -3,11 +3,13 @@ import { bytes } from './archive.js';
 
 // one lazy duckdb-wasm engine serves every parquet read and raw statement.
 // its client runs in engine.js, a worker, so a read costs the main thread
-// only the structured clone of its rows.
-let files = {}, engine, seq = 0;
-const pending = new Map();
+// only the structured clone of its rows. another engine, named, is a
+// duckdb of its own, for statements that would hold this one up (a quack
+// query waits on its server in a synchronous request)
+let files = {}, seq = 0;
+const engines = new Map(), pending = new Map();
 
-const db = () => engine ??= (() => {
+const db = (e = 'map') => engines.get(e) ?? engines.set(e, (() => {
     const w = new Worker(new URL('./engine.js', import.meta.url),
         { type: 'module' });
     w.onmessage = ({ data: [n, v, err] }) => {
@@ -16,10 +18,10 @@ const db = () => engine ??= (() => {
         err == null ? ok(v) : fail(new Error(err));
     };
     return w;
-})();
-const call = (op, args, transfer = []) => new Promise((ok, fail) => {
+})()).get(e);
+const call = (op, args, transfer = [], e) => new Promise((ok, fail) => {
     pending.set(++seq, [ok, fail]);
-    db().postMessage([seq, op, ...args], transfer);
+    db(e).postMessage([seq, op, ...args], transfer);
 });
 
 // the engine is ~7 MB over the wire, so it starts here, downloading while
@@ -77,8 +79,8 @@ export async function from(name) {
 
 // a connection per lane (engine.js): a lane may wait behind itself, never
 // behind anything else, so a card open cannot hold a pan
-export const sql = (statement, { lane } = {}) =>
-    call('sql', [statement, lane]);
+export const sql = (statement, { lane, engine } = {}) =>
+    call('sql', [statement, lane], [], engine);
 
 // `where` is {column: [lo, hi]}, either end open, and never null
 export async function read(name, { columns, where, lane } = {}) {

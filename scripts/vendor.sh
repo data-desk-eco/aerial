@@ -7,7 +7,7 @@ set -euo pipefail
 VENDOR=web/vendor
 DD_DIST="${DD_DIST:-$HOME/Tools/design/dist}"
 BURNOFF="${BURNOFF:-$HOME/Tools/burnoff}"   # after `make wasm` there
-DUCKDB_TAG="v2.0.0-alpha1-lite.6"   # DuckDB data engine release
+DUCKDB_TAG="v2.0.0-lite.1"   # DuckDB data engine release
 grep -q "DUCKDB_RELEASE = '$DUCKDB_TAG'" web/shell/engine.js
 
 rm -rf "$VENDOR"
@@ -41,19 +41,6 @@ echo "burnoff (from $BURNOFF/web) ..."
 mkdir -p "$VENDOR/burnoff"
 cp "$BURNOFF"/web/{burnoff.js,burnoff.wasm,worker.js,gpu.js,j2k.wgsl} \
     "$VENDOR/burnoff/"
-
-echo "quack sdk 0.3.0 ..."
-# the browser's quack client, for burnoff's service (live.js), and flechette,
-# its one dependency, which it imports by name: pointed at the file here
-mkdir -p "$VENDOR/quack"
-NPM=https://registry.npmjs.org
-curl -sL "$NPM/@quack-protocol/sdk/-/sdk-0.3.0.tgz" |
-    tar xz -C "$VENDOR/quack" --strip-components 2 \
-        package/dist/index.js package/dist/messages-BsNzlNiY.js
-curl -sL "$NPM/@uwdata/flechette/-/flechette-2.7.1.tgz" |
-    tar xz -C "$VENDOR/quack" --strip-components 2 package/dist/flechette.mjs
-sed -i.bak 's#"@uwdata/flechette"#"./flechette.mjs"#' "$VENDOR/quack/index.js"
-rm "$VENDOR/quack/index.js.bak"
 
 echo "inter font ..."
 # a desktop chrome agent, so google serves woff2
