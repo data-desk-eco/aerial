@@ -9,20 +9,18 @@
 // mean can cross a rounding edge as the store fills, so a site joins one
 // held within ID_M; the fallback's detections, one within SITE_M. the
 // service speaks quack (duckdb's protocol), a block a `FROM sites(...)`
-// through its gate, asked by quack_query in a duckdb of the page's own
-// (engine live: a query holds its engine until the server answers). where
-// the service fails, burnoff's detector reads the block here (fallback.js),
-// loaded only then.
+// through its gate, one connection a request. where the service fails,
+// burnoff's detector reads the block here (fallback.js), loaded only then.
 
-import { dateInQuarters, quarterOf, quote } from '../shell/util.js';
+import { dateInQuarters, quarterOf } from '../shell/util.js';
 import { MODE } from './render.js';
 import { viewportBbox } from '../shell/map.js';
-import { sql } from '../shell/data.js';
+import { QuackClient } from '../vendor/quack/index.js';
 
 export const LIVE_ZOOM = 12;
 // ?api= on the page names another service
 const API = new URLSearchParams(location.search).get('api')
-    || 'quack:dev.datadesk.eco:443';
+    || 'https://dev.datadesk.eco';
 const DAYS = 180, RECENT = 30, BACK = 90, FIRST = '2022-01-25';
 const SITE_M = 100, ID_M = 40, CLEAR = 0.6, MIN_LOOKS = 10, BLOCK = 0.1;
 const FLY = 4;
@@ -107,10 +105,14 @@ let fly = 0, moving = false, still, changed = () => {}, read = () => {};
 // credited its share of it so far, short of done, the bar ticking meanwhile
 let mean = 4000, tick;
 const get = async (box, a, b) => {
-    const [{ geojson }] = await sql(`FROM quack_query(${quote(API)}, ${quote(
-        `FROM sites(${box.map(v => v.toFixed(5))}, '${a}', '${b}')`)},
-        token := 'burnoff')`, { engine: 'live' });
-    absorb(JSON.parse(geojson).features);
+    // (the sdk calls fetch unbound, which a browser refuses)
+    const c = await QuackClient.connect(API, { authToken: 'burnoff',
+        fetch: (...x) => fetch(...x) });
+    try {
+        const [{ geojson }] = (await c.query(`FROM sites(${box.map(v =>
+            v.toFixed(5))}, '${a}', '${b}')`)).rows();
+        absorb(JSON.parse(geojson).features);
+    } finally { c.disconnect().catch(() => {}); }
 };
 // a failed request is made once more, 5 s on (the service restarts on a
 // deploy), before the detector here reads the box
