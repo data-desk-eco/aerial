@@ -7,20 +7,20 @@
 // cloud of the 640 m square under it, a date) and its detections, named by
 // its detections' mean place rounded to 40 m (the service's sites.sql). the
 // mean can cross a rounding edge as the store fills, so a site joins one
-// held within ID_M; the fallback's detections, one within SITE_M.
-// the browser's http cache keeps what came back (the service's max-age), so
-// a reload starts from it. where
-// the service fails, burnoff's detector reads the block here (fallback.js),
-// loaded only then.
+// held within ID_M; the fallback's detections, one within SITE_M. the
+// service speaks quack (duckdb's protocol), a block a `FROM sites(...)`
+// through its gate, one connection a request. where the service fails,
+// burnoff's detector reads the block here (fallback.js), loaded only then.
 
 import { dateInQuarters, quarterOf } from '../shell/util.js';
 import { MODE } from './render.js';
 import { viewportBbox } from '../shell/map.js';
+import { QuackClient } from '../vendor/quack/index.js';
 
 export const LIVE_ZOOM = 12;
 // ?api= on the page names another service
 const API = new URLSearchParams(location.search).get('api')
-    || 'https://dev.datadesk.eco/burnoff/hotspots';
+    || 'https://dev.datadesk.eco';
 const DAYS = 180, RECENT = 30, BACK = 90, FIRST = '2022-01-25';
 const SITE_M = 100, ID_M = 40, CLEAR = 0.6, MIN_LOOKS = 10, BLOCK = 0.1;
 const FLY = 4;
@@ -104,10 +104,16 @@ let fly = 0, moving = false, still, changed = () => {}, read = () => {};
 // a request's mean time, ms, learnt as they come back; a block in flight is
 // credited its share of it so far, short of done, the bar ticking meanwhile
 let mean = 4000, tick;
-const get = (box, a, b) => fetch(`${API}?bbox=${box.map(v =>
-    v.toFixed(5))}&datetime=${a}/${b}&f=sites`)
-    .then(r => r.ok ? r.json() : Promise.reject(r.status))
-    .then(({ features }) => absorb(features));
+const get = async (box, a, b) => {
+    // (the sdk calls fetch unbound, which a browser refuses)
+    const c = await QuackClient.connect(API, { authToken: 'burnoff',
+        fetch: (...x) => fetch(...x) });
+    try {
+        const [{ geojson }] = (await c.query(`FROM sites(${box.map(v =>
+            v.toFixed(5))}, '${a}', '${b}')`)).rows();
+        absorb(JSON.parse(geojson).features);
+    } finally { c.disconnect().catch(() => {}); }
+};
 // a failed request is made once more, 5 s on (the service restarts on a
 // deploy), before the detector here reads the box
 const fetchBlock = (box, a, b) => get(box, a, b).catch(() => new Promise(ok =>
