@@ -56,17 +56,14 @@ const whenReady = new Promise(r => readyResolve = r);
 // ── the three layers ──
 
 // on this branch the sentinels are live layers alone, off burnoff's service
-// (flaring/live.js): s2 by day or s3 by night, one at a time, chosen in the
-// key (SENTINEL). the other's read is empty, so its source, the clusters
-// and its table tab are too, and it asks the service for nothing
+// (flaring/live.js): s2 by day and s3 by night, both drawn
 
 // far out every family is one clustered source, `everything`: 60k markers
 // placed each frame made the globe crawl. from NEAR in, each family's own
 // layer draws every point. a cluster's label is a count, since a summed
 // value would mash t/hr, ppm·m, b12 and radiant heat
 const FAMILIES = ['live', 's3', 'vnf', 'plumes'], NEAR = 5;
-let SENTINEL = 's2';
-const LIVE = { s2, s3 }, on = () => LIVE[SENTINEL];
+const LIVE = [s2, s3], each = f => LIVE.forEach(f);
 // a cluster's colour: the mean band of what it holds, shifted up so a mixed
 // cluster reads at its brighter end
 const BAND = band(MODE);
@@ -110,11 +107,9 @@ const READS = {
         .features,
     plumes: async ({ startDate, endDate }) =>
         CTX.fc(await readPlumes(startDate, endDate)).features,
-    // what burnoff's service found, of the sentinel the key draws
-    live: async () => SENTINEL === 's2' ? s2.features(CTX.quarters.keys())
-        : [],
-    s3: async () => SENTINEL === 's3' ? s3.features(CTX.quarters.keys())
-        : [],
+    // what burnoff's service found
+    live: async () => s2.features(CTX.quarters.keys()),
+    s3: async () => s3.features(CTX.quarters.keys()),
     // every outline around the view, held in the engine; drawSites draws
     // the ones a detection holds, so there is no source to set
     sites: async () => {
@@ -164,7 +159,7 @@ async function quarterDots() {
     const q = CTX.quarters, pad = padBbox(viewportBbox(CTX.map));
     const vnf = await quarters('eog', pad, GRID_START, GRID_END).catch(err =>
         (console.error('quarter availability:', err), null));
-    const avail = vnf && new Set([...vnf, ...on().quarters(pad),
+    const avail = vnf && new Set([...vnf, ...s2.quarters(pad), ...s3.quarters(pad),
         ...await availableQuartersPlumes(pad, GRID_START, GRID_END)]);
     [...q.buttons()].forEach(b => b.toggleAttribute('unavailable',
         !!avail && !avail.has(q.key(b))));
@@ -173,25 +168,9 @@ const scheduleDots = debounce(quarterDots, 300);
 
 // ── deep links ──
 
-// ── the sentinel choice ──
-
-// the key's choice: the group re-labelled and its rows anew, the one no
-// longer drawn asking for nothing more, both layers re-read (one to
-// empty), and the one now drawn asked for its view
-function setSentinel(to) {
-    if (to === SENTINEL) return;
-    on().view(null);
-    SENTINEL = to;
-    CTX.setKey(keySections(SENTINEL, setSentinel));
-    REFRESH.live(); REFRESH.s3();
-    on().view(CTX.map);
-    scheduleDots();
-}
-
 // #flare= names a live site (live:<lat>,<lon>@<tile>_<date>, s3:<lat>,<lon>)
-// or a vnf one; a link to the sentinel not drawn draws it. a live site is
-// the service's answer, so the link waits until its view's reads hold it,
-// or are done, a minute at most
+// or a vnf one. a live site is the service's answer, so the link waits
+// until its view's reads hold it, or are done, a minute at most
 const until = async (x, id) => {
     for (let t = 0; t < 120; t++) {
         const f = x.site(id, CTX.quarters.keys());
@@ -202,8 +181,8 @@ const until = async (x, id) => {
 };
 async function resolveFlare(id) {
     await whenReady;
-    if (id.startsWith('live:')) return setSentinel('s2'), until(s2, id);
-    if (id.startsWith('s3:')) return setSentinel('s3'), until(s3, id);
+    if (id.startsWith('live:')) return until(s2, id);
+    if (id.startsWith('s3:')) return until(s3, id);
     const row = await readSite(id, CTX.quarters.keys());
     return row && fc([row]).features[0];
 }
@@ -388,7 +367,7 @@ mount({
         },
     },
 
-    key: () => keySections(SENTINEL, setSentinel),
+    key: keySections,
 
     // a tab per family, each the rows its layer is drawing. an attribution
     // is listed while its plume is: the plume carries the window and the
@@ -443,9 +422,9 @@ mount({
 
         // no live read starts while the map moves, so its frames keep the
         // cores the workers would take
-        ctx.map.on('movestart', () => on().hold(true));
+        ctx.map.on('movestart', () => each(x => x.hold(true)));
         ctx.map.on('moveend', () => { scheduleDots(); SCHEDULED.sites();
-            on().hold(false); on().view(ctx.map); });
+            each(x => (x.hold(false), x.view(ctx.map))); });
         ctx.map.on('zoomend', () => stale && ctx.map.getZoom() < NEAR
             && cluster());
         // the numbers are padded with figure spaces, as wide as a digit in
@@ -463,22 +442,21 @@ mount({
             // is new, taken down once it is done, but only if this view saw
             // it short of done: a view already searched says nothing. reads
             // further out change nothing it says, and do not hold it up. out
-            // of reach of the live reads, a line says to zoom in. the
-            // sentinel not drawn says nothing
+            // of reach of the live reads, a line says to zoom in. each
+            // sentinel has its lines
             x.onRead(fresh => {
-                if (x !== on()) return;
                 const z = ctx.map.getZoom(), p = z >= x.zoom && x.progress();
-                ctx.status('zoom', z < x.zoom && z >= x.zoom - 2
+                ctx.status('zoom' + id, z < x.zoom && z >= x.zoom - 2
                     ? `Zoom in to detect ${x.label} hotspots` : null);
-                if (z < x.zoom) return said = null, ctx.status('live');
+                if (z < x.zoom) return said = null, ctx.status(id);
                 if (!p) return;
                 const [a, b] = p, say = a < 1
                     ? `Recent ${x.label} hotspots: ${pad(a)}%`
                     : `Older ${x.label} hotspots: ${pad(b)}%`;
                 if (fresh) ran = a < 1 || b < 1;
-                if (!ran || !x.busy()) return said = null, ctx.status('live');
+                if (!ran || !x.busy()) return said = null, ctx.status(id);
                 if (fresh || say !== said)
-                    said = say, ctx.status('live', say, a < 1 ? a : b);
+                    said = say, ctx.status(id, say, a < 1 ? a : b);
             });
         }
 
@@ -490,7 +468,7 @@ mount({
             100));
         // the dots wait for the first paint: their plume index is a read
         // still on the network, and ahead of it it held the layers
-        on().view(ctx.map);
+        each(x => x.view(ctx.map));
         const first = Promise.allSettled([REFRESH.vnf(), REFRESH.plumes(),
             REFRESH.sites()]);
         // what no first paint draws waits for it, rather than sharing a

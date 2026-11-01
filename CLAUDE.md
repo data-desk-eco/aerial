@@ -82,12 +82,11 @@ what each object weighs and which partitions a table holds (`bytes()`,
 
 **live s2 and s3 (experimental, branch burnoff-live).** on this branch the
 sentinels are live layers alone: the archive's s2 sites are not read or
-drawn, and the ui says hotspots, not flares. the flaring group's key has a
-choice, S2 day or S3 night (`setSentinel`, `config.js`; the key's `choice`,
-`shell/ui.js`, and `ctx.setKey`): the one not drawn reads empty, so its
-source, the clusters and its table tab are empty too, and it asks for
-nothing. a `#flare=` link to the other switches to it, and waits for the
-view's reads to hold its site (`until`).
+drawn, and the ui says hotspots, not flares. s2 by day and s3 by
+night are both drawn, in one key group with vnf (`S2/S3/VNF hotspots`), while
+s3 is tested; the shell's key `choice` (`shell/ui.js`, `ctx.setKey`) once
+chose between them and is kept. a `#flare=` link waits for the view's reads
+to hold its site (`until`).
 
 both come from burnoff's service (its `serve/` on the jump host, at
 `https://dev.datadesk.eco`, `?api=` on the page naming another) over
