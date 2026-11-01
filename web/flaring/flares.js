@@ -1,13 +1,13 @@
-// the flaring families, in the engine. data-desk/flares (s2 clusters),
-// eog/flares (vnf sites) and data-desk-s3/flares (s3 sites) are a row per
-// site with its quarterly history nested in `quarters`, each small enough to be held as an engine buffer
+// both flaring families, in the engine. data-desk/flares (s2 clusters) and
+// eog/flares (vnf sites) are a row per site with its quarterly history nested
+// in `quarters`, each small enough to be held as an engine buffer
 // (shell/data.js), so a viewport is one statement: the window summed, the
 // site rated and named, and the rows out as the map's properties. the
 // per-date series is read per site on card open, off the object its cell
 // names, which the engine computes from the site's position.
 
 import { sql, from } from '../shell/data.js';
-import { objects, published } from '../shell/archive.js';
+import { objects } from '../shell/archive.js';
 import { quote, quarterKey } from '../shell/util.js';
 
 // s2: the archive's floor; a rate off three looks is noise, so below it the
@@ -15,16 +15,11 @@ import { quote, quarterKey } from '../shell/util.js';
 // sky was read; below it a platform was grounded, and there is no rate
 const MIN_LOOKS = 10, COVERAGE_MIN = 0.8, TERMINAL_M = 7500;
 
-// the provider of the sentinel-3 tables: burnoff's s3_detect by night, a
-// night a look, as vnf's. not every archive publishes them, so an index
-// that names none is an empty family, not an error
-export const S3 = 'data-desk-s3';
-
 // no keys is no window, and admits every quarter
 const ticked = (d, keys) => keys.size
     ? `${quarterKey(d)} IN (${[...keys].map(quote).join(', ')})` : 'true';
 
-// the one reducer every family's `quarters` goes through, so no caller can
+// the one reducer both families' `quarters` go through, so no caller can
 // redefine persistence without changing how it reads. `clear` is the
 // cloud-free count a rate divides by, and `detections_clear` the only
 // numerator that pairs with it; `observations` is every look. `n` counts the
@@ -77,14 +72,14 @@ export const s2 = (src, keys, where = 'true') => `
         FROM (${site(src, keys, where,
             'f.max_b12, f.persistence AS published')}))`;
 
-// a night instrument's sites, brightest first: vnf, and s3, which publishes
-// vnf's shape. both counts are clear nights, so the ratio is a rate; null,
-// not 0, where too little was read or no night was clear: never seen is not
-// unlit. there is no intensity floor. `lit` keeps a site lit on any night,
-// cloudy ones included: a flare caught only under cloud still burned
-const nightly = (kind, fallback) => (src, keys, where = 'true', lit = false) => `
-    SELECT coalesce(terminal, nullif(detail, ''), ${fallback}) AS name,
-        '${kind}' AS kind, terminal, lat, lon, id,
+// vnf sites, brightest first. both counts are clear nights, so the ratio is
+// a rate; null, not 0, where too little was read or no night was clear:
+// never seen is not unlit. there is no intensity floor. `lit` keeps a site
+// lit on any night, cloudy ones included: a flare caught only under cloud
+// still burned
+export const vnf = (src, keys, where = 'true', lit = false) => `
+    SELECT coalesce(terminal, nullif(detail, ''), 'Flare #' || id) AS name,
+        'vnf' AS kind, terminal, lat, lon, id,
         coalesce(detail, '') AS detail, coalesce(country, '') AS country,
         CASE WHEN detections > 0 THEN rh_sum / detections ELSE 0 END
             AS avg_rh,
@@ -96,11 +91,6 @@ const nightly = (kind, fallback) => (src, keys, where = 'true', lit = false) => 
     WHERE n > 0 ${lit ? 'AND detections > 0' : ''}
     ORDER BY rh_max DESC`;
 
-export const vnf = nightly('vnf', `'Flare #' || id`);
-// an s3 site's id is its place, so it is named by its count, as s2's are
-export const s3 = nightly('s3', `detections::BIGINT || ' detection'
-    || CASE detections WHEN 1 THEN '' ELSE 's' END`);
-
 // ── reads ──
 
 let terminals;
@@ -108,24 +98,15 @@ const held = () => terminals ??= sql(`CREATE TABLE IF NOT EXISTS terminals
     (name VARCHAR, lat DOUBLE, lon DOUBLE)`);
 
 // a table partitioned past the prefetch cap names no single object, and that
-// has to be the loud kind of broken rather than a blank map. a provider the
-// index does not name at all has not published: `optional` makes that null
-const src = (provider, optional = false) => Promise.all([held(),
-    objects('flares', { provider }), published('flares', provider)])
-    .then(([, [u], is]) => u ? from(u) : optional && !is ? null
-        : Promise.reject(new Error(`${provider}/flares names no object: it `
-            + 'has partitioned, and this reader must address it by cell')));
+// has to be the loud kind of broken rather than a blank map
+const src = provider => Promise.all([held(),
+    objects('flares', { provider })]).then(([, [u]]) => u ? from(u)
+    : Promise.reject(new Error(`${provider}/flares names no object: it has `
+        + 'partitioned, and this reader must address it by cell')));
 
 // the whole world: a window's rates are the same wherever the map looks
 const inWindow = ({ startDate, endDate }) =>
     `f.last_seen >= ${quote(startDate)} AND f.first_seen <= ${quote(endDate)}`;
-
-// `floor` is MODE.s2.floor, the published quality gate on a site's average
-// (render.js). the negation lets a cluster the table gives no intensity for
-// through. an unrated s2 site passes: its null persistence is no finding
-export const readS2 = async (range, keys, floor) => sql(s2(await src(
-    'data-desk'), keys, `${inWindow(range)}
-    AND NOT coalesce(f.avg_b12 < ${+floor}, false)`));
 
 // a vnf site with no rate is dropped: no clear night is a finding. here, not
 // in a layer filter, as a cluster counts what its source holds
@@ -133,41 +114,17 @@ export const readVNF = async (range, keys) => sql(`SELECT * FROM (${vnf(
     await src('eog'), keys, inWindow(range), true)})
     WHERE persistence IS NOT NULL`);
 
-// s3 sites as vnf's are read, by the same rules; none where s3 has not
-// published
-export const readS3 = async (range, keys) => {
-    const from = await src(S3, true);
-    return from ? sql(`SELECT * FROM (${s3(from, keys, inWindow(range), true)})
-        WHERE persistence IS NOT NULL`) : [];
-};
+// #flare= names a vnf site; on this branch an s2 one is live.js's
+export const readSite = async (id, keys) => (await sql(vnf(await src('eog'),
+    keys, `f.id = ${quote(String(id))}`)))[0] ?? null;
 
-// #flare= names a flare of any family. the id spaces are disjoint by
-// accident, not contract, so every table is asked rather than the id's shape
-export async function readSite(id, keys) {
-    const where = `f.id = ${quote(String(id))}`;
-    const [s] = await sql(s2(await src('data-desk'), keys, where));
-    const [v] = s ? [] : await sql(vnf(await src('eog'), keys, where));
-    const s3src = s ?? v ? null : await src(S3, true);
-    return s ?? v ?? (s3src && (await sql(s3(s3src, keys, where)))[0]) ?? null;
-}
-
-// the quarter keys with any detection in the box over [start, end]: none
-// for a provider that has not published
-export const quarters = async (provider, [w, s, e, n], start, end) => {
-    const from = await src(provider, true);
-    return new Set(from ? (await sql(`SELECT DISTINCT
-        ${quarterKey('q.quarter')} AS k
-        FROM ${from} AS f, unnest(f.quarters) AS u(q)
+// the quarter keys with any detection in the box over [start, end]
+export const quarters = async (provider, [w, s, e, n], start, end) =>
+    new Set((await sql(`SELECT DISTINCT ${quarterKey('q.quarter')} AS k
+        FROM ${await src(provider)} AS f, unnest(f.quarters) AS u(q)
         WHERE q.detections > 0 AND q.quarter BETWEEN ${quote(start)}
             AND ${quote(end)} AND f.lon BETWEEN ${+w} AND ${+e}
-            AND f.lat BETWEEN ${+s} AND ${+n}`)).map(r => r.k) : []);
-};
-
-// what the s2 archive covers, for the intro's worldmap: a tenth of a degree
-// holding a site, which minSize then draws as a box
-export const coverage = async () => (await sql(`SELECT DISTINCT
-    round(lon, 1) AS x, round(lat, 1) AS y FROM ${await src('data-desk')}`))
-    .map(({ x, y }) => [x, y, x, y]);
+            AND f.lat BETWEEN ${+s} AND ${+n}`)).map(r => r.k));
 
 // the export lng terminals a flare is named after, off gem's infrastructure
 // table, on the card lane: a ranged read of a big object, which no flare dot
@@ -197,15 +154,5 @@ const series = (provider, cols, also = () => '') => async p => {
         ${also(cell)} ORDER BY date`, { lane: 'card' });
 };
 
-// rows are in (kind, cell, site_id, date) order, so the cell and id prune
-// row groups off the footer; `kind` because plumes share the table
-export const s2Series = series('data-desk', `max_b12::DOUBLE AS max_b12,
-    pixels::DOUBLE AS pixels, lon AS raw_lon, lat AS raw_lat`,
-    cell => `AND kind = 'flare' AND cell = ${quote(cell)}`);
-
 // every row is a night the site was seen lit, so there is nothing to filter
 export const vnfSeries = series('eog', 'coalesce(rh_mw, 0)::DOUBLE AS rh_mw');
-
-// s3's, the same, with planck's temperature, which a saturated night lacks
-export const s3Series = series(S3, `coalesce(rh_mw, 0)::DOUBLE AS rh_mw,
-    temp_k::DOUBLE AS temp_k`);

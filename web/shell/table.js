@@ -9,7 +9,11 @@
 //   cols: [names],                default: the keys of row 0
 //   filter: false,                opt out of the key's filters, for rows
 //                                 that are not feature properties
+//   empty: ctx => text,           what no rows says, if not "No rows in view"
 // }]
+//
+// it re-renders on a move, on fx-filters, and on fx-rows, which a tab whose
+// rows or empty text move without the filters sends
 
 import { escapeHtml } from './util.js';
 import { viewportBbox } from './map.js';
@@ -55,8 +59,9 @@ export function initTable(ctx) {
         drawer.style.borderLeftWidth = w ? '1px' : '0';
         handle.style.right = w + 'px';
         ctx.map.setPadding({ right: w });
-        document.getElementById('detail')
-            ?.style.setProperty('right', w ? w + 'px' : '');
+        for (const id of ['detail', 'status'])
+            document.getElementById(id)
+                ?.style.setProperty('right', w ? w + 'px' : '');
         // search only once there is room beside the tabs. visibility, not
         // display, so the head never changes height
         el('.fx-drawer-q').style.visibility =
@@ -84,7 +89,8 @@ export function initTable(ctx) {
             ? `<thead><tr>${cols.map(th).join('')}</tr></thead>`
                 + `<tbody>${rows.map(tr).join('')}</tbody>`
             : '<tbody><tr><td class="fx-drawer-empty fx-secondary">'
-                + 'No rows in view</td></tr></tbody>';
+                + `${escapeHtml(t.empty?.(ctx) || 'No rows in view')}`
+                + '</td></tr></tbody>';
         el('.fx-drawer-foot').textContent = (hits.length > rows.length
             ? `${rows.length.toLocaleString()} of ` : '')
             + `${hits.length.toLocaleString()} in view`;
@@ -129,6 +135,7 @@ export function initTable(ctx) {
     });
     ctx.map.on('moveend', render);
     addEventListener('fx-filters', render);
+    addEventListener('fx-rows', render);
 
     handle.addEventListener('pointerdown', e => {
         e.preventDefault();
@@ -145,6 +152,8 @@ export function initTable(ctx) {
         handle.addEventListener('pointerup', () => {
             handle.removeEventListener('pointermove', move);
             if (width < MIN) setWidth(0); else render();
+            // the view's reads follow what is left in sight
+            if (width !== sw) ctx.map.fire('moveend');
         }, { once: true });
     });
 }

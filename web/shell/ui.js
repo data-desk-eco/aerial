@@ -12,10 +12,19 @@ const SEARCH = `<input type="search" class="fx-search" id="search"
     placeholder="Address or lat, lon" spellcheck="false" autocomplete="off">`;
 const QUARTERS = `<div class="fx-quarters" id="quarters"></div>`;
 
-// the subtitle says the first reads are still out, and the app takes it
-// down (ctx.loaded()) once they settle: on a slow line an empty map and a
-// loading one look the same, and the subtitle shows contracted too
-export const loaded = () => document.getElementById('loading')?.remove();
+// a line at the map's top right saying what is still being read: the newest
+// read's, and an update keeps its place. on a slow line an empty map and a
+// loading one look the same. status(k) takes read k down, and the start
+// goes once the first reads settle. a line with a share done, p, draws it
+// as a bar beneath
+const lines = new Map([['start', ['Loading the engine and archive']]]);
+export function status(k, text, p) {
+    text ? lines.set(k, [text, p]) : lines.delete(k);
+    const el = document.getElementById('status'), [t, q] =
+        [...lines.values()].at(-1) ?? [''];
+    if (el) el.textContent = t, el.style.setProperty('--p', q ?? 0);
+}
+export const loaded = () => status('start');
 
 export function buildShell(config) {
     const title = escapeHtml(config.title);
@@ -28,12 +37,14 @@ export function buildShell(config) {
     <dd-panel class="fx-main" id="main-panel" collapsible${
         config.about ? ' info' : ''}>
         <span slot="title">${title}${badge}</span>
-        <span slot="subtitle">${escapeHtml(config.subtitle || '')}<span
-            class="fx-secondary" id="loading"> Loading…</span></span>
+        <span slot="subtitle">${escapeHtml(config.subtitle || '')}</span>
         <svg id="worldmap"></svg>
         ${config.search ? SEARCH : ''}
         ${config.quarters ? QUARTERS : ''}
     </dd-panel>
+
+    <div class="fx-status" id="status">${
+        escapeHtml(lines.get('start'))}</div>
 
     <dd-key class="fx-key" id="key-panel"></dd-key>
 
@@ -100,13 +111,10 @@ function wireIntro(title) {
 
 // ── the key ──
 
-// sections: [{label, choice, rows: [{swatch: {mark, color}, label, toggle:
-// id | [ids], pred}]}]. a `toggle` row switches layers; `pred` rows are a
+// sections: [{label, rows: [{swatch: {mark, color}, label, toggle: id |
+// [ids], pred}]}]. a `toggle` row switches layers; `pred` rows are a
 // multi-select per section, active rows ORed into the filter (all on is no
-// filter). `choice` ({value, options: [[value, label]], onChange}) heads the
-// section's rows with a dd-toggle, one of its options at a time, for an app
-// that draws one of two instruments in a section's place. the key element
-// collapses itself; set() re-renders.
+// filter). the key element collapses itself; set() re-renders.
 //
 // a section's rows partition one family, and a row is no statement about a
 // feature outside it — so a feature every row admits is outside the section,
@@ -125,21 +133,11 @@ export function initKey(map, onFilter) {
             r.pred ? ` data-row="${si}.${ri}"` : ''}>${
             escapeHtml(r.label)}</dd-key-row>`;
     };
-    const choiceHtml = (c, si) => c ? `<dd-toggle class="fx-choice"
-        data-section="${si}" value="${escapeHtml(c.value)}">${c.options.map(
-        ([v, label]) => `<button value="${escapeHtml(v)}">${
-        escapeHtml(label)}</button>`).join('')}</dd-toggle>` : '';
     const render = () => {
         el.innerHTML = sections.map((s, si) => `<dd-key-group label="${
-            escapeHtml(s.label)}">${choiceHtml(s.choice, si)}${s.rows.map(
-            (r, ri) => rowHtml(r, si, ri)).join('')}</dd-key-group>`).join('');
+            escapeHtml(s.label)}">${s.rows.map((r, ri) => rowHtml(r, si, ri))
+            .join('')}</dd-key-group>`).join('');
     };
-
-    // a choice is the app's to act on: it sets the key anew
-    el.addEventListener('change', e => {
-        const t = e.target.closest('.fx-choice');
-        if (t) sections[+t.dataset.section].choice.onChange(t.value);
-    });
 
     el.addEventListener('click', e => {
         const t = e.target.closest('.fx-toggle');

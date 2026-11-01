@@ -51,11 +51,11 @@ export const plumeIcon = ['case',
 // a feature's band on its own family's stops, 0 → 2, so one number means the
 // same across the families a cluster mixes; no value is the foot, as in
 // flareIcon. MODE's stops are passed in, as render.js imports this module
-export const band = ({ s2, vnf, s3 }) => {
+export const band = ({ s2, vnf }) => {
     const at = (prop, [, mid, hi]) =>
         ['step', ['coalesce', ['get', prop], -1], 0, mid, 1, hi, 2];
-    return ['match', ['get', 'kind'], 'flare', at(s2.prop, s2.stops),
-        'vnf', at(vnf.prop, vnf.stops), 's3', at(s3.prop, s3.stops),
+    return ['match', ['get', 'kind'], 'live', at(s2.prop, s2.stops),
+        'vnf', at(vnf.prop, vnf.stops),
         'plume', at('rate_kg_h', [0, ...PLUME_STOPS]), 0];
 };
 
@@ -75,13 +75,14 @@ export const MARK = {
 };
 
 // where aerial departs from the guidelines on purpose, written down so
-// vendor/dd/audit.js passes everything else (`make audit`): the heat halo and the probability
+// vendor/dd/audit.js passes everything else (`make audit`): the heat halo, a
+// live detection's pixels and the probability
 // surface, which are data, not imagery; and the intro heading at 600, the
 // title weight of datadesk.eco, where the guidelines' 750 read heavy
 export const AUDIT = {
     skip: '.fx-modal-content [slot=title], .fx-modal-content [slot=title] *',
-    graded: ['detection-footprint', 'dd-plume-probability',
-        'plume-mask-image'],
+    graded: ['detection-footprint', 'detection-pixels-fill',
+        'dd-plume-probability', 'plume-mask-image'],
 };
 
 export const DASH = [2, 2];
@@ -104,3 +105,13 @@ export const RATE_LABEL = {
     'text-font': ['Montserrat Regular'], 'text-size': 11,
     'text-anchor': 'bottom-left', 'text-offset': [0.7, -0.7],
 };
+// a hotspot's instrument, an inter label up and right of it from z10
+// (shell/map.js ensureTag), never dropped: one marking alone has no key to
+// tell s2's scale from vnf's. a layer of its own over the family's source,
+// as a symbol takes one icon
+export const TAGS = { live: 'S2', vnf: 'VNF' };
+export const tagLayer = id => ({
+    id: `${id}-tag`, type: 'symbol', source: id, minzoom: 10,
+    layout: { ...PIN, 'icon-image': `tag-${TAGS[id]}`,
+              'icon-anchor': 'bottom-left', 'icon-offset': [7, -7] },
+});

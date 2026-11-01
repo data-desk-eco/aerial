@@ -18,13 +18,36 @@ export function ensureMark(map, id) {
     if (name) mark(map, name, color).catch(() => {});
 }
 
+// a label as an image `tag-<text>`, set in the page's own inter as the
+// shell's 11px text is: gl text takes only sdf glyphs, and the basemap
+// serves no inter. drawn at the screen's pixel ratio, so it is as sharp
+export async function ensureTag(map, text, color) {
+    const id = `tag-${text}`, r = devicePixelRatio || 1;
+    const font = '300 11px Inter';
+    await document.fonts.load(font, text).catch(() => {});
+    const g = document.createElement('canvas').getContext('2d');
+    g.font = font;
+    const w = Math.ceil(g.measureText(text).width * r), h = Math.ceil(14 * r);
+    Object.assign(g.canvas, { width: w, height: h });
+    g.scale(r, r);
+    Object.assign(g, { font, fillStyle: color, textBaseline: 'top' });
+    g.fillText(text, 0, 1);
+    if (!map.hasImage(id))
+        map.addImage(id, g.getImageData(0, 0, w, h), { pixelRatio: r });
+}
+
 // the dd satellite underlay: esri, graded to the guidelines' gradient map
 // (pdf:62), fading in over the basemap from z7.5
 export const addSatellite = map => imagery(map, { id: 'satellite' });
 
+// what the reader sees: the canvas less its padding, which the table drawer
+// sets over the right of it
 export function viewportBbox(map) {
-    const b = map.getBounds();
-    return [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+    const { top, right, bottom, left } = map.getPadding(),
+        c = map.getContainer(),
+        sw = map.unproject([left, c.clientHeight - bottom]),
+        ne = map.unproject([c.clientWidth - right, top]);
+    return [sw.lng, sw.lat, ne.lng, ne.lat];
 }
 
 // the worldmap with the live viewport as its box (pdf:83)
@@ -32,12 +55,4 @@ export function wireWorldmap(map, el) {
     const update = () => setBoxes(el, [viewportBbox(map)]);
     drawWorldmap(el).then(update);
     map.on('move', update);
-}
-
-// the worldmap with fixed boxes (pdf:86); getBoxes resolves to bboxes or null
-export function boxesWorldmap(el, getBoxes, minSize) {
-    drawWorldmap(el).then(async () => {
-        const boxes = await getBoxes();
-        if (boxes) setBoxes(el, boxes, minSize);
-    });
 }

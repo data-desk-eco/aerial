@@ -1,20 +1,20 @@
 // the detail card: the shell renders the header and calls these hooks; the
-// body is the one the feature's `kind` selects (an s2 site, a vnf or an s3
-// flare, or a plume). the flaring bodies share the series card here: information rows,
+// body is the one the feature's `kind` selects (an s2 site, a vnf flare or a
+// plume). the flaring bodies share the series card here: information rows,
 // chart, dated rows. dispatch is on the feature, so a card opened from "also
 // here" is the kind it names.
 
 import { showDetail, closeDetail } from '../shell/detail.js';
 import { dateInQuarters, formatDate } from '../shell/util.js';
 import { renderChart } from './chart.js';
-import { initOverlays, greyCircles, clearOverlays } from './overlays.js';
+import { initOverlays, greyCircles, clearOverlays, dim }
+    from './overlays.js';
 import flare from './flare.js';
 import vnf from './vnf.js';
-import s3 from './s3.js';
 import plume from './plume.js';
 
-const BODIES = { flare, vnf, s3, plume };
-const bodyOf = p => BODIES[p.kind] ?? BODIES.flare;
+const BODIES = { live: flare, vnf, plume };
+const bodyOf = p => BODIES[p.kind] ?? BODIES.live;
 
 export let map = null;
 let quarterKeys = () => new Set();
@@ -68,13 +68,15 @@ export const cardHtml = p => (bodyOf(p).html ?? seriesHtml)(p, bodyOf(p));
 
 export function onCardShow(p, el) {
     const b = bodyOf(p);
+    // a re-render keeps the date the reader had selected
+    const keep = skipAuto ? selectedDetection?.date : null;
     // a selection that crosses families never fires onClose, so the
     // outgoing body takes its own map state down here
     if (shownBody && shownBody !== b) closeBody(shownBody);
     shownBody = b;
     current = p;
     selectedDetection = null;
-    (b.show ?? seriesShow)(p, el, b);
+    (b.show ?? seriesShow)(p, el, b, keep);
     document.activeElement?.blur();
 }
 
@@ -91,7 +93,15 @@ export function onCardClose() {
 // ── selection across re-renders ──
 
 const rerender = fn => { skipAuto = true; fn(); skipAuto = false; };
-const reopen = p => rerender(() => showDetail(featureOf(p), true, moved));
+// a redraw keeps where the list and the card were scrolled to: a live read
+// landing with the card open re-renders it, and put both back at the top
+let scrolled = null;
+const box = l => l.closest('.visible')?.shadowRoot?.querySelector('.box');
+const reopen = p => {
+    const l = document.getElementById('events-list');
+    if (l?.querySelector('.event-item')) scrolled = [l.scrollTop, box(l)?.scrollTop];
+    rerender(() => showDetail(featureOf(p), true, moved));
+};
 
 // a new quarter window: the card's own layer re-reads and reselect re-renders
 // it once, forced, since its series is windowed even where the properties
@@ -121,10 +131,12 @@ export function reselectCurrentFeature(id) {
 const pct = v => `${Math.round(v * 100)}%`;
 
 // the feature carries the window's numbers, so nothing here recomputes a
-// rate. "(clear)" only where a cloud mask says which passes were clear
+// rate. "(clear)" only where a cloud mask says which passes were clear; a
+// live site counts every detection it lists
 const seriesStats = (p, b) => [
     ['Instrument', b.instrument],
-    [p.observations == null ? 'Detections' : 'Detections (clear)',
+    [p.observations == null || p.kind === 'live'
+        ? 'Detections' : 'Detections (clear)',
         p.detection_count],
     ['Persistence', p.persistence != null ? pct(p.persistence) : '—'],
     [b.passLabel, p.passes ?? '—'],
@@ -147,8 +159,9 @@ function seriesHtml(p, b) {
             : ''}`;
 }
 
-function seriesShow(p, el, b) {
+function seriesShow(p, el, b, keep) {
     greyCircles(true);
+    dim(...coords(p));
     // the series is read per site on open, then windowed to the ticked
     // quarters; a failed read lists nothing rather than loading for good
     const qKeys = quarterKeys();
@@ -157,11 +170,23 @@ function seriesShow(p, el, b) {
     b.fetch(p)
         .then(dets => dets.filter(d => dateInQuarters(d.date, qKeys)))
         .catch(err => (console.error('detection series:', err), []))
-        .then(dets => { if (current === p) renderEvents(el, dets, b); });
+        .then(dets => { if (current === p) renderEvents(el, dets, b, keep); });
     b.wire?.(el);
+    // a scroll down past the dated rows' end asks for older dates (an s2
+    // site's history is read 90 days at a time). on a phone the card scrolls
+    // and not the list, so either may be the one at its end
+    const end = e => e.scrollTop + e.clientHeight >= e.scrollHeight - 1;
+    const list = el.querySelector('#events-list'), more = () => b.more
+        && end(list) && end(el.shadowRoot.querySelector('.box'))
+        && b.more(p);
+    // braced: an on-handler returning false cancels the scroll itself
+    let y = 0;
+    el.onwheel = e => { e.deltaY > 0 && more(); };
+    el.ontouchstart = e => { y = e.touches[0].clientY; };
+    el.ontouchmove = e => { e.touches[0].clientY < y - 30 && more(); };
 }
 
-function renderEvents(el, detections, b) {
+function renderEvents(el, detections, b, keep) {
     currentDets = detections;
     const list = el.querySelector('#events-list');
     list.innerHTML = '';
@@ -193,9 +218,12 @@ function renderEvents(el, detections, b) {
         }
     });
 
-    const rows = window.innerWidth <= 768 ? 4 : 10;
+    // a phone has no room for a scroller in a scroller (ios will not hand
+    // the gesture on): there the list runs whole and the card scrolls
+    const rows = window.innerWidth <= 768 ? 0 : 10;
     const items = list.querySelectorAll('.event-item');
-    if (items.length) {
+    if (items.length && !rows) list.style.maxHeight = '';
+    else if (items.length) {
         const n = Math.min(items.length, rows);
         const gap = parseFloat(getComputedStyle(list).rowGap) || 0;
         // unrounded, or the list scrolls by a fraction and clips the top row
@@ -206,8 +234,14 @@ function renderEvents(el, detections, b) {
         list.innerHTML = '<div class="events-empty">No detections</div>';
     }
 
-    if (firstItem && !skipAuto)
-        selectDetection(firstItem.det, firstItem.item, b);
+    const pick = dateToItem.get(keep) ?? firstItem;
+    if (pick) selectDetection(pick.det, pick.item, b);
+    if (scrolled) {
+        const c = box(list);
+        [list.scrollTop] = scrolled;
+        if (c) c.scrollTop = scrolled[1] ?? 0;
+        scrolled = null;
+    }
 }
 
 function selectDetection(det, item, b) {

@@ -1,21 +1,16 @@
-// the s2 flare site body: the series card over data-desk/detections, plus
-// what only this family has — the copernicus scene for the selected date, and
-// a csv of the series the card is listing.
+// the s2 hotspot body: the series card over the dates this browser's own
+// reads found (flaring/live.js), so it fills in as they land, its title
+// saying Loading… until every scene it can has looked at the site (its card
+// open, live.js deepen() reads its last 90 days, and a scroll past its
+// rows' end 90 more, older()). a
+// date draws the pixels the detector found; and only this family has the
+// copernicus scene for the selected date, and a csv of the series listed.
 
 import { MODE } from '../flaring/render.js';
-import { s2Series } from '../flaring/flares.js';
+import { series, deepen, older } from '../flaring/live.js';
 import { map, current, currentDets, selectedDetection, coords, siteTitle }
     from './index.js';
-import { heatFootprint } from './overlays.js';
-
-// the heat halo at the selected date's own raw point
-function footprint(det) {
-    if (!det || !current) return;
-    const [cLon, cLat] = coords(current);
-    const val = det.max_b12 || 0;
-    heatFootprint({ lon: det.raw_lon ?? cLon, lat: det.raw_lat ?? cLat,
-                    val, radiusM: 45 * Math.sqrt(val), cfg: MODE.s2 });
-}
+import { pixelFootprint } from './overlays.js';
 
 // the scene itself is one link away, at the day and the place the card is on
 function copernicusUrl(date) {
@@ -47,20 +42,22 @@ function downloadCSV() {
     const csv = [CSV_COLS, ...rows].map(r => r.join(',')).join('\n');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-    const slug = (p.name || 'flare').replace(/[^a-z0-9]/gi, '-').toLowerCase();
-    a.download = `${slug}-detections.csv`;
+    // the site's id, its colon (no filename takes one) as _
+    a.download = `${p.id.replace(/[:/\\]/g, '_')}.csv`;
     a.click();
     URL.revokeObjectURL(a.href);
 }
 
 export default {
-    source: 'detections',
+    source: 'live',
     cfg: MODE.s2,
     instrument: 'S2',
     passLabel: 'Passes',
-    title: p => siteTitle(p, 'Unknown facility'),
-    fetch: s2Series,
-    select: footprint,
+    title: p => ({ ...siteTitle(p, 'Unknown facility'),
+                   note: p.loading && 'Loading…' }),
+    fetch: p => (deepen(p.id), Promise.resolve(series(p.id))),
+    more: p => older(p.id),
+    select: det => det && pixelFootprint(det, MODE.s2),
     actions: `<dd-btn id="open-image-btn">Open image</dd-btn>
               <dd-btn id="download-btn">Download CSV</dd-btn>`,
     wire(el) {

@@ -33,11 +33,6 @@ export async function bytes(url) {
     return value && s ? s[value] ?? 0 : s;
 }
 
-// whether the index names `provider` as publishing `table` at all, however
-// it is addressed: what tells "not published" from "partitioned"
-export const published = async (table, provider) =>
-    Object.hasOwn((await initArchive(base))[table] ?? {}, provider);
-
 // the urls of `table`: one per provider publishing it whole, plus each
 // partitioned one addressed at `key` that holds it. a partitioned provider
 // is left out with no key, as a url cannot expand a glob. urls, not rows, so

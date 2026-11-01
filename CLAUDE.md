@@ -1,10 +1,9 @@
 # aerial
 
 one map of two ways the oil and gas industry puts carbon into the air: gas it
-burns and gas it leaks. flaring is a sentinel layer and VIIRS Nightfire looks
-(VNF), both drawn at once: the sentinel is Sentinel-2 archive clusters (S2,
-by day) or Sentinel-3 SLSTR sites (S3, by night), one at a time, chosen in
-the key; methane plumes are the third layer. one quarter grid sets the date window for all three, and a
+burns and gas it leaks. flaring is Sentinel-2 archive clusters (S2) and VIIRS
+Nightfire looks (VNF), a layer each and both drawn at once; methane plumes are
+the third layer. one quarter grid sets the date window for all three, and a
 quarter greys only when no layer covers it.
 
 aerial reads parquet off the Data Desk archive with DuckDB and draws it, and does
@@ -46,24 +45,14 @@ change the elements in the design repository, never in vendor/.
 
 ## the three families
 
-**flaring.** `flaring/flares.js` is every family: a statement per window,
-the whole world, over `data-desk/flares` (S2 clusters), `eog/flares` (VNF
-sites) or `data-desk-s3/flares` (S3 sites, `S3`), one row per site with its quarterly history nested in `quarters`, both held as engine
+**flaring.** `flaring/flares.js` is both families: a statement per window,
+the whole world, over `data-desk/flares` (S2 clusters) or `eog/flares` (VNF
+sites), one row per site with its quarterly history nested in `quarters`, both held as engine
 buffers. the per-date series, `data-desk/detections` and `eog/detections`, is
 read per site on card open. every eog detections row is a positive detection;
 the looks that found nothing are `eog/observations`, which aerial does not read
-(see invariants). the S2 methodology is s2-flares, run in the etl; S3's is burnoff's
-`s3_detect` (caseiro et al.'s); aerial is a viewer.
-
-S3 is VNF's shape and VNF's rules: a night a look, `vnf()` and `s3()` one
-statement (`nightly`), its radiant heat on VNF's stops (its mean was 0.87 of
-VNF's at 432 sites both saw in 2023 q1). an archive whose index names no
-`data-desk-s3` has not published it: the family is empty, not an error
-(`src(provider, true)`). an S3 site sits a few hundred metres off its stack
-at street zoom: slstr's l1b places S3A ~250 m east and S3B ~350 m west of
-VNF and S2 alike (`docs/s3.md`). the key's choice (`setSentinel`, `config.js`) empties
-the other sentinel's read rather than hiding its layer, so the clusters and
-the table follow, and a `#flare=` link to the other sentinel switches to it. a pan reads nothing: every family is drawn whole and maplibre
+(see invariants). the S2 methodology is s2-flares, run in the etl; aerial is a
+viewer. a pan reads nothing: every family is drawn whole and maplibre
 draws what is in view. below z5 all three are one clustered source, every
 point a cluster (60k markers placed each frame made the globe crawl), drawn
 as a hairline ring on a log of its count, coloured by the mean band
@@ -91,6 +80,93 @@ so a table that starts partitioning does not break a reader. its `sizes` say
 what each object weighs and which partitions a table holds (`bytes()`,
 `shell/archive.js`): a hint, listed as the archive publishes.
 
+**live s2 (experimental, branch burnoff-live).** on this branch s2 is the
+live layer alone: the archive's s2 sites are not read or drawn, and the ui
+says hotspots, not flares. `flaring/live.js` is the one exception to
+"detects nothing": burnoff's detector, as wasm in `vendor/burnoff/` (built
+by `make wasm` in `~/Tools/burnoff`), reads google's sentinel-2 mirror in
+two workers per core, at most two per GB of `deviceMemory`, and four on a
+touch-first device: a worker's wasm heap keeps its largest read (25-40 MB
+over a phone's view, up to 135 MB over a desktop's), and sixteen crashed a
+phone's tab.
+
+the search belongs to the ground, not the view. from z12 (LIVE_ZOOM) each
+0.05° square in view wants every scene of its tiles in the last year: the
+last 30 days' first, then the rest coarse to fine in time (the newest of
+each month, then the middle of the month, then halving the gaps), so most
+flares are drawn early and the last reads only complete the year (`ranks`).
+reads are scored by place (in view, then within a view's width, at least
+0.5°, then paused), then rank, then rings out from the centre, then newest;
+one scene is read over every square wanting it. a found site has its year
+read around it too, a small read ranked just behind the sweeps of the same
+rank, and a scene its square was swept in counts as a look at it. a pan or
+zoom re-scores the wants and drops only sweeps now beyond the margin.
+nothing is kept in indexeddb: the service's store is the cache, and the
+browser's http cache keeps its answers (max-age a day for a window closed
+before today, else an hour). a z12 permian view
+read its recent scenes in ~12 s and the year in ~130 s (360 sweeps, ~10 MB
+each over a clear view), headless on an m2.
+
+the page's thread is the map's. no read starts while the map moves or until
+it has been still for half a second (a read started between two drags held
+every core through the second); the read-ahead fetches run in their own
+worker (`flaring/ahead.js`); a live update waits for the map to stop and
+re-sets only its own source unless its set of points changed (`setSource`:
+re-clustering 60k points at every read made pans judder), and the clusters,
+drawn only below NEAR, are re-set on the way out. the next read is chosen
+as a worker comes free, the squares' wants kept by scene until a sweep
+lands, a tile is listed or the view moves.
+
+an open card reads its site's last 90 days in one request of burnoff's
+service (`API`, its `serve/` on the jump host, which answers off the archive
+where it holds the scene and reads the jp2s in region where not; `?api=` on
+the page names another, empty reads here), and a scroll past its rows' end
+90 more once those are in (`older()`); the view's search reads here.
+
+a site is every date's detections linked within 40 m, never two of one
+date over 30 m apart (burnoff's `serve/sites.sql`), named by its
+detections' mean place rounded to 40 m (`live:<lat>,<lon>`), the same
+for any block or window; as the store fills, the mean can cross a
+rounding edge, so a site joins one held within 40 m (the
+fallback's detections, within 100 m; a link falls back to the site
+nearest its place), and a look is clear
+under 0.6 cloud, as in the archive. it is drawn as the archive's are, lit on
+two dates with its mean b12 over MODE.s2.floor, unless lit only in its
+hemisphere's summer (the archive's `seasonal`, april to august in the
+north): roofs and solar panels that catch a high sun, which the detector's
+heat test (b8a against b12, burnoff's AGENTS.md) cannot tell from a fire. in
+a year of scenes the heat test took london from ~2000 drawn sites to 87 and
+the summer rule to 54; madrid 704, 114, 43; the permian's sites by a viirs
+flare 327, 308, 301. kind `live` draws, clusters and filters as an s2 site
+(`key.js`, `layers.js` band, FAMILIES) and opens the s2 card
+(`card/flare.js`), named by every detection it lists, cloudy ones too, whose title says Loading…
+in grey until every scene of the year has looked at the site (`loading`), and where a date draws the detector's
+own pixels, each on the ramp by its b12 inside a hairline outline, as a
+plume mask is drawn. the table's s2 tab says Detections loading, not No rows
+in view, while the view's search is not done (`busy`; a live redraw
+sends `fx-rows`). one line at the map's top right says what is still being
+read, the newest read's (`status`, `shell/ui.js`): the engine at start, each
+layer's read, and the view's live search, Recent S2 hotspots: x%, then Older
+S2 hotspots: x% (each the mean over the view's squares of their scenes read,
+so it moves with every read, never falls while the view is still and is the
+same at every zoom), kept up 3 s once both are done; at z10-11 it says Zoom
+in to detect S2 hotspots. its lines carry no ellipsis. the ground not yet
+read through is hatched (layer `unread`), fainter as its scenes are read. the reads
+for a view ask `viewportBbox` (`shell/map.js`), the canvas less the table
+drawer's padding, and a drag of the drawer reads again as a move does. no
+live read starts out past LIVE_ZOOM: one in flight finishes, and the rest
+wait until the view is back. a hotspot card dims the imagery around its site, not each
+date's own point, which lit some dates and darkened others.
+
+from z10 each hotspot carries its instrument, S2 or VNF, up and right of
+it: an image set in the page's inter at 300 (`ensureTag`, `shell/map.js`)
+in a layer of its own over the family's source (`tagLayer`, `layers.js`),
+as gl text takes only the basemap's sdf glyphs, which are not inter. the
+intro names the three groups of facilities whose outlines the map holds, as
+text. the old burnoff map (`~/Tools/burnoff-map`) did
+this with l2a cogs, a stac search, every band of every 256 px block of every
+scene, and a crdt shared over webrtc.
+
 ## layout
 
 ```
@@ -106,10 +182,10 @@ web/
                      reselectCurrentFeature
     overlays.js      the open card's map overlays
     chart.js         the intensity chart
-    flare.js vnf.js s3.js plume.js   the bodies
+    flare.js vnf.js plume.js   the bodies
   flaring/
     render.js        MODE: the scale each instrument reads on, the S2 floor
-    flares.js        every family in sql: the reducer, s2(), vnf() and s3(),
+    flares.js        both families in sql: the reducer, s2() and vnf(),
                      the terminals, availability, coverage(), the series
   methane/           plumes.js reader, attribution.js, candidates.js,
                      overlay.js, mask.js
@@ -165,7 +241,9 @@ passes the gate; in VNF it is a finding — no clear night — and the flare is
 dropped. the split is in `readS2` and `readVNF` (`flares.js`): S2 has no
 persistence gate, VNF keeps `persistence IS NOT NULL`. it is sql, not a layer
 filter, because a cluster counts what its source holds. the old slider at
-0.25 sank the whole archive when S2 coalesced to 0.
+0.25 sank the whole archive when S2 coalesced to 0. (on burnoff-live
+`readS2` is gone with the archive's s2 layer; a live site with no rate is
+drawn, as an archive one was.)
 
 **intensity is the key's.** there is no persistence slider: it only hid
 flares. B12 reflectance and radiant heat
@@ -187,9 +265,7 @@ its own: when only others moved, its re-render is a no-op (detail.js compares
 properties, rightly — a rebuild would drop the reader's selected date).
 
 **units and types.** MCM/d is `rh_mw × 0.0315` (JZ-RH, Zhizhin et al. 2025);
-`RH_TO_MCM` in `flaring/render.js` is the only place it is spelled. it is
-calibrated on VIIRS: S3's card shows its planck temperature in that column,
-never MCM/d. EOG's own
+`RH_TO_MCM` in `flaring/render.js` is the only place it is spelled. EOG's own
 `flow_mcm` must never be displayed — the legacy power law overestimates dim
 flares and underestimates bright ones. identifiers are VARCHAR in every table;
 never coerce with `Number()` (`card/index.js` compares `String(id)`), and never
@@ -212,7 +288,7 @@ as cloud, not as zero activity (`docs/ras-laffan-monitoring.md`).
 **the negation in the S2 intensity gate is deliberate.**
 `NOT coalesce(f.avg_b12 < floor, false)` (`readS2`) lets a cluster the table
 gives no intensity for through: `avg_b12 >= 0.85` is null for such a row, and
-a null WHERE drops it.
+a null WHERE drops it. (main only: burnoff-live reads no archive s2.)
 
 **VNF has no intensity floor.** a 3 MW floor on the average hid every dim
 flare — most onshore gas plants, and the LNG trains at Darwin and Ichthys.
@@ -272,10 +348,6 @@ exactly what a reader may rely on.
   detections, detections_clear, rh_sum, rh_max`.
 - `eog/flares`, `eog/detections` — VNF sites and their nightly detections, the
   same `quarters` struct. `eog/observations` exists and is not read here.
-- `data-desk-s3/flares`, `data-desk-s3/detections` — S3 sites and their
-  nightly detections (`rh_mw`, `temp_k`), in eog's shape. not yet published:
-  the etl that builds them is a proposal (burnoff's `s3_detect` over each
-  site's box, a granule's boxes in one chunk).
 - `<provider>/detections` — methane plumes, `kind = 'plume'`, with `valid`
   false on a retrieval the producer does not trust, and `wind_ms`,
   `wind_from_deg` where the producer gives a wind.

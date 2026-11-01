@@ -5,7 +5,7 @@
 import { createMap, addSatellite, wireWorldmap } from './map.js';
 import { hover } from '../vendor/dd/dd.js';
 import { initData, read, sql, fc } from './data.js';
-import { buildShell, initKey, loaded } from './ui.js';
+import { buildShell, initKey, loaded, status } from './ui.js';
 import { initQuarters } from './quarters.js';
 import { initDetail, restorePermalink } from './detail.js';
 import { initTable } from './table.js';
@@ -51,8 +51,9 @@ function wireFilters(map, sources, keyPreds, ctx) {
 
 export async function mount(config) {
     buildShell(config);
-    // a card link with no view starts on the world, not the default view,
-    // and jumps to the card once it resolves
+    // a card link with no view (one from before views rode with cards)
+    // starts on the world, not the default view; any card link jumps to the
+    // card once it resolves, never flies
     const cold = !/[#&]map=/.test(location.hash) && readHashKeys(
         location.hash, Object.keys(config.detail?.hashKeys ?? {}))[1];
     const map = createMap({ hash: 'map', ...config.map,
@@ -61,7 +62,7 @@ export async function mount(config) {
     if (config.search) wireSearch(map);
     if (config.data) initData(config.data);
 
-    const ctx = { map, config, read, sql, fc, loaded, sources: {} };
+    const ctx = { map, config, read, sql, fc, loaded, status, sources: {} };
     if (config.quarters) ctx.quarters = initQuarters(
         document.getElementById('quarters'),
         () => config.quarters.onChange?.(ctx), config.quarters.years);
@@ -87,9 +88,6 @@ export async function mount(config) {
     let applyFilters;
     const key = initKey(map, () => applyFilters());
     applyFilters = wireFilters(map, ctx.sources, key.preds, ctx);
-    // ctx.setKey re-sets it, as a key choice does: rows drawn anew, so
-    // every row on and the filter re-applied
-    ctx.setKey = sections => { key.set(sections); applyFilters(); };
     if (config.key) await key.set(config.key(ctx));
     applyFilters(true);
 
@@ -99,7 +97,7 @@ export async function mount(config) {
 
     await config.ready?.(ctx);
     // after ready: onShow hooks use handles wired there
-    restorePermalink(cold);
+    restorePermalink(true);
     window.aerial = ctx;   // console handle
     return ctx;
 }
