@@ -80,48 +80,36 @@ so a table that starts partitioning does not break a reader. its `sizes` say
 what each object weighs and which partitions a table holds (`bytes()`,
 `shell/archive.js`): a hint, listed as the archive publishes.
 
-**live s2 (experimental, branch burnoff-live).** on this branch s2 is the
-live layer alone: the archive's s2 sites are not read or drawn, and the ui
-says hotspots, not flares. `flaring/live.js` is the one exception to
-"detects nothing": burnoff's detector, as wasm in `vendor/burnoff/` (built
-by `make wasm` in `~/Tools/burnoff`), reads google's sentinel-2 mirror in
-two workers per core, at most two per GB of `deviceMemory`, and four on a
-touch-first device: a worker's wasm heap keeps its largest read (25-40 MB
-over a phone's view, up to 135 MB over a desktop's), and sixteen crashed a
-phone's tab.
+**live s2 and s3 (experimental, branch burnoff-live).** on this branch the
+sentinels are live layers alone: the archive's s2 sites are not read or
+drawn, and the ui says hotspots, not flares. the flaring group's key has a
+choice, S2 day or S3 night (`setSentinel`, `config.js`; the key's `choice`,
+`shell/ui.js`, and `ctx.setKey`): the one not drawn reads empty, so its
+source, the clusters and its table tab are empty too, and it asks for
+nothing. a `#flare=` link to the other switches to it, and waits for the
+view's reads to hold its site (`until`).
 
-the search belongs to the ground, not the view. from z12 (LIVE_ZOOM) each
-0.05° square in view wants every scene of its tiles in the last year: the
-last 30 days' first, then the rest coarse to fine in time (the newest of
-each month, then the middle of the month, then halving the gaps), so most
-flares are drawn early and the last reads only complete the year (`ranks`).
-reads are scored by place (in view, then within a view's width, at least
-0.5°, then paused), then rank, then rings out from the centre, then newest;
-one scene is read over every square wanting it. a found site has its year
-read around it too, a small read ranked just behind the sweeps of the same
-rank, and a scene its square was swept in counts as a look at it. a pan or
-zoom re-scores the wants and drops only sweeps now beyond the margin.
-nothing is kept in indexeddb: the service's store is the cache, and the
-browser's http cache keeps its answers (max-age a day for a window closed
-before today, else an hour). a z12 permian view
-read its recent scenes in ~12 s and the year in ~130 s (360 sweeps, ~10 MB
-each over a clear view), headless on an m2.
-
-the page's thread is the map's. no read starts while the map moves or until
-it has been still for half a second (a read started between two drags held
-every core through the second); the read-ahead fetches run in their own
-worker (`flaring/ahead.js`); a live update waits for the map to stop and
-re-sets only its own source unless its set of points changed (`setSource`:
-re-clustering 60k points at every read made pans judder), and the clusters,
-drawn only below NEAR, are re-set on the way out. the next read is chosen
-as a worker comes free, the squares' wants kept by scene until a sweep
-lands, a tile is listed or the view moves.
-
-an open card reads its site's last 90 days in one request of burnoff's
-service (`API`, its `serve/` on the jump host, which answers off the archive
-where it holds the scene and reads the jp2s in region where not; `?api=` on
-the page names another, empty reads here), and a scroll past its rows' end
-90 more once those are in (`older()`); the view's search reads here.
+both come from burnoff's service (its `serve/` on the jump host, at
+`https://dev.datadesk.eco`, `?api=` on the page naming another) over
+duckdb's quack protocol: `FROM sites(w, s, e, n, 'a', 'b')` for s2 and
+`s3_sites` for s3, each one row of geojson (`flaring/service.js`, the
+`@quack-protocol/sdk` client vendored in `vendor/quack/` with flechette,
+its one dependency, loaded on the first call; a pool of four connections,
+as the client queues a connection's statements; `fetch` passed bound, as
+the client calls it as its own method and a browser refuses that). the
+service reads the scenes off eodata in region and keeps them, so a view it
+has read answers in under a second. `flaring/live.js` is one module for
+both: `live(spec)` makes an instrument (`s2`, `s3`), and the specs hold
+what differs. s2 is read from z12 in 0.1° blocks, s3 from z9 in 0.5°
+blocks (the service takes up to 1°: it reads a granule once for all a
+box's cells); each block asks the last 30 days 10 at a time, then back to
+180 days a month at a time, the view's middle first, four in flight. an
+open card asks its site's last 90 days, and a scroll past its rows' end
+90 more, back to 2022-01-25 (s2) or 2018-06-01 (s3). where the service
+fails, s2 falls back to burnoff's detector in the browser (`fallback.js`,
+`vendor/burnoff/`, google's sentinel-2 mirror); s3 has none. `?asof=`
+reads as if on a past date, for a service whose mirror stops short of
+today (a local one off meeo's).
 
 a site is every date's detections linked within 40 m, never two of one
 date over 30 m apart (burnoff's `serve/sites.sql`), named by its
@@ -158,7 +146,20 @@ live read starts out past LIVE_ZOOM: one in flight finishes, and the rest
 wait until the view is back. a hotspot card dims the imagery around its site, not each
 date's own point, which lit some dates and darkened others.
 
-from z10 each hotspot carries its instrument, S2 or VNF, up and right of
+an s3 site is burnoff's `s3sites.sql`: hotspots linked within 750 m,
+never two of one granule, named by the mean rounded to 250 m
+(`s3:<lat>,<lon>`). the l1b places s3a ~250 m east of a flare and s3b
+~350 m west (`docs/s3.md`), so the mean moves more than s2's as nights
+come, up to 1 km for a site of few nights, while distinct sites stand 790 m
+or more apart: a site joins one held within 600 m, never two of one answer
+(`absorb`). a night is clear where the 0.02° square under the site was half
+clear or more; a site is drawn lit on two nights; its radiant heat reads on
+vnf's MW stops (its mean was 0.87 of vnf's at 432 sites in 2023 q1), and
+its card (`card/s3.js`) shows planck's temperature where vnf's shows
+MCM/d, as jz-rh is calibrated on viirs. kind `s3` draws, clusters and
+filters on its own stops (`layers.js` band, `key.js`).
+
+from z10 each hotspot carries its instrument, S2, S3 or VNF, up and right of
 it: an image set in the page's inter at 300 (`ensureTag`, `shell/map.js`)
 in a layer of its own over the family's source (`tagLayer`, `layers.js`),
 as gl text takes only the basemap's sdf glyphs, which are not inter. the
@@ -182,7 +183,7 @@ web/
                      reselectCurrentFeature
     overlays.js      the open card's map overlays
     chart.js         the intensity chart
-    flare.js vnf.js plume.js   the bodies
+    flare.js s3.js vnf.js plume.js   the bodies
   flaring/
     render.js        MODE: the scale each instrument reads on, the S2 floor
     flares.js        both families in sql: the reducer, s2() and vnf(),

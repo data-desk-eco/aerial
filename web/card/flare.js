@@ -7,7 +7,7 @@
 // copernicus scene for the selected date, and a csv of the series listed.
 
 import { MODE } from '../flaring/render.js';
-import { series, deepen, older } from '../flaring/live.js';
+import { s2 } from '../flaring/live.js';
 import { map, current, currentDets, selectedDetection, coords, siteTitle }
     from './index.js';
 import { pixelFootprint } from './overlays.js';
@@ -55,8 +55,8 @@ export default {
     passLabel: 'Passes',
     title: p => ({ ...siteTitle(p, 'Unknown facility'),
                    note: p.loading && 'Loading…' }),
-    fetch: p => (deepen(p.id), Promise.resolve(series(p.id))),
-    more: p => older(p.id),
+    fetch: p => (s2.deepen(p.id), Promise.resolve(s2.series(p.id))),
+    more: p => s2.older(p.id),
     select: det => det && pixelFootprint(det, MODE.s2),
     actions: `<dd-btn id="open-image-btn">Open image</dd-btn>
               <dd-btn id="download-btn">Download CSV</dd-btn>`,

@@ -47,6 +47,24 @@ export const MODE = {
             : (d.rh_mw * RH_TO_MCM).toFixed(2),
         sentinel: 999,
     },
+    // sentinel-3 slstr by night (burnoff's s3_sites): radiant heat as vnf
+    // reads it, so vnf's stops. at 432 sites both saw in 2023 q1 its mean
+    // was 0.87 of vnf's (log r 0.88, docs/s3.md), but jz-rh is calibrated
+    // on viirs, so no MCM/d: the third column is planck's temperature
+    s3: {
+        unit: 'MW',
+        prop: 'max_rh',
+        col2: 'RH', col3: 'K', cols: '1fr 27px 38px',
+        stops: [3, 7, 20],
+        log: true,
+        chartRange: [0.5, 50],
+        yVal: d => d.rh_mw || 0,
+        formatVal: d => fixed(d.rh_mw, 1),
+        // a saturated hotspot has no temperature
+        formatCount: d => d.temp_k == null ? '-'
+            : String(Math.round(d.temp_k)),
+        sentinel: null,
+    },
 };
 
 const clamp01 = v => Math.max(0, Math.min(1, v));

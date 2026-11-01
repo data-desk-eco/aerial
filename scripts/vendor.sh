@@ -42,6 +42,21 @@ mkdir -p "$VENDOR/burnoff"
 cp "$BURNOFF"/web/{burnoff.js,burnoff.wasm,worker.js,gpu.js,j2k.wgsl} \
     "$VENDOR/burnoff/"
 
+echo "quack sdk (@quack-protocol/sdk, its one dependency flechette) ..."
+# burnoff's service speaks duckdb's quack: the client, its import of
+# flechette made relative, as the page has no import map
+mkdir -p "$VENDOR/quack"
+QT=$(mktemp -d)
+for p in @quack-protocol/sdk@0.3.0 @uwdata/flechette@2.7.0; do
+    (cd "$QT" && npm pack -q "$p" >/dev/null)
+done
+for t in "$QT"/*.tgz; do tar xzf "$t" -C "$QT" && mv "$QT/package" "${t%.tgz}"; done
+cp "$QT"/quack-protocol-sdk-0.3.0/dist/{index.js,messages-*.js} "$VENDOR/quack/"
+cp "$QT"/uwdata-flechette-2.7.0/dist/flechette.mjs "$VENDOR/quack/"
+sed -i.bak 's#from "@uwdata/flechette"#from "./flechette.mjs"#' \
+    "$VENDOR"/quack/*.js && rm -f "$VENDOR"/quack/*.bak
+rm -rf "$QT"
+
 echo "inter font ..."
 # a desktop chrome agent, so google serves woff2
 UA='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'

@@ -51,11 +51,11 @@ export const plumeIcon = ['case',
 // a feature's band on its own family's stops, 0 → 2, so one number means the
 // same across the families a cluster mixes; no value is the foot, as in
 // flareIcon. MODE's stops are passed in, as render.js imports this module
-export const band = ({ s2, vnf }) => {
+export const band = ({ s2, vnf, s3 }) => {
     const at = (prop, [, mid, hi]) =>
         ['step', ['coalesce', ['get', prop], -1], 0, mid, 1, hi, 2];
     return ['match', ['get', 'kind'], 'live', at(s2.prop, s2.stops),
-        'vnf', at(vnf.prop, vnf.stops),
+        'vnf', at(vnf.prop, vnf.stops), 's3', at(s3.prop, s3.stops),
         'plume', at('rate_kg_h', [0, ...PLUME_STOPS]), 0];
 };
 
@@ -109,7 +109,7 @@ export const RATE_LABEL = {
 // (shell/map.js ensureTag), never dropped: one marking alone has no key to
 // tell s2's scale from vnf's. a layer of its own over the family's source,
 // as a symbol takes one icon
-export const TAGS = { live: 'S2', vnf: 'VNF' };
+export const TAGS = { live: 'S2', s3: 'S3', vnf: 'VNF' };
 export const tagLayer = id => ({
     id: `${id}-tag`, type: 'symbol', source: id, minzoom: 10,
     layout: { ...PIN, 'icon-image': `tag-${TAGS[id]}`,

@@ -11,9 +11,10 @@ import { initOverlays, greyCircles, clearOverlays, dim }
     from './overlays.js';
 import flare from './flare.js';
 import vnf from './vnf.js';
+import s3 from './s3.js';
 import plume from './plume.js';
 
-const BODIES = { live: flare, vnf, plume };
+const BODIES = { live: flare, s3, vnf, plume };
 const bodyOf = p => BODIES[p.kind] ?? BODIES.live;
 
 export let map = null;
@@ -135,7 +136,7 @@ const pct = v => `${Math.round(v * 100)}%`;
 // live site counts every detection it lists
 const seriesStats = (p, b) => [
     ['Instrument', b.instrument],
-    [p.observations == null || p.kind === 'live'
+    [p.observations == null || p.kind === 'live' || p.kind === 's3'
         ? 'Detections' : 'Detections (clear)',
         p.detection_count],
     ['Persistence', p.persistence != null ? pct(p.persistence) : '—'],

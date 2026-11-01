@@ -26,10 +26,7 @@ import { initProbabilityOverlay } from './methane/overlay.js';
 import { initMask } from './methane/mask.js';
 import { loadAttributions } from './methane/attribution.js';
 import { SITE_LAYERS, SITE_ZOOM, holdSites, drawSites } from './sites.js';
-import { view as liveView, features as liveFeatures, site as liveSite,
-    quarters as liveQuarters, onChange as onLive, hold as holdLive,
-    busy as liveBusy, onRead, progress, LIVE_ZOOM }
-    from './flaring/live.js';
+import { s2, s3 } from './flaring/live.js';
 
 // the bucket every layer reads. index.json names each table's objects, so no
 // module names one
@@ -58,15 +55,18 @@ const whenReady = new Promise(r => readyResolve = r);
 
 // ── the three layers ──
 
-// on this branch s2 is the live layer alone: burnoff's detector reading
-// sentinel-2 in the browser (flaring/live.js) stands in for the archive's
-// sites, which are not read
+// on this branch the sentinels are live layers alone, off burnoff's service
+// (flaring/live.js): s2 by day or s3 by night, one at a time, chosen in the
+// key (SENTINEL). the other's read is empty, so its source, the clusters
+// and its table tab are too, and it asks the service for nothing
 
 // far out every family is one clustered source, `everything`: 60k markers
 // placed each frame made the globe crawl. from NEAR in, each family's own
 // layer draws every point. a cluster's label is a count, since a summed
 // value would mash t/hr, ppm·m, b12 and radiant heat
-const FAMILIES = ['live', 'vnf', 'plumes'], NEAR = 5;
+const FAMILIES = ['live', 's3', 'vnf', 'plumes'], NEAR = 5;
+let SENTINEL = 's2';
+const LIVE = { s2, s3 }, on = () => LIVE[SENTINEL];
 // a cluster's colour: the mean band of what it holds, shifted up so a mixed
 // cluster reads at its brighter end
 const BAND = band(MODE);
@@ -94,7 +94,8 @@ const cluster = () => (stale = false, put('everything',
 function setSource(id, features) {
     put(id, features);
     const k = features.map(f => `${f.properties.id}:${f.properties[
-        f.properties.kind === 'vnf' ? MODE.vnf.prop : MODE.s2.prop]}`).join();
+        f.properties.kind === 'live' ? MODE.s2.prop : MODE.vnf.prop]}`)
+        .join();
     if (k === drawn[id]) return;
     drawn[id] = k;
     CTX.map.getZoom() < NEAR ? cluster() : stale = true;
@@ -109,8 +110,11 @@ const READS = {
         .features,
     plumes: async ({ startDate, endDate }) =>
         CTX.fc(await readPlumes(startDate, endDate)).features,
-    // what burnoff found in this browser's own reads of sentinel-2
-    live: async () => liveFeatures(CTX.quarters.keys()),
+    // what burnoff's service found, of the sentinel the key draws
+    live: async () => SENTINEL === 's2' ? s2.features(CTX.quarters.keys())
+        : [],
+    s3: async () => SENTINEL === 's3' ? s3.features(CTX.quarters.keys())
+        : [],
     // every outline around the view, held in the engine; drawSites draws
     // the ones a detection holds, so there is no source to set
     sites: async () => {
@@ -160,7 +164,7 @@ async function quarterDots() {
     const q = CTX.quarters, pad = padBbox(viewportBbox(CTX.map));
     const vnf = await quarters('eog', pad, GRID_START, GRID_END).catch(err =>
         (console.error('quarter availability:', err), null));
-    const avail = vnf && new Set([...vnf, ...liveQuarters(pad),
+    const avail = vnf && new Set([...vnf, ...on().quarters(pad),
         ...await availableQuartersPlumes(pad, GRID_START, GRID_END)]);
     [...q.buttons()].forEach(b => b.toggleAttribute('unavailable',
         !!avail && !avail.has(q.key(b))));
@@ -169,10 +173,37 @@ const scheduleDots = debounce(quarterDots, 300);
 
 // ── deep links ──
 
-// #flare= names a live site (live:<lat>,<lon>@<tile>_<date>) or a vnf one
+// ── the sentinel choice ──
+
+// the key's choice: the group re-labelled and its rows anew, the one no
+// longer drawn asking for nothing more, both layers re-read (one to
+// empty), and the one now drawn asked for its view
+function setSentinel(to) {
+    if (to === SENTINEL) return;
+    on().view(null);
+    SENTINEL = to;
+    CTX.setKey(keySections(SENTINEL, setSentinel));
+    REFRESH.live(); REFRESH.s3();
+    on().view(CTX.map);
+    scheduleDots();
+}
+
+// #flare= names a live site (live:<lat>,<lon>@<tile>_<date>, s3:<lat>,<lon>)
+// or a vnf one; a link to the sentinel not drawn draws it. a live site is
+// the service's answer, so the link waits until its view's reads hold it,
+// or are done, a minute at most
+const until = async (x, id) => {
+    for (let t = 0; t < 120; t++) {
+        const f = x.site(id, CTX.quarters.keys());
+        if (f || t > 4 && !x.busy()) return f;
+        await new Promise(r => setTimeout(r, 500));
+    }
+    return null;
+};
 async function resolveFlare(id) {
     await whenReady;
-    if (id.startsWith('live:')) return liveSite(id, CTX.quarters.keys());
+    if (id.startsWith('live:')) return setSentinel('s2'), until(s2, id);
+    if (id.startsWith('s3:')) return setSentinel('s3'), until(s3, id);
     const row = await readSite(id, CTX.quarters.keys());
     return row && fc([row]).features[0];
 }
@@ -210,9 +241,10 @@ mount({
                 attribution of satellite emissions observations. Use it to
                 investigate a specific facility or to browse point source
                 emissions globally.</p>
-            <p>In addition to Sentinel-2 ${link(
+            <p>In addition to ${link(
                 'https://github.com/data-desk-eco/burnoff',
-                'hotspot detections')} for the past year, the map
+                'hotspot detections')} from Sentinel-2 by day and Sentinel-3
+                by night, the map
                 aggregates methane plumes and detections published by ${link('https://methanedata.unep.org/',
                 'UN IMEO')}, ${link('https://data.carbonmapper.org/',
                 'Carbon Mapper')}, ${link(
@@ -244,6 +276,10 @@ mount({
                     'https://doi.org/10.1038/s41597-022-01878-2', 'doi.org/10.1038/s41597-022-01878-2')}</p>
                 <p>Batchu, V. V. et al. (2026). Global monitoring of methane point sources using deep learning on hyperspectral radiance measurements from EMIT. <i>Proceedings of the National Academy of Sciences</i>. ${link(
                     'https://doi.org/10.1073/pnas.2612145123', 'doi.org/10.1073/pnas.2612145123')}</p>
+                <p>Caseiro, A. et al. (2018). Persistent hot spot detection and characterisation using SLSTR. <i>Remote Sensing 10, 1118</i>. ${link(
+                    'https://doi.org/10.3390/rs10071118', 'doi.org/10.3390/rs10071118')}</p>
+                <p>Caseiro, A. et al. (2020). Gas flaring activity and black carbon emissions in 2017 derived from the Sentinel-3A Sea and Land Surface Temperature Radiometer. <i>Earth System Science Data 12, 2137–2155</i>. ${link(
+                    'https://doi.org/10.5194/essd-12-2137-2020', 'doi.org/10.5194/essd-12-2137-2020')}</p>
                 <p>Duren, R. M. et al. (2025). The Carbon Mapper emissions monitoring system. <i>Atmospheric Measurement Techniques 18, 6933–6975</i>. ${link(
                     'https://doi.org/10.5194/amt-18-6933-2025', 'doi.org/10.5194/amt-18-6933-2025')}</p>
                 <p>Elvidge, C. D. et al. (2013). VIIRS Nightfire: satellite pyrometry at night. <i>Remote Sensing 5, 4423–4449</i>. ${link(
@@ -293,6 +329,7 @@ mount({
         return {
             sites: empty,
             live: empty,
+            s3: empty,
             vnf: empty,
             plumes: empty,
             everything: { data: empty, cluster: true,
@@ -305,16 +342,20 @@ mount({
     layers: [
         ...SITE_LAYERS,
         {
-            // read from LIVE_ZOOM, drawn from NEAR and clustered below it
+            // read from s2's zoom, drawn from NEAR and clustered below it
             id: 'live', type: 'symbol', source: 'live', minzoom: NEAR,
             layout: { ...PIN, 'icon-image': flareIcon(MODE.s2) },
         },
         {
-            // above s2, so the card's heat footprint stays under both
+            id: 's3', type: 'symbol', source: 's3', minzoom: NEAR,
+            layout: { ...PIN, 'icon-image': flareIcon(MODE.s3) },
+        },
+        {
+            // above the sentinels, so the card's heat footprint stays under
             id: 'vnf', type: 'symbol', source: 'vnf', minzoom: NEAR,
             layout: { ...PIN, 'icon-image': flareIcon(MODE.vnf) },
         },
-        tagLayer('live'), tagLayer('vnf'),
+        tagLayer('live'), tagLayer('s3'), tagLayer('vnf'),
         {
             // no value label: colour already says how much, and the card
             // carries the number
@@ -347,7 +388,7 @@ mount({
         },
     },
 
-    key: () => keySections(),
+    key: () => keySections(SENTINEL, setSentinel),
 
     // a tab per family, each the rows its layer is drawing. an attribution
     // is listed while its plume is: the plume carries the window and the
@@ -370,13 +411,17 @@ mount({
           cols: ['id', 'name', 'country', 'max_rh', 'detection_count',
                  'observations', 'persistence', 'lat', 'lon'] },
         { label: 'Hotspots (S2)', rows: props('live'),
-          empty: () => liveBusy() && 'Detections loading',
+          empty: () => s2.busy() && 'Detections loading',
           cols: ['id', 'name', 'max_b12', 'detection_count', 'observations',
+                 'persistence', 'lat', 'lon'] },
+        { label: 'Hotspots (S3)', rows: props('s3'),
+          empty: () => s3.busy() && 'Detections loading',
+          cols: ['id', 'name', 'max_rh', 'detection_count', 'observations',
                  'persistence', 'lat', 'lon'] },
     ],
 
     detail: {
-        layers: ['live', 'vnf', 'plumes'],
+        layers: ['live', 's3', 'vnf', 'plumes'],
         hashKeys: { flare: resolveFlare, plume: resolvePlume },
         hashKey: p => isPlume(p) ? 'plume' : 'flare',
         idProp: 'id',
@@ -398,41 +443,44 @@ mount({
 
         // no live read starts while the map moves, so its frames keep the
         // cores the workers would take
-        ctx.map.on('movestart', () => holdLive(true));
+        ctx.map.on('movestart', () => on().hold(true));
         ctx.map.on('moveend', () => { scheduleDots(); SCHEDULED.sites();
-            holdLive(false); liveView(ctx.map); });
+            on().hold(false); on().view(ctx.map); });
         ctx.map.on('zoomend', () => stale && ctx.map.getZoom() < NEAR
             && cluster());
-        // the live reads land a scene at a time: redrawn at most once a
-        // second while they do, and never while the map moves
-        let soon;
-        const redraw = () => ctx.map.isMoving() ? ctx.map.once('moveend',
-            redraw) : (soon = null, REFRESH.live(),
-            dispatchEvent(new Event('fx-rows')));
-        onLive(() => soon ??= setTimeout(redraw, 1000));
-        // the view's search in the status line as it changes, or a view is
-        // new, taken down once it is done, but only if this view saw it short
-        // of done: a view already searched says nothing. reads further out
-        // change nothing it says, and do not hold it up. out of reach of the
-        // live reads, a line says to zoom in
         // the numbers are padded with figure spaces, as wide as a digit in
         // tabular figures (shell.css), so the line keeps its width
         const pad = v => String(Math.floor(100 * v)).padStart(3, '\u2007');
-        let said, ran;
-        onRead(fresh => {
-            const z = ctx.map.getZoom(), p = z >= LIVE_ZOOM && progress();
-            ctx.status('zoom', z < LIVE_ZOOM && z >= LIVE_ZOOM - 2
-                ? 'Zoom in to detect S2 hotspots' : null);
-            if (z < LIVE_ZOOM) return said = null, ctx.status('live');
-            if (!p) return;
-            const [a, b] = p, say = a < 1 ? `Recent S2 hotspots: ${pad(a)}%`
-                : `Older S2 hotspots: ${pad(b)}%`;
-            if (fresh) ran = a < 1 || b < 1;
-            if (!ran) return said = null, ctx.status('live');
-            if (!liveBusy()) return said = null, ctx.status('live');
-            if (fresh || say !== said)
-                said = say, ctx.status('live', say, a < 1 ? a : b);
-        });
+        for (const [id, x] of [['live', s2], ['s3', s3]]) {
+            // the live reads land a block at a time: redrawn at most once a
+            // second while they do, and never while the map moves
+            let soon, said, ran;
+            const redraw = () => ctx.map.isMoving() ? ctx.map.once('moveend',
+                redraw) : (soon = null, REFRESH[id](),
+                dispatchEvent(new Event('fx-rows')));
+            x.onChange(() => soon ??= setTimeout(redraw, 1000));
+            // the view's search in the status line as it changes, or a view
+            // is new, taken down once it is done, but only if this view saw
+            // it short of done: a view already searched says nothing. reads
+            // further out change nothing it says, and do not hold it up. out
+            // of reach of the live reads, a line says to zoom in. the
+            // sentinel not drawn says nothing
+            x.onRead(fresh => {
+                if (x !== on()) return;
+                const z = ctx.map.getZoom(), p = z >= x.zoom && x.progress();
+                ctx.status('zoom', z < x.zoom && z >= x.zoom - 2
+                    ? `Zoom in to detect ${x.label} hotspots` : null);
+                if (z < x.zoom) return said = null, ctx.status('live');
+                if (!p) return;
+                const [a, b] = p, say = a < 1
+                    ? `Recent ${x.label} hotspots: ${pad(a)}%`
+                    : `Older ${x.label} hotspots: ${pad(b)}%`;
+                if (fresh) ran = a < 1 || b < 1;
+                if (!ran || !x.busy()) return said = null, ctx.status('live');
+                if (fresh || say !== said)
+                    said = say, ctx.status('live', say, a < 1 ? a : b);
+            });
+        }
 
         // an outline is drawn while a drawn detection is inside it: after
         // any layer is re-set, and after the key re-filters them
@@ -442,7 +490,7 @@ mount({
             100));
         // the dots wait for the first paint: their plume index is a read
         // still on the network, and ahead of it it held the layers
-        liveView(ctx.map);
+        on().view(ctx.map);
         const first = Promise.allSettled([REFRESH.vnf(), REFRESH.plumes(),
             REFRESH.sites()]);
         // what no first paint draws waits for it, rather than sharing a
