@@ -3,7 +3,7 @@
 # card through vendor/dd/audit.js. any finding config.audit does not declare
 # fails it. needs the data desk `browse` (skills/browser in ~/data-desk)
 set -euo pipefail
-BROWSE="${BROWSE:-$HOME/data-desk/skills/browser/browse}"
+BROWSE="${BROWSE:-$(data-desk where)/skills/browser/browse}"
 PORT=8765
 python3 scripts/serve.py $PORT web 2>/dev/null &
 trap 'kill $!' EXIT

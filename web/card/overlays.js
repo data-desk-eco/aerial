@@ -14,9 +14,9 @@ const UNDER = 'live';   // the lowest flaring layer, which overlays sit under
 let map = null;
 export const initOverlays = m => { map = m; };
 
-// both flaring layers: imagery under one is imagery under the other
+// every flaring layer: imagery under one is imagery under the others
 export function greyCircles(grey) {
-    for (const id of ['live', 'vnf', 'live-tag', 'vnf-tag'])
+    for (const id of ['live', 's3', 'vnf', 'live-tag', 's3-tag', 'vnf-tag'])
         if (map.getLayer(id))
             map.setPaintProperty(id, 'icon-opacity', grey ? 0.35 : 1);
 }
