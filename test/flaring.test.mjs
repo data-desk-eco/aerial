@@ -9,7 +9,7 @@ import { describe, it } from 'node:test';
 
 import { execFileSync } from 'node:child_process';
 
-import { s2, vnf } from '../web/flaring/flares.js';
+import { s2, vnf, s3 } from '../web/flaring/flares.js';
 import { quote } from '../web/shell/util.js';
 
 // the statements run in the duckdb cli, as the engine runs them: spatial
@@ -139,5 +139,36 @@ describe('vnf', () => {
 
     it('keeps a dim site: there is no intensity floor', () => {
         assert.equal(one({ rh_sum: 1, rh_max: 0.1 }).avg_rh, 0.05);
+    });
+});
+
+// s3 publishes vnf's shape and is read by vnf's rules, through the same
+// reducer: a night a look, clear nights over clear nights, no intensity floor
+describe('s3', () => {
+    const S3 = { ...VNF, id: 'S3:25.9000,51.5000', detail: null };
+    const one = (o, row = {}) =>
+        run(s3(src({ ...S3, quarters: [Q('2026-01-01', o)], ...row }), KEYS))[0];
+
+    it('is its own kind, on the reducer vnf reads through', () => {
+        const p = one();
+        assert.equal(p.kind, 's3');
+        assert.equal(p.persistence, 10 / 40);
+        assert.equal(p.max_rh, 5);
+    });
+
+    // its id is a place, so it is named by its count, as an s2 site is
+    it('is named by its detections', () => {
+        assert.equal(one().name, '20 detections');
+        assert.equal(one({ detections: 1 }).name, '1 detection');
+    });
+
+    // the null branch is vnf's: no clear night is a finding, not a rate
+    it('publishes no rate under the coverage floor or with no clear night', () => {
+        assert.equal(one({ observations: 45 }).persistence, null);
+        assert.equal(one({ clear: 0, detections_clear: 0 }).persistence, null);
+    });
+
+    it('keeps the identifier a string', () => {
+        assert.equal(one().id, 'S3:25.9000,51.5000');
     });
 });

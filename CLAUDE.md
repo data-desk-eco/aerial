@@ -1,9 +1,10 @@
 # aerial
 
 one map of two ways the oil and gas industry puts carbon into the air: gas it
-burns and gas it leaks. flaring is Sentinel-2 archive clusters (S2) and VIIRS
-Nightfire looks (VNF), a layer each and both drawn at once; methane plumes are
-the third layer. one quarter grid sets the date window for all three, and a
+burns and gas it leaks. flaring is a sentinel layer and VIIRS Nightfire looks
+(VNF), both drawn at once: the sentinel is Sentinel-2 archive clusters (S2,
+by day) or Sentinel-3 SLSTR sites (S3, by night), one at a time, chosen in
+the key; methane plumes are the third layer. one quarter grid sets the date window for all three, and a
 quarter greys only when no layer covers it.
 
 aerial reads parquet off the Data Desk archive with DuckDB and draws it, and does
@@ -45,14 +46,24 @@ change the elements in the design repository, never in vendor/.
 
 ## the three families
 
-**flaring.** `flaring/flares.js` is both families: a statement per window,
-the whole world, over `data-desk/flares` (S2 clusters) or `eog/flares` (VNF
-sites), one row per site with its quarterly history nested in `quarters`, both held as engine
+**flaring.** `flaring/flares.js` is every family: a statement per window,
+the whole world, over `data-desk/flares` (S2 clusters), `eog/flares` (VNF
+sites) or `data-desk-s3/flares` (S3 sites, `S3`), one row per site with its quarterly history nested in `quarters`, both held as engine
 buffers. the per-date series, `data-desk/detections` and `eog/detections`, is
 read per site on card open. every eog detections row is a positive detection;
 the looks that found nothing are `eog/observations`, which aerial does not read
-(see invariants). the S2 methodology is s2-flares, run in the etl; aerial is a
-viewer. a pan reads nothing: every family is drawn whole and maplibre
+(see invariants). the S2 methodology is s2-flares, run in the etl; S3's is burnoff's
+`s3_detect` (caseiro et al.'s); aerial is a viewer.
+
+S3 is VNF's shape and VNF's rules: a night a look, `vnf()` and `s3()` one
+statement (`nightly`), its radiant heat on VNF's stops (its mean was 0.87 of
+VNF's at 432 sites both saw in 2023 q1). an archive whose index names no
+`data-desk-s3` has not published it: the family is empty, not an error
+(`src(provider, true)`). an S3 site sits a few hundred metres off its stack
+at street zoom: slstr's l1b places S3A ~250 m east and S3B ~350 m west of
+VNF and S2 alike (`docs/s3.md`). the key's choice (`setSentinel`, `config.js`) empties
+the other sentinel's read rather than hiding its layer, so the clusters and
+the table follow, and a `#flare=` link to the other sentinel switches to it. a pan reads nothing: every family is drawn whole and maplibre
 draws what is in view. below z5 all three are one clustered source, every
 point a cluster (60k markers placed each frame made the globe crawl), drawn
 as a hairline ring on a log of its count, coloured by the mean band
@@ -95,10 +106,10 @@ web/
                      reselectCurrentFeature
     overlays.js      the open card's map overlays
     chart.js         the intensity chart
-    flare.js vnf.js plume.js   the bodies
+    flare.js vnf.js s3.js plume.js   the bodies
   flaring/
     render.js        MODE: the scale each instrument reads on, the S2 floor
-    flares.js        both families in sql: the reducer, s2() and vnf(),
+    flares.js        every family in sql: the reducer, s2(), vnf() and s3(),
                      the terminals, availability, coverage(), the series
   methane/           plumes.js reader, attribution.js, candidates.js,
                      overlay.js, mask.js
@@ -176,7 +187,9 @@ its own: when only others moved, its re-render is a no-op (detail.js compares
 properties, rightly — a rebuild would drop the reader's selected date).
 
 **units and types.** MCM/d is `rh_mw × 0.0315` (JZ-RH, Zhizhin et al. 2025);
-`RH_TO_MCM` in `flaring/render.js` is the only place it is spelled. EOG's own
+`RH_TO_MCM` in `flaring/render.js` is the only place it is spelled. it is
+calibrated on VIIRS: S3's card shows its planck temperature in that column,
+never MCM/d. EOG's own
 `flow_mcm` must never be displayed — the legacy power law overestimates dim
 flares and underestimates bright ones. identifiers are VARCHAR in every table;
 never coerce with `Number()` (`card/index.js` compares `String(id)`), and never
@@ -259,6 +272,10 @@ exactly what a reader may rely on.
   detections, detections_clear, rh_sum, rh_max`.
 - `eog/flares`, `eog/detections` — VNF sites and their nightly detections, the
   same `quarters` struct. `eog/observations` exists and is not read here.
+- `data-desk-s3/flares`, `data-desk-s3/detections` — S3 sites and their
+  nightly detections (`rh_mw`, `temp_k`), in eog's shape. not yet published:
+  the etl that builds them is a proposal (burnoff's `s3_detect` over each
+  site's box, a granule's boxes in one chunk).
 - `<provider>/detections` — methane plumes, `kind = 'plume'`, with `valid`
   false on a retrieval the producer does not trust, and `wind_ms`,
   `wind_from_deg` where the producer gives a wind.

@@ -1,6 +1,6 @@
 // the detail card: the shell renders the header and calls these hooks; the
-// body is the one the feature's `kind` selects (an s2 site, a vnf flare or a
-// plume). the flaring bodies share the series card here: information rows,
+// body is the one the feature's `kind` selects (an s2 site, a vnf or an s3
+// flare, or a plume). the flaring bodies share the series card here: information rows,
 // chart, dated rows. dispatch is on the feature, so a card opened from "also
 // here" is the kind it names.
 
@@ -10,9 +10,10 @@ import { renderChart } from './chart.js';
 import { initOverlays, greyCircles, clearOverlays } from './overlays.js';
 import flare from './flare.js';
 import vnf from './vnf.js';
+import s3 from './s3.js';
 import plume from './plume.js';
 
-const BODIES = { flare, vnf, plume };
+const BODIES = { flare, vnf, s3, plume };
 const bodyOf = p => BODIES[p.kind] ?? BODIES.flare;
 
 export let map = null;

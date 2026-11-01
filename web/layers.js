@@ -51,11 +51,11 @@ export const plumeIcon = ['case',
 // a feature's band on its own family's stops, 0 → 2, so one number means the
 // same across the families a cluster mixes; no value is the foot, as in
 // flareIcon. MODE's stops are passed in, as render.js imports this module
-export const band = ({ s2, vnf }) => {
+export const band = ({ s2, vnf, s3 }) => {
     const at = (prop, [, mid, hi]) =>
         ['step', ['coalesce', ['get', prop], -1], 0, mid, 1, hi, 2];
     return ['match', ['get', 'kind'], 'flare', at(s2.prop, s2.stops),
-        'vnf', at(vnf.prop, vnf.stops),
+        'vnf', at(vnf.prop, vnf.stops), 's3', at(s3.prop, s3.stops),
         'plume', at('rate_kg_h', [0, ...PLUME_STOPS]), 0];
 };
 
