@@ -90,13 +90,15 @@ nothing. a `#flare=` link to the other switches to it, and waits for the
 view's reads to hold its site (`until`).
 
 both come from burnoff's service (its `serve/` on the jump host, at
-`https://dev.datadesk.eco`, `?api=` on the page naming another) over
-duckdb's quack protocol: `FROM sites(w, s, e, n, 'a', 'b')` for s2 and
-`s3_sites` for s3, each one row of geojson (`flaring/service.js`, the
-`@quack-protocol/sdk` client vendored in `vendor/quack/` with flechette,
-its one dependency, loaded on the first call; a pool of four connections,
-as the client queues a connection's statements; `fetch` passed bound, as
-the client calls it as its own method and a browser refuses that). the
+`quack:dev.datadesk.eco:443`, `?api=` on the page naming another as a quack
+uri) over duckdb's quack protocol, asked in the engine: duckdb-wasm-lite
+from v2.0.0-lite.1 links quack's client, so a read is one statement,
+`quack_query` of `FROM sites(w, s, e, n, 'a', 'b')` for s2 or `s3_sites`
+for s3, each one row of geojson (`flaring/service.js`, on four lanes). on
+lite.1 a call waits in the engine's worker, holding the archive's reads
+while it does; lite.2's `columns := {...}` parks it on its fetch, several
+in flight at once, and wants passing once its build releases (its
+acceptance run failed on 2026-10-31). the
 service reads the scenes off eodata in region and keeps them, so a view it
 has read answers in under a second. `flaring/live.js` is one module for
 both: `live(spec)` makes an instrument (`s2`, `s3`), and the specs hold

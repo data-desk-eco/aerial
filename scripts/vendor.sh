@@ -7,7 +7,7 @@ set -euo pipefail
 VENDOR=web/vendor
 DD_DIST="${DD_DIST:-$HOME/Tools/design/dist}"
 BURNOFF="${BURNOFF:-$HOME/Tools/burnoff}"   # after `make wasm` there
-DUCKDB_TAG="v2.0.0-alpha1-lite.6"   # DuckDB data engine release
+DUCKDB_TAG="v2.0.0-lite.1"   # DuckDB data engine release: 2.0, and quack
 grep -q "DUCKDB_RELEASE = '$DUCKDB_TAG'" web/shell/engine.js
 
 rm -rf "$VENDOR"
@@ -25,7 +25,8 @@ gh release download "$DUCKDB_TAG" -R data-desk-eco/duckdb-wasm-lite \
     -p 'duckdb-browser-eh.worker.js' \
     -D "$VENDOR/duckdb" --clobber
 # the guard is for the category error: a build that linked gdal and proj, or
-# the stock npm wasm (35.96 MB). the lite build is 24.40 MB
+# the stock npm wasm (35.96 MB). the lite build is 28.23 MB, quack's client
+# among it
 [ "$(wc -c < "$VENDOR/duckdb/duckdb-eh.wasm")" -lt 30000000 ] || {
     echo "duckdb-wasm-lite: WASM exceeds 30 MB" >&2
     exit 1
@@ -41,21 +42,6 @@ echo "burnoff (from $BURNOFF/web) ..."
 mkdir -p "$VENDOR/burnoff"
 cp "$BURNOFF"/web/{burnoff.js,burnoff.wasm,worker.js,gpu.js,j2k.wgsl} \
     "$VENDOR/burnoff/"
-
-echo "quack sdk (@quack-protocol/sdk, its one dependency flechette) ..."
-# burnoff's service speaks duckdb's quack: the client, its import of
-# flechette made relative, as the page has no import map
-mkdir -p "$VENDOR/quack"
-QT=$(mktemp -d)
-for p in @quack-protocol/sdk@0.3.0 @uwdata/flechette@2.7.0; do
-    (cd "$QT" && npm pack -q "$p" >/dev/null)
-done
-for t in "$QT"/*.tgz; do tar xzf "$t" -C "$QT" && mv "$QT/package" "${t%.tgz}"; done
-cp "$QT"/quack-protocol-sdk-0.3.0/dist/{index.js,messages-*.js} "$VENDOR/quack/"
-cp "$QT"/uwdata-flechette-2.7.0/dist/flechette.mjs "$VENDOR/quack/"
-sed -i.bak 's#from "@uwdata/flechette"#from "./flechette.mjs"#' \
-    "$VENDOR"/quack/*.js && rm -f "$VENDOR"/quack/*.bak
-rm -rf "$QT"
 
 echo "inter font ..."
 # a desktop chrome agent, so google serves woff2
