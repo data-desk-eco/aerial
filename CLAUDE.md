@@ -155,8 +155,11 @@ or more apart: a site joins one held within 600 m, never two of one answer
 clear or more; a site is drawn lit on two nights; its radiant heat reads on
 vnf's MW stops (its mean was 0.87 of vnf's at 432 sites in 2023 q1), and
 its card (`card/s3.js`) shows planck's temperature where vnf's shows
-MCM/d, as jz-rh is calibrated on viirs. kind `s3` draws, clusters and
-filters on its own stops (`layers.js` band, `key.js`).
+MCM/d, as jz-rh is calibrated on viirs, and where a night draws its 500 m
+pixels as an s2 date does, each on the MW stops by its share of the night's
+heat (burnoff's `px`, placed as the hotspot is; a saturated pixel, which
+has none, at the top). kind `s3` draws, clusters and filters on its own
+stops (`layers.js` band, `key.js`).
 
 from z10 each hotspot carries its instrument, S2, S3 or VNF, up and right of
 it: an image set in the page's inter at 300 (`ensureTag`, `shell/map.js`)

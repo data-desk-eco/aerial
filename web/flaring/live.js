@@ -69,7 +69,7 @@ const S3 = {
                     avg_rh: on.reduce((a, f) => a + f.rh, 0)
                         / (on.length || 1) }),
     row: f => ({ rh_mw: f.rh, temp_k: f.temperature, pixels: f.pixels,
-                 raw_lat: f.lat, raw_lon: f.lon }),
+                 raw_lat: f.lat, raw_lon: f.lon, px: f.px }),
 };
 
 export function live(spec) {
