@@ -172,8 +172,8 @@ this with l2a cogs, a stac search, every band of every 256 px block of every
 scene, and a crdt shared over webrtc.
 
 a card's ⓘ opens what its kind shows (each body's `about`) in the modal
-the intro uses (`openModal`, `shell/ui.js`), which opens out of the ⓘ that
-raised it and shuts back into it. a click groups only the markings within
+the intro uses (`openModal`, `shell/ui.js`), which opens at once and
+shuts into the ⓘ that raised it. a click groups only the markings within
 2 px of it as ‹ n/N ›. the panels' fold is the kernel's (200 ms, `toggle`
 fired once still).
 

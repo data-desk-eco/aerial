@@ -95,11 +95,12 @@ function evenTops() {
 }
 
 // one modal at a time, a panel of #modal: its overlay, escape or a
-// [data-close] dismisses it. it opens out of the ⓘ on the panel that raised
-// it and shuts back into it, so the reader sees what brings it back
+// [data-close] dismisses it. it opens at once, as the reader knows where
+// they asked for it, and shuts into the ⓘ on the panel that raised it, so
+// they see what brings it back
 const MOTION = matchMedia('(prefers-reduced-motion: reduce)');
 let from = null, onShut = null;
-function fly(m, shut) {
+function fly(m) {
     const p = [...m.children].find(c => !c.hidden),
         i = from?.shadowRoot?.querySelector('.info');
     if (!p || !i?.offsetWidth || MOTION.matches) return Promise.resolve();
@@ -108,17 +109,15 @@ function fly(m, shut) {
         b.y + b.height / 2 - a.y - a.height / 2}px) scale(${
         b.width / a.width})`;
     return p.animate([{}, { transform: to, opacity: 0 }], { duration: 350,
-        easing: 'cubic-bezier(.4, 0, .2, 1)', direction: shut ? 'normal'
-        : 'reverse' }).finished.catch(() => {});
+        easing: 'cubic-bezier(.4, 0, .2, 1)' }).finished.catch(() => {});
 }
-// `panel` the one to show, `origin` the panel whose ⓘ it flies out of and
-// back to, `shut` called when it is dismissed; `still` opens it in place
-export function openModal(panel, origin, { shut, still } = {}) {
+// `panel` the one to show, `origin` the panel whose ⓘ it shuts into,
+// `shut` called when it is dismissed
+export function openModal(panel, origin, shut) {
     const m = document.getElementById('modal');
     for (const c of m.children) c.hidden = c !== panel;
     [from, onShut] = [origin, shut];
     m.classList.remove('hidden');
-    if (!still) fly(m);
 }
 async function closeModal() {
     const m = document.getElementById('modal');
@@ -126,7 +125,7 @@ async function closeModal() {
     // the panels come back as it leaves, so it has an ⓘ to fly to
     m.setAttribute('leaving', '');
     onShut?.();
-    await fly(m, true);
+    await fly(m);
     m.classList.add('hidden');
     m.removeAttribute('leaving');
 }
@@ -148,10 +147,10 @@ function wireIntro(title) {
     const intro = document.getElementById('intro'),
         main = document.getElementById('main-panel'),
         seen = `fx-entered:${title}`;
-    const open = still => openModal(intro, main,
-        { still, shut: () => localStorage.setItem(seen, '1') });
-    main.addEventListener('info', () => open());
-    if (!localStorage.getItem(seen)) open(true);
+    const open = () => openModal(intro, main,
+        () => localStorage.setItem(seen, '1'));
+    main.addEventListener('info', open);
+    if (!localStorage.getItem(seen)) open();
 }
 
 // ── the key ──

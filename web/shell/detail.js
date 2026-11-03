@@ -204,7 +204,7 @@ export function initDetail(m, config, getFeatures) {
         }
     });
 
-    // what the card shows, in the modal, flown out of its ⓘ
+    // what the card shows, in the modal, which shuts into its ⓘ
     panel().addEventListener('info', () => {
         const a = cfg.about(shown.feature.properties),
             m = document.getElementById('about-card');
