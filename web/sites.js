@@ -81,7 +81,8 @@ export async function holdSites([w, s, e, n]) {
     if (inside([w, s], held) && inside([e, n], held)) return false;
     const x = e - w, y = n - s, box = [w - x, s - y, e + x, n + y];
     await sql(`CREATE OR REPLACE TABLE site_view AS SELECT id, kind, name,
-        operator, geometry FROM ${await from(await objects('sites'))}
+        operator, geometry, xmin, ymin, xmax, ymax
+        FROM ${await from(await objects('sites'))}
         WHERE xmin <= ${box[2]} AND xmax >= ${box[0]}
           AND ymin <= ${box[3]} AND ymax >= ${box[1]}`);
     return !!(held = box);
@@ -89,25 +90,35 @@ export async function holdSites([w, s, e, n]) {
 
 // the held outlines that hold a point the map is drawing, each with the ids
 // of the points it holds and its vertex furthest up and right for its
-// label: `shown(id)` is
-// a layer's features as drawn, after the key's filters, and only those in
-// the held box are asked about: the window's plumes are 40k the world over,
-// and all of them made this 10 s against 5 ms. the inset dash sits right of
-// the stroke's direction, so inside a clockwise ring, which is how
-// ST_Normalize winds an outer ring (and each hole the other way)
-let epoch = 0, drawn = null, holds = new Map();
+// label: `shown(id)` is a layer's features as drawn, after the key's
+// filters, and only those in the held box are asked about: the window's
+// plumes are 40k the world over, and all of them made this 10 s against
+// 5 ms. the box test before ST_DWithin makes the join a range join, and it
+// needs the points as doubles (a literal is a decimal): at the permian from
+// z10, 6.4k outlines by 5.3k points, it took 3.6 s, now 0.5 s. the same
+// points in the same box are not asked again, as each live read sends
+// fx-filters. the inset dash sits right of the stroke's direction, so
+// inside a clockwise ring, which is how ST_Normalize winds an outer ring
+// (and each hole the other way)
+let epoch = 0, drawn = null, asked = null, holds = new Map(),
+    named = new Map();
 const str = v => `'${String(v).replace(/'/g, "''")}'`;
 export async function drawSites(map, shown) {
     if (map.getZoom() < SITE_ZOOM) return;
     const points = HELD_BY.flatMap(id => shown(id)).filter(f =>
-        f.geometry && inside(f.geometry.coordinates, held, REACH));
-    const e = ++epoch;
-    const rows = points.length ? await sql(`
+        f.geometry && inside(f.geometry.coordinates, held, REACH))
+        .map(({ properties: { id }, geometry: { coordinates: [x, y] } }) =>
+            `(${str(id)}, ${+x}, ${+y})`).join();
+    if (held + points === asked) return;
+    asked = held + points;
+    const e = ++epoch, R = REACH;
+    const rows = points ? await sql(`
         WITH h AS (SELECT s.id, list(p.id) AS held
-            FROM site_view s JOIN (VALUES ${points.map(({ properties: { id },
-                geometry: { coordinates: [x, y] } }) =>
-                `(${str(id)}, ${+x}, ${+y})`)}) AS p(id, x, y)
-            ON ST_DWithin(s.geometry, ST_Point(p.x, p.y), ${REACH})
+            FROM site_view s JOIN (SELECT id, x::DOUBLE AS x, y::DOUBLE AS y
+                FROM (VALUES ${points}) AS v(id, x, y)) AS p
+            ON p.x BETWEEN s.xmin - ${R} AND s.xmax + ${R}
+            AND p.y BETWEEN s.ymin - ${R} AND s.ymax + ${R}
+            AND ST_DWithin(s.geometry, ST_Point(p.x, p.y), ${R})
             GROUP BY s.id)
         SELECT id, kind, name, operator, held, ST_Area(geometry) AS area,
             ST_AsGeoJSON(ST_Normalize(geometry)) AS outline,
@@ -120,10 +131,8 @@ export async function drawSites(map, shown) {
     // the lines at every key toggle and every live read
     const k = rows.map(r => r.id + r.held).sort().join();
     if (e !== epoch || k === drawn) return;
-    await Promise.all(rows.map(r => ensureLabel(map, `site-${r.id}`,
-        { ...siteLabel(r), weight: 300 })));
-    if (e !== epoch) return;
     drawn = k;
+    named = new Map(rows.map(r => [String(r.id), siteLabel(r)]));
     holds = new Map(rows.map(r => [String(r.id), r.held.map(String)]));
     show();   // a selected facility's detections, anew
     map.getSource('sites')?.setData({ type: 'FeatureCollection',
@@ -157,8 +166,18 @@ function shade() {
         if (map.getLayer(id)) map.setPaintProperty(id, prop,
             ids ? ['case', on(ids), full, site ? FAINT : FADE] : full);
     }
-    if (map.getLayer('sites-label')) map.setFilter('sites-label',
-        ['all', isPoint, on(lit?.sites ?? [])]);
+    label(lit?.sites ?? []);
+}
+// a label is drawn when its facility is first lit, not for every outline:
+// 2.8k of them held the page 1.9 s
+let labelling = 0;
+async function label(ids) {
+    const n = ++labelling;
+    await Promise.all(ids.map(id => ensureLabel(map, `site-${id}`,
+        { ...named.get(id), weight: 300 })));
+    if (n === labelling && map.getLayer('sites-label')) map.setFilter(
+        'sites-label', ['all', isPoint, ['in', ['get', 'id'],
+            ['literal', ids]]]);
 }
 export const greyMarkings = g => { grey = g; shade(); };
 

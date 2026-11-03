@@ -372,7 +372,13 @@ exactly what a reader may rely on.
   leaves that box. an outline is drawn while a drawn detection is within
   `REACH` of it (`drawSites`, on `fx-filters`), and only the detections in
   the held box are asked: all 40k plumes made it 10 s against 5 ms, which
-  held the engine and every lane behind it. it names no detection, so a
+  held the engine and every lane behind it. the join tests each outline's
+  box before `ST_DWithin`, with the points cast to double (a literal is a
+  decimal), so it is a range join, not a nested loop: 6.4k outlines by
+  5.3k points at the permian from z10 took 3.6 s, now 0.5 s. the same
+  points in the same box are not asked again, and a label is drawn when
+  its facility is first lit, not for every outline (2.8k held the page
+  1.9 s). it names no detection, so a
   flare's facility is what the reader sees it inside. a facility's label
   is its name over its sector, kind and operator, each said once
   (`siteLabel`), set at 300 up and right of its vertex furthest up and
