@@ -35,7 +35,7 @@ const OPS = {
         const t0 = performance.now(), c = await connect(lane);
         const result = await c.query(statement), t1 = performance.now();
         const r = rows(result, result.schema.fields);
-        console.log(`[prof] ${lane ?? "map"} ${Math.round(t0)} q=${Math.round(t1 - t0)} rows=${Math.round(performance.now() - t1)} n=${r.length} ${statement.replace(/\s+/g, " ").slice(0, 90)}`);
+        console.log(`[prof] ${lane ?? "map"} ${(Date.now() - Math.round(performance.now() - t0)) % 1e6} q=${Math.round(t1 - t0)} rows=${Math.round(performance.now() - t1)} n=${r.length} ${statement.replace(/\s+/g, " ").slice(0, 90)}`);
         return r;
     },
 };

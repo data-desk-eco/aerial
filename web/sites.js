@@ -178,9 +178,19 @@ function show() {
     lit = next;
     shade();
 }
-// a card's detection, or null as it shuts
-export const choose = id => { chosen = id == null ? null : String(id);
-    show(); };
+// a card's detection, or null as it shuts. a card shut by a click is shut
+// by the shell before clicked() hears it, so a shut card waits a microtask
+// before it repaints: a click on an outline then goes straight from the
+// card to the facility, with nothing lit or dimmed between
+let released = null;
+export function choose(id) {
+    if (id == null && chosen) {
+        released = chosen;
+        queueMicrotask(() => { released = null; show(); });
+    }
+    chosen = id == null ? null : String(id);
+    if (chosen) show();
+}
 
 // the topmost of the markings and the outlines under the point
 const under = ({ point }) => map.getZoom() >= SITE_ZOOM && map
@@ -194,14 +204,14 @@ function hovered(e) {
     hover = light(!f ? [] : f.layer.id === 'sites-hit' ? [id] : sitesOf(id));
     show();
 }
-// a click on an outline holds it, or lets it go if it was held; a marking
-// opens its card, which selects it, and leaves the hold as it is; anywhere
-// else lets go, as it shuts a card
+// a click on an outline holds it, or lets it go if it was held and no card
+// was open; a marking opens its card, which selects it, and leaves the hold
+// as it is; anywhere else lets go, as it shuts a card
 function clicked(e) {
     const f = under(e);
     if (f && f.layer.id !== 'sites-hit') return;
     const id = f && String(f.properties.id);
-    pinned = id && id !== pinned ? id : null;
+    pinned = id && (id !== pinned || released) ? id : null;
     show();
 }
 export function initEmphasis(m) {
