@@ -99,15 +99,19 @@ export function pixelFootprint({ px }, cfg) {
 // hotspot card dims around the site, not each date's own point, which near
 // REACH lit some dates and darkened others; and a failed statement (the
 // outlines are re-read after a pan) leaves the dim as it was
+// a selected facility (sites.js) dims around itself the same way
 const DIM = 'dim', REACH = 0.005;
+export const dim = (lon, lat) => dimOutside(lon !== false
+    && `ST_DWithin(geometry, ST_Point(${+lon}, ${+lat}), ${REACH})`);
+export const dimSite = id => dimOutside(id != null
+    && `id = '${String(id).replace(/'/g, "''")}'`);
 let dimEpoch = 0, dimmed = null;
-export async function dim(lon, lat) {
+async function dimOutside(where) {
     const e = ++dimEpoch;
-    const [{ g } = {}] = lon === false ? [] : await sql(`SELECT
+    const [{ g } = {}] = !where ? [] : await sql(`SELECT
         ST_AsGeoJSON(ST_Difference(ST_MakeEnvelope(-180, -85, 180, 85),
             ST_Union_Agg(geometry))) AS g
-        FROM site_view
-        WHERE ST_DWithin(geometry, ST_Point(${+lon}, ${+lat}), ${REACH})
+        FROM site_view WHERE ${where}
         HAVING count(*) > 0`).catch(() => [{ g: dimmed }]);
     if (e !== dimEpoch || g === dimmed) return;
     dimmed = g;

@@ -375,10 +375,12 @@ exactly what a reader may rely on.
   held the engine and every lane behind it. it names no detection, so a
   flare's facility is what the reader sees it inside. a facility's label
   is its name over its sector, kind and operator, each said once
-  (`siteLabel`): a hover below z13, and from z13 an image at a point inside
-  the outline (`sites-label`, `ST_PointOnSurface`), the largest first where
-  two would overlap. the same statement lists the detections each outline
-  holds, so a hovered outline, or a detection in one, lights that facility
-  and what it holds and fades the rest (`shade`, the one writer of the
-  markings' opacities, which an open flaring card's grey also goes
-  through).
+  (`siteLabel`), set at 300 up and right of its vertex furthest up and
+  right (`sites-label`), and drawn only while the facility is lit. the
+  same statement lists the detections each outline holds, so a hovered
+  outline, or a detection in one, lights that facility and what it holds,
+  shows its label and fades the rest, and takes the pointer; a click on an
+  outline holds it lit and dims the imagery around it, as a card does
+  (`dimSite`, `card/overlays.js`), until a click elsewhere or on it again
+  (the card to come will open there). `shade` is the one writer of the markings' opacities and the
+  label's filter, which an open flaring card's grey also goes through.

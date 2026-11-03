@@ -10,6 +10,7 @@ import { lines } from './vendor/dd/dd.js';
 import { objects } from './shell/archive.js';
 import { sql, from } from './shell/data.js';
 import { ensureLabel } from './shell/map.js';
+import { dimSite } from './card/overlays.js';
 
 // each kind under its sector, the subtitle's first word
 const SECTORS = {
@@ -26,25 +27,24 @@ const SECTORS = {
 };
 const KIND = Object.fromEntries(Object.entries(SECTORS).flatMap(([s, ks]) =>
     Object.entries(ks).map(([k, label]) => [k, [s, label]])));
-// a facility's name over its sector, kind and operator, each said once: a
-// part the heading or an earlier part already says, or that says one of
-// them, is left out
-export const siteLabel = ({ name, kind, operator }) => {
-    const [sector, k] = KIND[kind] ?? [], heading = name || k || '';
+// a heading over its parts, each said once: a part the heading or an
+// earlier part already says, or that says one of them, is left out
+const once = (heading, parts) => {
     const said = [heading.toLowerCase()];
-    const text = [sector, k, operator].filter(v => {
+    return { heading, text: parts.filter(v => {
         const l = v?.toLowerCase();
         return l && !said.some(s => s.includes(l) || l.includes(s))
             && said.push(l);
-    }).join(' · ');
-    return { heading, text };
+    }).join(' · ') };
+};
+// a facility's name over its sector, kind and operator
+const siteLabel = ({ name, kind, operator }) => {
+    const [sector, k] = KIND[kind] ?? [];
+    return once(name || k || '', [sector, k, operator]);
 };
 
 // below this a refinery is a few pixels and the outlines are noise
 export const SITE_ZOOM = 10;
-// from here every drawn outline is named at its middle, the largest first
-// where two would overlap; below it a name is a hover
-const LABEL_ZOOM = 13;
 // the layers whose points an outline must hold to be drawn
 const HELD_BY = ['live', 's3', 'vnf', 'plumes'];
 // how far outside its outline a detection still holds it, in degrees (~500 m):
@@ -52,19 +52,22 @@ const HELD_BY = ['live', 's3', 'vnf', 'plumes'];
 const REACH = 0.005;
 const isPoint = ['==', ['geometry-type'], 'Point'];
 
-// an invisible fill under the lines, so the label answers anywhere inside
+// an invisible fill under the lines, so the outline answers anywhere
+// inside; and its label up and right of its vertex furthest up and right,
+// drawn while it is lit (shade). the label is set at 300, lighter than the
+// ui's 370, as a canvas sets inter at its text optical size, which is
+// heavier than the page's
 export const SITE_LAYERS = [
     { id: 'sites-hit', type: 'fill', source: 'sites', minzoom: SITE_ZOOM,
-      paint: { 'fill-color': '#000', 'fill-opacity': 0 },
-      hover: p => map?.getZoom() < LABEL_ZOOM ? siteLabel(p) : null },
+      paint: { 'fill-color': '#000', 'fill-opacity': 0 } },
     ...[['sites', lines.area()], ['sites-inset', lines.areaInset()]]
         .map(([id, l]) => ({ id, source: 'sites', minzoom: SITE_ZOOM,
                              filter: ['!', isPoint], ...l })),
-    { id: 'sites-label', type: 'symbol', source: 'sites',
-      minzoom: LABEL_ZOOM, filter: isPoint,
+    { id: 'sites-label', type: 'symbol', source: 'sites', minzoom: SITE_ZOOM,
+      filter: ['in', ['get', 'id'], ['literal', []]],
       layout: { 'icon-image': ['concat', 'site-', ['get', 'id']],
-                'icon-padding': 4,
-                'symbol-sort-key': ['-', ['get', 'area']] } },
+                'icon-anchor': 'bottom-left', 'icon-offset': [4, -4],
+                'icon-allow-overlap': true, 'icon-ignore-placement': true } },
 ];
 
 // the outlines in the viewport's box padded a viewport each way, held in the
@@ -86,7 +89,8 @@ export async function holdSites([w, s, e, n]) {
 }
 
 // the held outlines that hold a point the map is drawing, each with the ids
-// of the points it holds and a point inside it for its name: `shown(id)` is
+// of the points it holds and its vertex furthest up and right for its
+// label: `shown(id)` is
 // a layer's features as drawn, after the key's filters, and only those in
 // the held box are asked about: the window's plumes are 40k the world over,
 // and all of them made this 10 s against 5 ms. the inset dash sits right of
@@ -100,44 +104,48 @@ export async function drawSites(map, shown) {
         f.geometry && inside(f.geometry.coordinates, held, REACH));
     const e = ++epoch;
     const rows = points.length ? await sql(`
-        SELECT s.id, s.kind, s.name, s.operator, list(p.id) AS held,
-            ST_AsGeoJSON(ST_Normalize(s.geometry)) AS outline,
-            ST_AsGeoJSON(ST_PointOnSurface(s.geometry)) AS middle,
-            ST_Area(s.geometry) AS area
-        FROM site_view s JOIN (VALUES ${points.map(({ properties: { id },
-            geometry: { coordinates: [x, y] } }) =>
-            `(${str(id)}, ${+x}, ${+y})`)}) AS p(id, x, y)
-        ON ST_DWithin(s.geometry, ST_Point(p.x, p.y), ${REACH})
-        GROUP BY ALL`)
+        WITH h AS (SELECT s.id, list(p.id) AS held
+            FROM site_view s JOIN (VALUES ${points.map(({ properties: { id },
+                geometry: { coordinates: [x, y] } }) =>
+                `(${str(id)}, ${+x}, ${+y})`)}) AS p(id, x, y)
+            ON ST_DWithin(s.geometry, ST_Point(p.x, p.y), ${REACH})
+            GROUP BY s.id)
+        SELECT id, kind, name, operator, held, ST_Area(geometry) AS area,
+            ST_AsGeoJSON(ST_Normalize(geometry)) AS outline,
+            ST_AsGeoJSON((SELECT arg_max(v.geom, ST_X(v.geom) + ST_Y(v.geom))
+                FROM (SELECT unnest(ST_Dump(ST_Points(geometry))) AS v)))
+                AS corner
+        FROM site_view JOIN h USING (id)`)
         .catch(() => []) : [];   // no site_view yet: nothing to draw
     // the same outlines again are left as they are: re-setting them flashed
     // the lines at every key toggle and every live read
     const k = rows.map(r => r.id + r.held).sort().join();
     if (e !== epoch || k === drawn) return;
-    await Promise.all(rows.map(r =>
-        ensureLabel(map, `site-${r.id}`, siteLabel(r))));
+    await Promise.all(rows.map(r => ensureLabel(map, `site-${r.id}`,
+        { ...siteLabel(r), weight: 300 })));
     if (e !== epoch) return;
     drawn = k;
     holds = new Map(rows.map(r => [String(r.id), r.held.map(String)]));
+    show(lit);   // a held facility's detections, anew
     map.getSource('sites')?.setData({ type: 'FeatureCollection',
-        features: rows.flatMap(({ outline, middle, held: _, ...p }) => [
-            outline, middle].map(g => ({ type: 'Feature', properties: p,
+        features: rows.flatMap(({ outline, corner, held: _, ...p }) =>
+            [outline, corner].map(g => ({ type: 'Feature', properties: p,
                 geometry: JSON.parse(g) }))) });
 }
 
 // ── emphasis ──
 
 // a hovered outline, or a detection inside one, lights that facility and
-// every detection it holds and fades the rest; an open flaring card greys
-// the flaring markings, so its imagery shows through. one writer of the
-// opacities, so neither undoes the other
+// every detection it holds, shows its label and fades the rest, and a
+// click on an outline holds it lit until a click elsewhere or on it again;
+// an open flaring card greys the flaring markings, so its imagery shows
+// through. one writer of the opacities, so neither undoes the other
 const FADE = 0.35;
 const GREYED = ['live', 's3', 'vnf', 'live-tag', 's3-tag', 'vnf-tag'];
 const MARKINGS = [...GREYED, 'plumes'];
 const OPACITY = { 'sites': 'line-opacity', 'sites-inset': 'line-opacity',
-    'sites-label': 'icon-opacity',
     ...Object.fromEntries(MARKINGS.map(id => [id, 'icon-opacity'])) };
-let map = null, grey = false, lit = null;
+let map = null, grey = false, lit = null, pinned = null;
 function shade() {
     if (!map) return;
     const on = ids => ['in', ['get', 'id'], ['literal', ids]];
@@ -147,27 +155,48 @@ function shade() {
         if (map.getLayer(id)) map.setPaintProperty(id, prop,
             ids ? ['case', on(ids), 1, FADE] : base);
     }
+    if (map.getLayer('sites-label')) map.setFilter('sites-label',
+        ['all', isPoint, on(lit?.sites ?? [])]);
 }
 export const greyMarkings = g => { grey = g; shade(); };
 
-// the facility under the pointer, or the facilities holding the detection
-// under it; the same again repaints nothing
-function hovered(e) {
-    const layers = [...MARKINGS, 'sites-hit'].filter(l => map.getLayer(l));
-    const f = map.getZoom() >= SITE_ZOOM && map.queryRenderedFeatures(
-        e.point, { layers })[0];
-    const id = f && String(f.properties.id);
-    const sites = !f ? [] : f.layer.id === 'sites-hit' ? [id]
-        : [...holds].filter(([, h]) => h.includes(id)).map(([s]) => s);
-    const next = sites.length ? { sites,
-        held: sites.flatMap(s => holds.get(s) ?? []) } : null;
+// the topmost of the markings and the outlines under the point
+const under = ({ point }) => map.getZoom() >= SITE_ZOOM && map
+    .queryRenderedFeatures(point, { layers: [...MARKINGS, 'sites-hit']
+        .filter(l => map.getLayer(l)) })[0];
+const light = sites => sites.length ? { sites,
+    held: sites.flatMap(s => holds.get(s) ?? []) } : null;
+// the same again repaints nothing; a held facility stays lit
+function show(next) {
+    next = pinned ? light([pinned]) : next;
     if (JSON.stringify(next) === JSON.stringify(lit)) return;
     lit = next;
     shade();
 }
+// the facility under the pointer, or the facilities holding the detection
+// under it; anything a click selects takes the pointer
+function hovered(e) {
+    const f = under(e), id = f && String(f.properties.id);
+    map.getCanvas().style.cursor = f ? 'pointer' : '';
+    show(light(!f ? [] : f.layer.id === 'sites-hit' ? [id]
+        : [...holds].filter(([, h]) => h.includes(id)).map(([s]) => s)));
+}
+// a click on an outline holds it and dims the imagery around it, or lets
+// it go if it was held; a marking opens its card and leaves the hold as it
+// is; anywhere else lets go
+function clicked(e) {
+    const f = under(e);
+    if (f && f.layer.id !== 'sites-hit') return;
+    const id = f && String(f.properties.id);
+    const was = pinned;
+    pinned = id && id !== pinned ? id : null;
+    // the imagery dims around it, as around a card's site
+    if (pinned || was) dimSite(pinned);
+    show(light(id ? [id] : []));
+}
 export function initEmphasis(m) {
     map = m;
     map.on('mousemove', hovered);
-    map.getCanvas().addEventListener('mouseleave', () =>
-        lit && (lit = null, shade()));
+    map.on('click', clicked);
+    map.getCanvas().addEventListener('mouseleave', () => show(null));
 }
