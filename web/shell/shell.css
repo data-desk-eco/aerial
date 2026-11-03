@@ -176,7 +176,10 @@ d='M0 0 8 8M8 0 0 8' stroke='%23000' stroke-width='1.4'/%3E%3C/svg%3E")
     cursor: pointer;
     user-select: none;
 }
-.fx-table td { padding: var(--dd-control-pad-y) var(--dd-button-pad-x); }
+/* a long value (an operator's full name) ends in an ellipsis, whole in
+   its tooltip, so no column takes the drawer */
+.fx-table td { padding: var(--dd-control-pad-y) var(--dd-button-pad-x);
+    max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
 /* the outer columns in to the head's and foot's s padding, so the tabs, the
    rows and the count share a left edge */
 .fx-table :is(th, td):first-child { padding-left: var(--dd-padding-s); }

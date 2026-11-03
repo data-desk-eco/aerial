@@ -371,17 +371,19 @@ mount({
     key: keySections,
 
     // a tab per family, each the rows its layer is drawing. an attribution
-    // is listed while its plume is: the plume carries the window and the
-    // filters, so the row is filtered as the plume and never as itself
+    // is listed while its plume is, under the plume's date: the plume
+    // carries the window and the filters, so the row is filtered as the
+    // plume and never as itself
     table: [
         {
             label: 'Attributions', filter: false,
             rows: ({ sources, preds = [] }) => loadAttributions().then(m =>
                 sources.plumes.features.map(f => f.properties)
                     .filter(p => preds.every(f => f(p)))
-                    .flatMap(p => m.get(canon(p.id)) ?? [])),
-            cols: ['id', 'source_label', 'source_kind', 'operator',
-                   'confidence', 'lat', 'lon'],
+                    .flatMap(p => (a => a ? [{ ...a, date: p.date }] : [])(
+                        m.get(canon(p.id))))),
+            cols: ['date', 'id', 'source_label', 'operator', 'confidence',
+                   'lat', 'lon'],
             open: r => resolvePlume(r.id),
         },
         { label: 'Plumes', rows: props('plumes'),

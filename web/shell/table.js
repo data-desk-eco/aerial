@@ -83,7 +83,8 @@ export function initTable(ctx) {
             + `${sortCol === c ? (sortDir > 0 ? ' ↑' : ' ↓') : ''}</th>`;
         const tr = (r, i) => `<tr data-i="${i}"`
             + `${r === selected ? ' class="selected"' : ''}>` + cols.map(c =>
-                `<td>${r[c] == null ? '' : escapeHtml(fmt(r[c]))}</td>`)
+                (v => `<td title="${v}">${v}</td>`)(r[c] == null ? ''
+                    : escapeHtml(fmt(r[c]))))
                 .join('') + '</tr>';
         el('.fx-table').innerHTML = rows.length
             ? `<thead><tr>${cols.map(th).join('')}</tr></thead>`
