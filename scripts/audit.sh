@@ -18,7 +18,7 @@ curl -sfI "localhost:$PORT/" >/dev/null \
         { map: aerial.map, allow: aerial.config.audit });
     await wait(3000);
     const found = run();
-    document.getElementById('enter-btn').click();
+    document.querySelector('#intro [data-close]').click();
     await wait(15000);
     const f = aerial.map.queryRenderedFeatures(
         { layers: ['live', 'vnf'] })[0];

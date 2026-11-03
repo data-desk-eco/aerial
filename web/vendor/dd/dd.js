@@ -70,6 +70,22 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g,
   c => `&#${c.charCodeAt(0)};`)
 const fire = (el, type) => el.dispatchEvent(new Event(type,
   { bubbles: true, composed: true }))
+// contracting and expanding move the box's height, 200 ms: the content
+// stays until a contraction ends, and `toggle` fires once the box is still,
+// so a page that measures it measures where it came to rest. a toggle while
+// one is moving is ignored; reduced motion snaps
+const MOTION = matchMedia('(prefers-reduced-motion: reduce)')
+const fold = (el, box) => {
+  if (box.getAnimations().length) return
+  const h0 = box.offsetHeight, shut = !el.hasAttribute('collapsed')
+  el.toggleAttribute('collapsed')
+  const h1 = box.offsetHeight
+  const done = () => (el.toggleAttribute('collapsed', shut), fire(el, 'toggle'))
+  if (MOTION.matches || h0 === h1) return done()
+  if (shut) el.removeAttribute('collapsed')
+  box.animate({ height: [`${h0}px`, `${h1}px`], overflow: ['hidden', 'hidden'] },
+    { duration: 200, easing: 'cubic-bezier(.2, 0, 0, 1)' }).finished.then(done)
+}
 
 // ── holding device (pdf:79, 83-86) ──
 // <dd-panel pad=l|s gap=l|s collapsible collapsed info intro>
@@ -121,11 +137,7 @@ name="title"></slot><button class="info" aria-label="About">${INFO}
   }
   r.addEventListener('slotchange', show)
   show()
-  const toggle = () => {
-    if (!el.hasAttribute('collapsible')) return
-    el.toggleAttribute('collapsed')
-    fire(el, 'toggle')
-  }
+  const toggle = () => el.hasAttribute('collapsible') && fold(el, $('.box'))
   $('.chev').onclick = toggle
   // a heading click toggles once it is plainly not the start of a double or
   // triple click (which select), nor the end of a drag that selected
@@ -257,10 +269,7 @@ flex-direction:column;gap:${S.gapS}}
     g.toggleAttribute('collapsed', el.hasAttribute('collapsed'))
   })
   r.addEventListener('slotchange', el.render)
-  el.addEventListener('dd-key-label', () => {
-    el.toggleAttribute('collapsed')
-    fire(el, 'toggle')
-  })
+  el.addEventListener('dd-key-label', () => fold(el, r.querySelector('.box')))
 }, ['collapsed'])
 
 define('dd-key-group', `.label{position:relative;cursor:pointer;

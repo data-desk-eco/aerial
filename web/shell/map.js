@@ -18,22 +18,27 @@ export function ensureMark(map, id) {
     if (name) mark(map, name, color).catch(() => {});
 }
 
-// a label as an image `tag-<text>`, set in the page's own inter as the
-// shell's 11px text is: gl text takes only sdf glyphs, and the basemap
-// serves no inter. drawn at the screen's pixel ratio, so it is as sharp
-export async function ensureTag(map, text, color) {
-    const id = `tag-${text}`, r = devicePixelRatio || 1;
-    const font = '300 11px Inter';
-    await document.fonts.load(font, text).catch(() => {});
+// a dd-label as an image `id`, its heading underlined over its text (pdf:73),
+// set in the page's own inter as the shell's 11px text is: gl text takes
+// only sdf glyphs, and the basemap serves no inter. drawn at the screen's
+// pixel ratio, so it is as sharp
+export async function ensureLabel(map, id, { heading = '', text = '',
+        color = '#fff', weight = 370 }) {
+    const r = devicePixelRatio || 1, font = `${weight} 11px Inter`, lh = 13.3;
+    await document.fonts.load(font, heading + text).catch(() => {});
+    if (map.hasImage(id)) return;
     const g = document.createElement('canvas').getContext('2d');
     g.font = font;
-    const w = Math.ceil(g.measureText(text).width * r), h = Math.ceil(14 * r);
+    const at = s => g.measureText(s).width, u = heading ? lh + 2 : 0;
+    const w = Math.ceil(Math.max(at(heading), at(text)) * r) || 1,
+        h = Math.ceil((u + (text ? lh : 0) + 1) * r);
     Object.assign(g.canvas, { width: w, height: h });
     g.scale(r, r);
     Object.assign(g, { font, fillStyle: color, textBaseline: 'top' });
-    g.fillText(text, 0, 1);
-    if (!map.hasImage(id))
-        map.addImage(id, g.getImageData(0, 0, w, h), { pixelRatio: r });
+    g.fillText(heading, 0, 1);
+    if (heading) g.fillRect(0, lh + 1, at(heading), 1);
+    g.fillText(text, 0, u + 1);
+    map.addImage(id, g.getImageData(0, 0, w, h), { pixelRatio: r });
 }
 
 // the dd satellite underlay: esri, graded to the guidelines' gradient map

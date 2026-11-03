@@ -20,6 +20,17 @@ export default {
     cfg: MODE.vnf,
     instrument: 'VNF',
     passLabel: 'Nights read',
+    about: { title: 'VIIRS Nightfire', html: `
+        <p>A flaring site from the Earth Observation Group's VIIRS Nightfire
+            catalogue, built from the VIIRS instrument's night-time
+            detections.</p>
+        <p>Radiant heat is in megawatts. Flared volume, in million cubic
+            metres a day, is estimated from it with JZ-RH (Zhizhin et al.
+            2025). Persistence is the share of cloud-free nights with a
+            detection in the ticked quarters; where too few nights were
+            seen, no rate is given.</p>
+        <p>A selected night draws a halo at the site, sized and coloured by
+            its radiant heat.</p>` },
     title: p => siteTitle(p, `Hotspot #${p.id}`),
     fetch: vnfSeries,
     select: footprint,

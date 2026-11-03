@@ -106,7 +106,7 @@ export const RATE_LABEL = {
     'text-anchor': 'bottom-left', 'text-offset': [0.7, -0.7],
 };
 // a hotspot's instrument, an inter label up and right of it from z10
-// (shell/map.js ensureTag), never dropped: one marking alone has no key to
+// (shell/map.js ensureLabel), never dropped: one marking alone has no key to
 // tell s2's scale from vnf's. a layer of its own over the family's source,
 // as a symbol takes one icon
 export const TAGS = { live: 'S2', s3: 'S3', vnf: 'VNF' };

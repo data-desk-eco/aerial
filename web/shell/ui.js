@@ -52,14 +52,15 @@ export function buildShell(config) {
 
     ${logo}
 
-    ${config.about ? `
-    <div class="fx-modal" id="about-modal">
-        <dd-panel intro class="fx-modal-content">
+    <div class="fx-modal hidden" id="modal">${config.about ? `
+        <dd-panel intro class="fx-modal-content" id="intro">
             <span slot="title">${title}${badge}</span>
             ${config.about}
-            <dd-btn id="enter-btn">Enter</dd-btn>
-        </dd-panel>
-    </div>` : ''}`);
+            <dd-btn data-close>Enter</dd-btn>
+        </dd-panel>` : ''}
+        <dd-panel intro class="fx-modal-content" id="about-card"></dd-panel>
+    </div>`);
+    wireModal();
     if (config.about) wireIntro(config.title || '');
     evenTops();
 }
@@ -93,20 +94,64 @@ function evenTops() {
     key.addEventListener('fx-rendered', even);
 }
 
+// one modal at a time, a panel of #modal: its overlay, escape or a
+// [data-close] dismisses it. it opens out of the ⓘ on the panel that raised
+// it and shuts back into it, so the reader sees what brings it back
+const MOTION = matchMedia('(prefers-reduced-motion: reduce)');
+let from = null, onShut = null;
+function fly(m, shut) {
+    const p = [...m.children].find(c => !c.hidden),
+        i = from?.shadowRoot?.querySelector('.info');
+    if (!p || !i?.offsetWidth || MOTION.matches) return Promise.resolve();
+    const a = p.getBoundingClientRect(), b = i.getBoundingClientRect();
+    const to = `translate(${b.x + b.width / 2 - a.x - a.width / 2}px, ${
+        b.y + b.height / 2 - a.y - a.height / 2}px) scale(${
+        b.width / a.width})`;
+    return p.animate([{}, { transform: to, opacity: 0 }], { duration: 350,
+        easing: 'cubic-bezier(.4, 0, .2, 1)', direction: shut ? 'normal'
+        : 'reverse' }).finished.catch(() => {});
+}
+// `panel` the one to show, `origin` the panel whose ⓘ it flies out of and
+// back to, `shut` called when it is dismissed; `still` opens it in place
+export function openModal(panel, origin, { shut, still } = {}) {
+    const m = document.getElementById('modal');
+    for (const c of m.children) c.hidden = c !== panel;
+    [from, onShut] = [origin, shut];
+    m.classList.remove('hidden');
+    if (!still) fly(m);
+}
+async function closeModal() {
+    const m = document.getElementById('modal');
+    if (m.classList.contains('hidden') || m.hasAttribute('leaving')) return;
+    // the panels come back as it leaves, so it has an ⓘ to fly to
+    m.setAttribute('leaving', '');
+    onShut?.();
+    await fly(m, true);
+    m.classList.add('hidden');
+    m.removeAttribute('leaving');
+}
+function wireModal() {
+    const m = document.getElementById('modal');
+    m.addEventListener('click', e => (e.target === m
+        || e.target.closest('[data-close]')) && closeModal());
+    // before the card's own escape, which would shut it too
+    addEventListener('keydown', e => {
+        if (e.key !== 'Escape' || m.classList.contains('hidden')) return;
+        e.stopImmediatePropagation();
+        closeModal();
+    }, true);
+}
+
 // enter or the overlay dismisses it, remembered per title (one origin serves
 // several maps); ⓘ reopens it (pdf:82)
 function wireIntro(title) {
-    const modal = document.getElementById('about-modal');
-    const seen = `fx-entered:${title}`;
-    const dismiss = () => {
-        modal.classList.add('hidden');
-        localStorage.setItem(seen, '1');
-    };
-    modal.addEventListener('click', e => e.target === modal && dismiss());
-    document.getElementById('enter-btn').addEventListener('click', dismiss);
-    document.getElementById('main-panel')
-        .addEventListener('info', () => modal.classList.remove('hidden'));
-    if (localStorage.getItem(seen)) modal.classList.add('hidden');
+    const intro = document.getElementById('intro'),
+        main = document.getElementById('main-panel'),
+        seen = `fx-entered:${title}`;
+    const open = still => openModal(intro, main,
+        { still, shut: () => localStorage.setItem(seen, '1') });
+    main.addEventListener('info', () => open());
+    if (!localStorage.getItem(seen)) open(true);
 }
 
 // ── the key ──

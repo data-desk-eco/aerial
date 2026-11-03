@@ -19,6 +19,16 @@ export default {
     cfg: MODE.s3,
     instrument: 'S3',
     passLabel: 'Nights read',
+    about: { title: 'Sentinel-3 hotspot', html: `
+        <p>A site where burnoff found heat in Sentinel-3's night-time
+            infrared (SLSTR) on at least two nights. Sentinel-3 passes at
+            about 22:00 local time, in 500 m pixels.</p>
+        <p>Radiant heat is in megawatts, on the scale VIIRS Nightfire uses;
+            temperature is from a Planck fit. Persistence is the share of
+            clear nights with a detection in the ticked quarters.</p>
+        <p>A flare is tens of metres across, so a selected night draws one
+            pixel at the hotspot's corrected place, coloured by its radiant
+            heat.</p>` },
     title: p => ({ ...siteTitle(p, 'Unknown facility'),
                    note: p.loading && 'Loading…' }),
     fetch: p => (s3.deepen(p.id), Promise.resolve(s3.series(p.id))),

@@ -69,6 +69,18 @@ const provider = p => {
 export default {
     source: 'plumes',
     init: deps => { archive = deps.archive; },
+    about: { title: 'Methane plume', html: `
+        <p>A methane plume as its provider published it: UN IMEO, Carbon
+            Mapper, SRON or Data Desk. Rate is the provider's estimate in
+            tonnes of methane an hour, with its uncertainty where given; a
+            plume with no rate is grey on the map. Wind is the provider's
+            own, at the plume.</p>
+        <p>The map draws the plume's outline, the probability surface where
+            the provider gives one, and the infrastructure around it as
+            triangles, the attributed source a square.</p>
+        <p>Analysis is an attribution to a nearby source by research
+            agents. It is experimental, and it requires further
+            research.</p>` },
     title: p => ({ text: p.id || '—' }),
     stats: p => `
             ${row('Source', provider(p))}

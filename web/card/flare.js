@@ -53,6 +53,17 @@ export default {
     cfg: MODE.s2,
     instrument: 'S2',
     passLabel: 'Passes',
+    about: { title: 'Sentinel-2 hotspot', html: `
+        <p>A site where burnoff's detector found heat in Sentinel-2's
+            shortwave infrared on at least two dates. Sentinel-2 passes every
+            two to five days, by day, in 20 m pixels.</p>
+        <p>Intensity is the B12 reflectance of the brightest pixel.
+            Persistence is the share of clear passes (under 60% cloud) with a
+            detection in the ticked quarters, given from 10 clear passes.
+            A site lit only in its hemisphere's summer is not drawn: roofs
+            and solar panels in a high sun can look like a fire.</p>
+        <p>Each date lists what the detector found. Select one to draw its
+            pixels on the map, or open the scene.</p>` },
     title: p => ({ ...siteTitle(p, 'Unknown facility'),
                    note: p.loading && 'Loading…' }),
     fetch: p => (s2.deepen(p.id), Promise.resolve(s2.series(p.id))),

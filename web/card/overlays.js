@@ -7,19 +7,13 @@ import { sql } from '../shell/data.js';
 import { degLat, degLon } from '../shell/util.js';
 import { rampRGB, scaleT } from '../flaring/render.js';
 import { RAMP, DD } from '../layers.js';
+import { greyMarkings } from '../sites.js';
 
 const FOOTPRINT = 'detection-footprint';   // the layer id and its source
 const PIXELS = 'detection-pixels';         // the source, and its layers' stem
 const UNDER = 'live';   // the lowest flaring layer, which overlays sit under
 let map = null;
 export const initOverlays = m => { map = m; };
-
-// every flaring layer: imagery under one is imagery under the others
-export function greyCircles(grey) {
-    for (const id of ['live', 's3', 'vnf', 'live-tag', 's3-tag', 'vnf-tag'])
-        if (map.getLayer(id))
-            map.setPaintProperty(id, 'icon-opacity', grey ? 0.35 : 1);
-}
 
 function clearFootprint() {
     for (const l of [FOOTPRINT, `${PIXELS}-fill`, `${PIXELS}-line`])
@@ -31,7 +25,7 @@ function clearFootprint() {
 export function clearOverlays() {
     clearFootprint();
     dim(false);
-    greyCircles(false);
+    greyMarkings(false);
 }
 
 // a radial gradient, in under UNDER so both families' markings stay
@@ -60,7 +54,7 @@ export function heatFootprint({ lon, lat, val, radiusM, cfg }) {
                       [lon + dLon, lat - dLat], [lon - dLon, lat - dLat]] });
     map.addLayer({ id: FOOTPRINT, type: 'raster', source: FOOTPRINT,
         paint: { 'raster-opacity': 1 } }, UNDER);
-    greyCircles(true);
+    greyMarkings(true);
 }
 
 // a live detection's own pixels, drawn as the plume mask draws a plume: each
@@ -95,7 +89,7 @@ export function pixelFootprint({ px }, cfg) {
     map.addLayer({ id: `${PIXELS}-line`, type: 'line', source: PIXELS,
         filter: ['!', ['has', 'v']], paint: { 'line-color': DD.white,
             'line-width': 1, 'line-opacity': 0.8 } }, UNDER);
-    greyCircles(true);
+    greyMarkings(true);
 }
 
 // the imagery darkened while a card is open, bar the outline of the site the

@@ -12,12 +12,14 @@
 //   title: p => ({text, note}), never a link: the heading collapses the card;
 //                               a note follows the text in grey
 //   stats: p => rows html,      under the heading rule, after the coordinates
+//   about: p => ({title, html}), what the card shows, behind its ⓘ
 //   html: p => body html,
 //   onShow: (p, el) => {},
 //   onClose: () => {},
 // }
 
 import { escapeHtml, fmtCoords, readHashKeys, writeHashKeys } from './util.js';
+import { openModal } from './ui.js';
 
 let map, cfg, allFeatures;
 let overlapping = [], overlapIndex = 0;
@@ -46,10 +48,11 @@ function setHash(id, key) {
     if (id == null) map._hash?._updateHashUnthrottled();
 }
 
-// rendered features within 10px, nearest first: a click and a restored
-// permalink group overlaps the same way
+// rendered features whose markings are within 2px of the point, nearest
+// first: a click and a restored permalink group overlaps the same way, and
+// only markings that touch the point are ‹ n/N ›
 function featuresAt(point, { lng, lat }) {
-    const box = [[point.x - 10, point.y - 10], [point.x + 10, point.y + 10]];
+    const box = [[point.x - 2, point.y - 2], [point.x + 2, point.y + 2]];
     const layers = cfg.layers.filter(l => map.getLayer(l)
         && map.getLayoutProperty(l, 'visibility') !== 'none');
     const d = f => Math.hypot(f.geometry.coordinates[0] - lng,
@@ -112,6 +115,7 @@ function render(feature, fromPermalink) {
             }${nav}</span><div class="fx-stats">${cfg.stats?.(p) || ''
             }</div></div>
         ${cfg.html?.(p) || ''}`;
+    el.toggleAttribute('info', !!cfg.about?.(p));
     el.classList.add('visible');
     shown = { feature, n, i: overlapIndex };
     cfg.onShow?.(p, el);
@@ -198,6 +202,16 @@ export function initDetail(m, config, getFeatures) {
             overlapIndex = (overlapIndex + Number(nav.dataset.nav) + n) % n;
             showDetail(overlapping[overlapIndex]);
         }
+    });
+
+    // what the card shows, in the modal, flown out of its ⓘ
+    panel().addEventListener('info', () => {
+        const a = cfg.about(shown.feature.properties),
+            m = document.getElementById('about-card');
+        m.innerHTML = `<span slot="title">${escapeHtml(a.title)}</span>
+            <div class="fx-intro">${a.html}</div>
+            <dd-btn data-close>Close</dd-btn>`;
+        openModal(m, panel());
     });
 
     addEventListener('keydown', e => e.key === 'Escape' && closeDetail());

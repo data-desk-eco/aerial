@@ -163,13 +163,19 @@ hotspot's heat (a saturated one, which has none, at the top). kind `s3` draws, c
 stops (`layers.js` band, `key.js`).
 
 from z10 each hotspot carries its instrument, S2, S3 or VNF, up and right of
-it: an image set in the page's inter at 300 (`ensureTag`, `shell/map.js`)
+it: an image set in the page's inter at 300 (`ensureLabel`, `shell/map.js`)
 in a layer of its own over the family's source (`tagLayer`, `layers.js`),
 as gl text takes only the basemap's sdf glyphs, which are not inter. the
 intro names the three groups of facilities whose outlines the map holds, as
 text. the old burnoff map (`~/Tools/burnoff-map`) did
 this with l2a cogs, a stac search, every band of every 256 px block of every
 scene, and a crdt shared over webrtc.
+
+a card's ⓘ opens what its kind shows (each body's `about`) in the modal
+the intro uses (`openModal`, `shell/ui.js`), which opens out of the ⓘ that
+raised it and shuts back into it. a click groups only the markings within
+2 px of it as ‹ n/N ›. the panels' fold is the kernel's (200 ms, `toggle`
+fired once still).
 
 ## layout
 
@@ -367,4 +373,12 @@ exactly what a reader may rely on.
   `REACH` of it (`drawSites`, on `fx-filters`), and only the detections in
   the held box are asked: all 40k plumes made it 10 s against 5 ms, which
   held the engine and every lane behind it. it names no detection, so a
-  flare's facility is what the reader sees it inside.
+  flare's facility is what the reader sees it inside. a facility's label
+  is its name over its sector, kind and operator, each said once
+  (`siteLabel`): a hover below z13, and from z13 an image at a point inside
+  the outline (`sites-label`, `ST_PointOnSurface`), the largest first where
+  two would overlap. the same statement lists the detections each outline
+  holds, so a hovered outline, or a detection in one, lights that facility
+  and what it holds and fades the rest (`shade`, the one writer of the
+  markings' opacities, which an open flaring card's grey also goes
+  through).

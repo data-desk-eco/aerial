@@ -5,27 +5,28 @@
 
 import { mount } from './shell/app.js';
 import { drawWorldmap } from './vendor/dd/worldmap.js';
-import { viewportBbox, ensureMark, ensureTag }
+import { viewportBbox, ensureMark, ensureLabel }
     from './shell/map.js';
 import { canon, padBbox, formatDate, debounce }
     from './shell/util.js';
 import { initArchive, objects } from './shell/archive.js';
 import { prefetchData, fc, from } from './shell/data.js';
 import { MODE } from './flaring/render.js';
-import { DD, MARKS, PIN, AUDIT, RAMP, band, flareIcon, plumeIcon, TAGS,
+import { MARKS, PIN, AUDIT, RAMP, band, flareIcon, plumeIcon, TAGS,
     tagLayer } from './layers.js';
 import { keySections } from './key.js';
 import { readVNF, readSite, quarters, loadTerminals }
     from './flaring/flares.js';
-import { initCard, cardTitle, cardStats, cardHtml, onCardShow, onCardClose,
-    refreshCard, reselectCurrentFeature } from './card/index.js';
+import { initCard, cardTitle, cardStats, cardHtml, cardAbout, onCardShow,
+    onCardClose, refreshCard, reselectCurrentFeature } from './card/index.js';
 import { isPlume, label, readPlumes, availableQuartersPlumes,
     readPlume } from './methane/plumes.js';
 import { addCandidateLayers } from './methane/candidates.js';
 import { initProbabilityOverlay } from './methane/overlay.js';
 import { initMask } from './methane/mask.js';
 import { loadAttributions } from './methane/attribution.js';
-import { SITE_LAYERS, SITE_ZOOM, holdSites, drawSites } from './sites.js';
+import { SITE_LAYERS, SITE_ZOOM, holdSites, drawSites, initEmphasis }
+    from './sites.js';
 import { s2, s3 } from './flaring/live.js';
 
 // the bucket every layer reads. index.json names each table's objects, so no
@@ -303,8 +304,8 @@ mount({
         CTX = ctx;
         // before the layers, or maplibre logs the expression-only ids missing
         MARKS.forEach(id => ensureMark(ctx.map, id));
-        await Promise.all(Object.values(TAGS)
-            .map(t => ensureTag(ctx.map, t, DD.white)));
+        await Promise.all(Object.values(TAGS).map(t =>
+            ensureLabel(ctx.map, `tag-${t}`, { text: t, weight: 300 })));
         return {
             sites: empty,
             live: empty,
@@ -408,6 +409,7 @@ mount({
         title: cardTitle,
         stats: cardStats,
         html: cardHtml,
+        about: cardAbout,
         onShow: onCardShow,
         onClose: onCardClose,
     },
@@ -419,6 +421,7 @@ mount({
         drawWorldmap(document.getElementById('modal-worldmap'));
         initMask(ctx.map, ARCHIVE);
         addCandidateLayers(ctx.map);
+        initEmphasis(ctx.map);
 
         // no live read starts while the map moves, so its frames keep the
         // cores the workers would take

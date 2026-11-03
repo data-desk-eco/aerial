@@ -7,8 +7,8 @@
 import { showDetail, closeDetail } from '../shell/detail.js';
 import { dateInQuarters, formatDate } from '../shell/util.js';
 import { renderChart } from './chart.js';
-import { initOverlays, greyCircles, clearOverlays, dim }
-    from './overlays.js';
+import { initOverlays, clearOverlays, dim } from './overlays.js';
+import { greyMarkings } from '../sites.js';
 import flare from './flare.js';
 import vnf from './vnf.js';
 import s3 from './s3.js';
@@ -66,6 +66,7 @@ export const cardTitle = p => bodyOf(p).title(p);
 // the statistics sit under the heading rule (pdf:89)
 export const cardStats = p => (bodyOf(p).stats ?? seriesStats)(p, bodyOf(p));
 export const cardHtml = p => (bodyOf(p).html ?? seriesHtml)(p, bodyOf(p));
+export const cardAbout = p => bodyOf(p).about;
 
 export function onCardShow(p, el) {
     const b = bodyOf(p);
@@ -161,7 +162,7 @@ function seriesHtml(p, b) {
 }
 
 function seriesShow(p, el, b, keep) {
-    greyCircles(true);
+    greyMarkings(true);
     dim(...coords(p));
     // the series is read per site on open, then windowed to the ticked
     // quarters; a failed read lists nothing rather than loading for good

@@ -194,7 +194,7 @@ d='M0 0 8 8M8 0 0 8' stroke='%23000' stroke-width='1.4'/%3E%3C/svg%3E")
     flex-shrink: 0;
 }
 
-/* --- intro --- */
+/* --- modal: the intro and a card's about --- */
 
 /* no scrim: the guidelines give a panel a black ground, not the map a veil.
    the full-screen layer only catches the click that dismisses it */
@@ -235,7 +235,9 @@ d='M0 0 8 8M8 0 0 8' stroke='%23000' stroke-width='1.4'/%3E%3C/svg%3E")
     .fx-drawer, .fx-drawer-handle { display: none; }
 }
 
-/* while the intro is up it is the one holding device on screen */
-body:has(.fx-modal:not(.hidden)) :is(.fx-main, .fx-key, .fx-detail) {
+/* while a modal is up it is the one holding device on screen; they come
+   back as it leaves, so it has an ⓘ to shut into */
+body:has(.fx-modal:not(.hidden, [leaving])) :is(.fx-main, .fx-key,
+    .fx-detail) {
     visibility: hidden;
 }
