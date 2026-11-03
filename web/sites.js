@@ -10,7 +10,6 @@ import { lines } from './vendor/dd/dd.js';
 import { objects } from './shell/archive.js';
 import { sql, from } from './shell/data.js';
 import { ensureLabel } from './shell/map.js';
-import { dimSite } from './card/overlays.js';
 
 // each kind under its sector, the subtitle's first word
 const SECTORS = {
@@ -126,7 +125,7 @@ export async function drawSites(map, shown) {
     if (e !== epoch) return;
     drawn = k;
     holds = new Map(rows.map(r => [String(r.id), r.held.map(String)]));
-    show(lit);   // a held facility's detections, anew
+    show();   // a selected facility's detections, anew
     map.getSource('sites')?.setData({ type: 'FeatureCollection',
         features: rows.flatMap(({ outline, corner, held: _, ...p }) =>
             [outline, corner].map(g => ({ type: 'Feature', properties: p,
@@ -135,68 +134,111 @@ export async function drawSites(map, shown) {
 
 // ── emphasis ──
 
-// a hovered outline, or a detection inside one, lights that facility and
-// every detection it holds, shows its label and fades the rest, and a
-// click on an outline holds it lit until a click elsewhere or on it again;
-// an open flaring card greys the flaring markings, so its imagery shows
-// through. one writer of the opacities, so neither undoes the other
-const FADE = 0.35;
+// one selection, whatever made it: a card's detection or a click on an
+// outline. it lights the facilities holding it and every detection they
+// hold, shows their labels, keeps the other outlines faint and the other
+// markings faded, and dims the imagery outside those outlines. a hover
+// lights the same way while nothing is selected, and dims nothing. an open
+// flaring card also greys its facility's flaring markings, so its imagery
+// shows through. one writer of the opacities, so nothing undoes another
+const FADE = 0.35, FAINT = 0.12, GREY = 0.6;
 const GREYED = ['live', 's3', 'vnf', 'live-tag', 's3-tag', 'vnf-tag'];
 const MARKINGS = [...GREYED, 'plumes'];
 const OPACITY = { 'sites': 'line-opacity', 'sites-inset': 'line-opacity',
     ...Object.fromEntries(MARKINGS.map(id => [id, 'icon-opacity'])) };
-let map = null, grey = false, lit = null, pinned = null;
+let map = null, grey = false, lit = null;
+let hover = null, pinned = null, chosen = null, dimmed = '';
 function shade() {
     if (!map) return;
     const on = ids => ['in', ['get', 'id'], ['literal', ids]];
     for (const [id, prop] of Object.entries(OPACITY)) {
-        const base = grey && GREYED.includes(id) ? FADE : 1,
-            ids = lit && (id.startsWith('sites') ? lit.sites : lit.held);
+        const site = id.startsWith('sites'), ids = lit?.[site ? 'sites'
+            : 'held'], full = grey && GREYED.includes(id) ? GREY : 1;
         if (map.getLayer(id)) map.setPaintProperty(id, prop,
-            ids ? ['case', on(ids), 1, FADE] : base);
+            ids ? ['case', on(ids), full, site ? FAINT : FADE] : full);
     }
     if (map.getLayer('sites-label')) map.setFilter('sites-label',
         ['all', isPoint, on(lit?.sites ?? [])]);
 }
 export const greyMarkings = g => { grey = g; shade(); };
 
-// the topmost of the markings and the outlines under the point
-const under = ({ point }) => map.getZoom() >= SITE_ZOOM && map
-    .queryRenderedFeatures(point, { layers: [...MARKINGS, 'sites-hit']
-        .filter(l => map.getLayer(l)) })[0];
-const light = sites => sites.length ? { sites,
-    held: sites.flatMap(s => holds.get(s) ?? []) } : null;
-// the same again repaints nothing; a held facility stays lit
-function show(next) {
-    next = pinned ? light([pinned]) : next;
+// the facilities holding a detection, and what they and it light
+const sitesOf = id => [...holds].filter(([, h]) => h.includes(id))
+    .map(([s]) => s);
+const light = (sites, own = []) => sites.length || own.length ? { sites,
+    held: [...own, ...sites.flatMap(s => holds.get(s) ?? [])] } : null;
+// the selection, else the hover; the same again repaints nothing
+function show() {
+    if (!map) return;
+    const next = chosen ? light(sitesOf(chosen), [chosen])
+        : pinned ? light([pinned]) : hover;
+    const d = chosen || pinned ? next?.sites ?? [] : [];
+    if (String(d) !== dimmed) dimOutside(d), dimmed = String(d);
     if (JSON.stringify(next) === JSON.stringify(lit)) return;
     lit = next;
     shade();
 }
+// a card's detection, or null as it shuts
+export const choose = id => { chosen = id == null ? null : String(id);
+    show(); };
+
+// the topmost of the markings and the outlines under the point
+const under = ({ point }) => map.getZoom() >= SITE_ZOOM && map
+    .queryRenderedFeatures(point, { layers: [...MARKINGS, 'sites-hit']
+        .filter(l => map.getLayer(l)) })[0];
 // the facility under the pointer, or the facilities holding the detection
 // under it; anything a click selects takes the pointer
 function hovered(e) {
     const f = under(e), id = f && String(f.properties.id);
     map.getCanvas().style.cursor = f ? 'pointer' : '';
-    show(light(!f ? [] : f.layer.id === 'sites-hit' ? [id]
-        : [...holds].filter(([, h]) => h.includes(id)).map(([s]) => s)));
+    hover = light(!f ? [] : f.layer.id === 'sites-hit' ? [id] : sitesOf(id));
+    show();
 }
-// a click on an outline holds it and dims the imagery around it, or lets
-// it go if it was held; a marking opens its card and leaves the hold as it
-// is; anywhere else lets go
+// a click on an outline holds it, or lets it go if it was held; a marking
+// opens its card, which selects it, and leaves the hold as it is; anywhere
+// else lets go, as it shuts a card
 function clicked(e) {
     const f = under(e);
     if (f && f.layer.id !== 'sites-hit') return;
     const id = f && String(f.properties.id);
-    const was = pinned;
     pinned = id && id !== pinned ? id : null;
-    // the imagery dims around it, as around a card's site
-    if (pinned || was) dimSite(pinned);
-    show(light(id ? [id] : []));
+    show();
 }
 export function initEmphasis(m) {
     map = m;
     map.on('mousemove', hovered);
     map.on('click', clicked);
-    map.getCanvas().addEventListener('mouseleave', () => show(null));
+    map.getCanvas().addEventListener('mouseleave', () => (hover = null,
+        show()));
+}
+
+// the imagery darkened outside the selected outlines: the world less them,
+// in sql. none, nothing is darkened. a new outline replaces the old in
+// place: taking the layer down while the statement ran flashed the map. a
+// hotspot card dims around its facility, not each date's own point, which
+// lit some dates and darkened others; and a failed statement (the outlines
+// are re-read after a pan) leaves the dim as it was
+const DIM = 'dim';
+let dimEpoch = 0, dimG = null;
+async function dimOutside(ids) {
+    const e = ++dimEpoch;
+    const [{ g } = {}] = !ids.length ? [] : await sql(`SELECT
+        ST_AsGeoJSON(ST_Difference(ST_MakeEnvelope(-180, -85, 180, 85),
+            ST_Union_Agg(geometry))) AS g
+        FROM site_view WHERE id IN (${ids.map(str)})
+        HAVING count(*) > 0`).catch(() => [{ g: dimG }]);
+    if (e !== dimEpoch || g === dimG) return;
+    dimG = g;
+    if (!g) {
+        if (map.getLayer(DIM)) map.removeLayer(DIM);
+        if (map.getSource(DIM)) map.removeSource(DIM);
+    } else if (map.getSource(DIM)) map.getSource(DIM).setData(JSON.parse(g));
+    else {
+        map.addSource(DIM, { type: 'geojson', data: JSON.parse(g) });
+        map.addLayer({ id: DIM, type: 'fill', source: DIM, minzoom: 7.5,
+            paint: { 'fill-color': '#000', 'fill-opacity': 0.65 } },
+            ['sites-hit', 'dd-plume-probability', 'plume-mask-image',
+             'plume-mask-fill', 'detection-footprint', 'plumes']
+                .find(l => map.getLayer(l)));
+    }
 }

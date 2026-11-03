@@ -3,11 +3,10 @@
 // a scene, so the halo is what a selected date draws, coloured and sized by
 // intensity on the family's own scale.
 
-import { sql } from '../shell/data.js';
 import { degLat, degLon } from '../shell/util.js';
 import { rampRGB, scaleT } from '../flaring/render.js';
 import { RAMP, DD } from '../layers.js';
-import { greyMarkings } from '../sites.js';
+import { greyMarkings, choose } from '../sites.js';
 
 const FOOTPRINT = 'detection-footprint';   // the layer id and its source
 const PIXELS = 'detection-pixels';         // the source, and its layers' stem
@@ -24,7 +23,7 @@ function clearFootprint() {
 
 export function clearOverlays() {
     clearFootprint();
-    dim(false);
+    choose(null);
     greyMarkings(false);
 }
 
@@ -90,41 +89,4 @@ export function pixelFootprint({ px }, cfg) {
         filter: ['!', ['has', 'v']], paint: { 'line-color': DD.white,
             'line-width': 1, 'line-opacity': 0.8 } }, UNDER);
     greyMarkings(true);
-}
-
-// the imagery darkened while a card is open, bar the outline of the site the
-// detection sits in, which stays lit: the world less that site, in sql. no
-// site, no row: nothing is darkened. a new outline replaces the old in
-// place: taking the layer down while the statement ran flashed the map. a
-// hotspot card dims around the site, not each date's own point, which near
-// REACH lit some dates and darkened others; and a failed statement (the
-// outlines are re-read after a pan) leaves the dim as it was
-// a selected facility (sites.js) dims around itself the same way
-const DIM = 'dim', REACH = 0.005;
-export const dim = (lon, lat) => dimOutside(lon !== false
-    && `ST_DWithin(geometry, ST_Point(${+lon}, ${+lat}), ${REACH})`);
-export const dimSite = id => dimOutside(id != null
-    && `id = '${String(id).replace(/'/g, "''")}'`);
-let dimEpoch = 0, dimmed = null;
-async function dimOutside(where) {
-    const e = ++dimEpoch;
-    const [{ g } = {}] = !where ? [] : await sql(`SELECT
-        ST_AsGeoJSON(ST_Difference(ST_MakeEnvelope(-180, -85, 180, 85),
-            ST_Union_Agg(geometry))) AS g
-        FROM site_view WHERE ${where}
-        HAVING count(*) > 0`).catch(() => [{ g: dimmed }]);
-    if (e !== dimEpoch || g === dimmed) return;
-    dimmed = g;
-    if (!g) {
-        if (map.getLayer(DIM)) map.removeLayer(DIM);
-        if (map.getSource(DIM)) map.removeSource(DIM);
-    } else if (map.getSource(DIM)) map.getSource(DIM).setData(JSON.parse(g));
-    else {
-        map.addSource(DIM, { type: 'geojson', data: JSON.parse(g) });
-        map.addLayer({ id: DIM, type: 'fill', source: DIM, minzoom: 7.5,
-            paint: { 'fill-color': '#000', 'fill-opacity': 0.65 } },
-            ['sites-hit', 'dd-plume-probability', 'plume-mask-image',
-             'plume-mask-fill', FOOTPRINT, 'plumes']
-                .find(l => map.getLayer(l)));
-    }
 }

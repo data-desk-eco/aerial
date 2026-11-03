@@ -377,10 +377,13 @@ exactly what a reader may rely on.
   is its name over its sector, kind and operator, each said once
   (`siteLabel`), set at 300 up and right of its vertex furthest up and
   right (`sites-label`), and drawn only while the facility is lit. the
-  same statement lists the detections each outline holds, so a hovered
-  outline, or a detection in one, lights that facility and what it holds,
-  shows its label and fades the rest, and takes the pointer; a click on an
-  outline holds it lit and dims the imagery around it, as a card does
-  (`dimSite`, `card/overlays.js`), until a click elsewhere or on it again
-  (the card to come will open there). `shade` is the one writer of the markings' opacities and the
-  label's filter, which an open flaring card's grey also goes through.
+  same statement lists the detections each outline holds, for one
+  selection whatever made it (`show`, `sites.js`): a card's detection
+  (`choose`) or a click on an outline, held until a click elsewhere or on
+  it again (the card to come will open there). it lights the facilities
+  holding it and what they hold, shows their labels, leaves the other
+  outlines faint and the other markings faded, and dims the imagery
+  outside those outlines (`dimOutside`). a hover lights the same way while
+  nothing is selected, dims nothing, and takes the pointer. `shade` is the
+  one writer of the markings' opacities and the label's filter, which an
+  open flaring card's grey also goes through.

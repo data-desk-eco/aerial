@@ -32,8 +32,11 @@ const OPS = {
     register: async (name, bytes) =>
         void await (await db).registerFileBuffer(name, bytes),
     sql: async (statement, lane) => {
-        const result = await (await connect(lane)).query(statement);
-        return rows(result, result.schema.fields);
+        const t0 = performance.now(), c = await connect(lane);
+        const result = await c.query(statement), t1 = performance.now();
+        const r = rows(result, result.schema.fields);
+        console.log(`[prof] ${lane ?? "map"} ${Math.round(t0)} q=${Math.round(t1 - t0)} rows=${Math.round(performance.now() - t1)} n=${r.length} ${statement.replace(/\s+/g, " ").slice(0, 90)}`);
+        return r;
     },
 };
 onmessage = async ({ data: [seq, op, ...args] }) => {
