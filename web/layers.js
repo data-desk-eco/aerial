@@ -49,14 +49,15 @@ export const plumeIcon = ['case',
     stepIcon('diamond', ['get', 'rate_kg_h'], PLUME_STOPS, RAMP)];
 
 // a feature's band on its own family's stops, 0 → 2, so one number means the
-// same across the families a cluster mixes; no value is the foot, as in
-// flareIcon. MODE's stops are passed in, as render.js imports this module
+// same across the families the far surface mixes; no value is the foot, as
+// in flareIcon. MODE's stops are passed in, as render.js imports this module
 export const band = ({ s2, vnf, s3 }) => {
-    const at = (prop, [, mid, hi]) =>
-        ['step', ['coalesce', ['get', prop], -1], 0, mid, 1, hi, 2];
-    return ['match', ['get', 'kind'], 'live', at(s2.prop, s2.stops),
-        'vnf', at(vnf.prop, vnf.stops), 's3', at(s3.prop, s3.stops),
-        'plume', at('rate_kg_h', [0, ...PLUME_STOPS]), 0];
+    const of = { live: s2, vnf, s3,
+        plume: { prop: 'rate_kg_h', stops: [0, ...PLUME_STOPS] } };
+    return p => {
+        const c = of[p.kind], v = c && p[c.prop], [, mid, hi] = c?.stops ?? [];
+        return (v >= mid) + (v >= hi);
+    };
 };
 
 // [label in t/hr, lo kg/h, hi kg/h, colour], off the same stops

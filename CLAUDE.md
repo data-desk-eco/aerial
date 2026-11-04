@@ -53,10 +53,12 @@ read per site on card open. every eog detections row is a positive detection;
 the looks that found nothing are `eog/observations`, which aerial does not read
 (see invariants). the S2 methodology is s2-flares, run in the etl; aerial is a
 viewer. a pan reads nothing: every family is drawn whole and maplibre
-draws what is in view. below z5 all three are one clustered source, every
-point a cluster (60k markers placed each frame made the globe crawl), drawn
-as a hairline ring on a log of its count, coloured by the mean band
-(`band`, `layers.js`) of what it holds; from z5
+draws what is in view. below z5 all three are one surface, `heat` (60k
+markers placed each frame made the globe crawl): one statement grids every
+point the key passes into mercator cells per zoom, each lighting the 3×3
+around its own at the mean band (`band`, `layers.js`) of what lights it,
+drawn opaque on the ramp with a 1 px white outline, the edges only one cell
+has, as a plume mask is; from z5
 each family draws every point (S2 is 631 sites in 47 ms, VNF 21k in 0.4 s; per viewport, flares
 lagged and churned the card).
 
