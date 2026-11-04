@@ -109,13 +109,22 @@ function frame(s, hands, { videoWidth: vw, videoHeight: vh }) {
         g.fill();
     }
     const n = P.length, dt = now - s.t;
+    // two pinches pin the ground under them where they took hold: each
+    // frame closes the gap between that ground and the hands, a few steps,
+    // as zoom and bearing turn about the centre and the globe pans unevenly
+    if (n > 1 && n !== was.length) s.A = P.map(p => map.unproject(p));
     if (n && n === was.length && dt > 0) {
-        if (n > 1) map.jumpTo({
-            zoom: map.getZoom() + Math.log2(span(P) / span(was)),
-            bearing: map.getBearing()
-                - (turn(P) - turn(was)) * 180 / Math.PI });
-        const [x, y] = mid(P), [x0, y0] = mid(was), d = [x0 - x, y0 - y];
-        map.panBy(d, { duration: 0 });
+        const [x, y] = mid(P), [x0, y0] = mid(was), d = [x0 - x, y0 - y],
+            at = () => s.A.map(a => map.project(a)).map(p => [p.x, p.y]);
+        if (n > 1) for (let i = 0; i < 3; i++) {
+            const Q = at(), a = turn(P) - turn(Q);
+            map.jumpTo({ zoom: map.getZoom() + Math.log2(span(P) / span(Q)),
+                bearing: map.getBearing() - 180 / Math.PI
+                    * Math.atan2(Math.sin(a), Math.cos(a)) });
+            const [qx, qy] = mid(at());
+            map.panBy([qx - x, qy - y], { duration: 0 });
+        }
+        else map.panBy(d, { duration: 0 });
         s.v = s.v.map((v, i) => (v + d[i] / dt) / 2);
     } else s.v = n ? [0, 0] : s.v;
     if (!n && was.length === 1) spin(s);
