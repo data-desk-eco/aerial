@@ -1,17 +1,31 @@
 // hands: the camera's hands traced over the map, and the camera never shown.
 // `h` turns it on and off. each frame goes to hands.worker.js as a
 // VideoFrame, transferred, one in flight, and comes back as points; the
-// video element is never in the page. a pinch (thumb tip to index tip)
-// grabs the globe and drags it, two pinch, zoom and turn as two fingers do,
-// and a drag let go spins on and slows
+// video element is never in the page. a fist grabs the globe by the palm
+// and drags it, two fists zoom and turn as two fingers do, an open hand
+// lets go, and a drag let go or a fast sweep of an open hand spins it on.
+// the camera gives ~30 frames a second and jitters; the screen wants 60 or
+// more and none. each point goes through a one euro filter (Casiez et al.
+// 2012), steady when slow and quick when fast, and the hands are drawn and
+// move the map every screen frame, run on from the camera frame's capture
+// by the filter's speed, which also covers the time the worker took
 import { palette as DD } from './vendor/dd/dd.js';
 
 // the bones as runs of landmarks: thumb, the four fingers, the knuckles
 const RUNS = [[0, 1, 2, 3, 4], [0, 5, 6, 7, 8], [9, 10, 11, 12],
     [13, 14, 15, 16], [0, 17, 18, 19, 20], [5, 9, 13, 17]];
-const IN = .3, OUT = .45,   // a pinch holds under IN of the palm, lets go
-    DECAY = .002,           // past OUT; the spin's slowing, per ms
-    TIPS = [4, 8, 12, 16, 20];
+// a fist holds when its fingertips come within IN of their knuckles'
+// reach from the wrist (an open hand's are near twice it), lets go past OUT
+const IN = 1.25, OUT = 1.5,
+    SWIPE = 1.5,     // an open hand faster than this, px per ms, spins
+    DECAY = .002,    // the spin's slowing, per ms
+    CUT = 1, BETA = 20, DCUT = 2,   // the filter: Hz, Hz per px/ms, Hz
+    // the most a point runs on past its frame, ms. tuned in a simulation
+    // of 30 Hz frames 25 ms late to a 60 Hz screen: against the raw points,
+    // a still hand's frame-to-frame jitter is halved and the lag behind a
+    // hand at 1 px/ms falls from 46 px to 18, overshooting a stop by 21
+    LEAD = 35,
+    TIPS = [4, 8, 12, 16, 20], PALM = [0, 5, 9, 13, 17];
 
 let on;
 
@@ -34,7 +48,7 @@ function stop(s = on) {
 async function start() {
     const map = window.aerial?.map;
     if (!map) return;
-    const s = on = { map, held: {}, sm: {}, P: [], v: [0, 0],
+    const s = on = { map, f: {}, held: {}, P: [], v: [0, 0],
         cv: document.body.appendChild(document.createElement('canvas')),
         worker: new Worker(new URL('./hands.worker.js', import.meta.url),
             { type: 'module' }) };
@@ -51,7 +65,7 @@ async function start() {
     let busy = false;
     s.worker.onmessage = ({ data }) => {
         busy = false;
-        if (on === s) frame(s, data, v);
+        if (on === s) track(s, data, v);
     };
     const tick = now => {
         if (on !== s) return;
@@ -63,32 +77,60 @@ async function start() {
         v.requestVideoFrameCallback(tick);
     };
     v.requestVideoFrameCallback(tick);
+    const loop = now => on === s && (draw(s, now), requestAnimationFrame(loop));
+    requestAnimationFrame(loop);
 }
 
 const mid = q => [(q[0][0] + q.at(-1)[0]) / 2, (q[0][1] + q.at(-1)[1]) / 2],
     span = q => Math.hypot(q[1][0] - q[0][0], q[1][1] - q[0][1]),
-    turn = q => Math.atan2(q[1][1] - q[0][1], q[1][0] - q[0][0]);
+    turn = q => Math.atan2(q[1][1] - q[0][1], q[1][0] - q[0][0]),
+    palm = p => [0, 1].map(j => PALM.reduce((a, i) => a + p[i][j], 0) / 5),
+    // a step of a low-pass at c Hz over dt ms, from a toward b
+    low = (a, b, c, dt) => a.map((v, j) =>
+        v + (b[j] - v) / (1 + 1000 / (2 * Math.PI * c * dt)));
 
-function frame(s, hands, { videoWidth: vw, videoHeight: vh }) {
-    const { cv, map, P: was } = s, W = innerWidth, H = innerHeight,
-        r = devicePixelRatio, k = Math.max(W / vw, H / vh),
-        g = cv.getContext('2d'), now = performance.now(), P = [],
+// a camera frame, taken at t: each hand's points on the screen, filtered,
+// with their speeds in px per ms. a hand not in it is forgotten
+function track(s, [t, hands], { videoWidth: vw, videoHeight: vh }) {
+    const W = innerWidth, H = innerHeight, k = Math.max(W / vw, H / vh),
         // mirrored, and over the window as the video would cover it
         px = ([x, y]) => [W / 2 + (.5 - x) * vw * k,
             H / 2 + (y - .5) * vh * k];
+    s.f = Object.fromEntries(hands.map(([side, h]) => {
+        const p = h.map(px), f = s.f[side], dt = t - f?.t;
+        if (!(dt > 0)) return [side, { t, x: p, dx: p.map(() => [0, 0]) }];
+        const dx = p.map((q, i) => low(f.dx[i],
+            [0, 1].map(j => (q[j] - f.x[i][j]) / dt), DCUT, dt));
+        return [side, { t, dx, x: p.map((q, i) =>
+            low(f.x[i], q, CUT + BETA * Math.hypot(...dx[i]), dt)) }];
+    }));
+    // a sweep is judged per camera frame, whatever the screen's rate
+    if (!s.P.length) for (const [side, { dx }] of Object.entries(s.f)) {
+        const u = palm(dx).map(v => -v);
+        if (!s.held[side] && Math.hypot(...u) > Math.max(SWIPE,
+            Math.hypot(...s.v))) s.v = u, spin(s);
+    }
+}
+
+// a screen frame: the hands as they are now, drawn, and the map moved
+function draw(s, now) {
+    const { cv, map, P: was } = s, W = innerWidth, H = innerHeight,
+        r = devicePixelRatio, g = cv.getContext('2d'), P = [];
     if (cv.width !== W * r || cv.height !== H * r)
         cv.width = W * r, cv.height = H * r;
     g.setTransform(r, 0, 0, r, 0, 0);
     g.clearRect(0, 0, W, H);
     g.lineWidth = 1.5;
     g.lineJoin = 'round';
-    for (const [side, h] of hands.sort(([a], [b]) => a < b ? -1 : 1)) {
-        const p = h.map(px),
+    for (const [side, { t, x, dx }] of Object.entries(s.f)
+        .sort(([a], [b]) => a < b ? -1 : 1)) {
+        const a = Math.min(Math.max(now - t, 0), LEAD),
+            p = x.map((q, i) => [q[0] + dx[i][0] * a, q[1] + dx[i][1] * a]),
             d = (a, b) => Math.hypot(p[a][0] - p[b][0], p[a][1] - p[b][1]),
-            held = s.held[side] = d(4, 8) < (s.held[side] ? OUT : IN) * d(0, 9),
-            m = mid([p[4], p[8]]), o = s.sm[side];
-        s.sm[side] = held ? o ? [(o[0] + m[0]) / 2, (o[1] + m[1]) / 2] : m
-            : null;
+            curl = TIPS.slice(1).reduce((a, i) => a + d(i, 0) / d(i - 3, 0),
+                0) / 4,
+            held = s.held[side] = curl < (s.held[side] ? OUT : IN),
+            m = palm(p);
         g.strokeStyle = g.fillStyle = DD.white;
         g.globalAlpha = .7;
         g.beginPath();
@@ -102,19 +144,20 @@ function frame(s, hands, { videoWidth: vw, videoHeight: vh }) {
             g.fill();
         });
         if (!held) continue;
-        P.push(s.sm[side]);
+        P.push(m);
+        s.v = palm(dx).map(v => -v);
         g.fillStyle = DD.orange;
         g.beginPath();
-        g.arc(...s.sm[side], 7, 0, 7);
+        g.arc(...m, 7, 0, 7);
         g.fill();
     }
-    const n = P.length, dt = now - s.t;
-    // two pinches pin the ground under them where they took hold: each
+    const n = P.length;
+    // two fists pin the ground under them where they took hold: each
     // frame closes the gap between that ground and the hands, a few steps,
     // as zoom and bearing turn about the centre and the globe pans unevenly
     if (n > 1 && n !== was.length) s.A = P.map(p => map.unproject(p));
-    if (n && n === was.length && dt > 0) {
-        const [x, y] = mid(P), [x0, y0] = mid(was), d = [x0 - x, y0 - y],
+    if (n && n === was.length) {
+        const [x, y] = mid(P), [x0, y0] = mid(was),
             at = () => s.A.map(a => map.project(a)).map(p => [p.x, p.y]);
         if (n > 1) for (let i = 0; i < 3; i++) {
             const Q = at(), a = turn(P) - turn(Q);
@@ -124,21 +167,26 @@ function frame(s, hands, { videoWidth: vw, videoHeight: vh }) {
             const [qx, qy] = mid(at());
             map.panBy([qx - x, qy - y], { duration: 0 });
         }
-        else map.panBy(d, { duration: 0 });
-        s.v = s.v.map((v, i) => (v + d[i] / dt) / 2);
-    } else s.v = n ? [0, 0] : s.v;
+        else if (x !== x0 || y !== y0)
+            map.panBy([x0 - x, y0 - y], { duration: 0 });
+    }
     if (!n && was.length === 1) spin(s);
     s.P = P;
-    s.t = now;
 }
 
-// a let-go drag spins on at its last speed, in px per ms, and slows
-function spin(s, t = performance.now()) {
-    requestAnimationFrame(now => {
-        if (on !== s || s.P.length) return;
+// a let-go drag or a sweep spins on at its speed, in px per ms, and slows,
+// one spin at a time, until a hand takes hold
+function spin(s) {
+    if (s.spinning) return;
+    s.spinning = true;
+    let t = performance.now();
+    const f = now => {
+        if (on !== s || s.P.length || Math.hypot(...s.v) < .02)
+            return s.spinning = false;
         s.v = s.v.map(v => v * Math.exp(-DECAY * (now - t)));
-        if (Math.hypot(...s.v) < .02) return;
         s.map.panBy(s.v.map(v => v * (now - t)), { duration: 0 });
-        spin(s, now);
-    });
+        t = now;
+        requestAnimationFrame(f);
+    };
+    requestAnimationFrame(f);
 }
