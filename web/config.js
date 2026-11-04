@@ -398,7 +398,7 @@ mount({
         // white at the plume mask's 0.5 read as grey
         { id: 'heat-fill', type: 'fill', source: 'heat', maxzoom: NEAR,
           filter: ['==', ['geometry-type'], 'Polygon'],
-          paint: { 'fill-antialias': false, 'fill-color': ['step',
+          paint: { 'fill-color': ['step',
               ['get', 'b'], RAMP[0], 1, RAMP[1], 2, RAMP[2]] } },
         { id: 'heat-line', type: 'line', source: 'heat', maxzoom: NEAR,
           filter: ['==', ['geometry-type'], 'LineString'],
