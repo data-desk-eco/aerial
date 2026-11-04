@@ -55,7 +55,19 @@ curl -sL "$NPM/@uwdata/flechette/-/flechette-2.7.1.tgz" |
 sed -i.bak 's#"@uwdata/flechette"#"./flechette.mjs"#' "$VENDOR/quack/index.js"
 rm "$VENDOR/quack/index.js.bak"
 
-echo "inter font ..."
+echo "mediapipe tasks-vision 1.2.2 ..."
+# the hand landmarker hands.js runs in a worker: the bundle, the wasm built
+# as an es module (a module worker has no importScripts), the float16 model
+mkdir -p "$VENDOR/mediapipe"
+curl -sL "$NPM/@mediapipe/tasks-vision/-/tasks-vision-1.2.2.tgz" |
+    tar xz -C "$VENDOR/mediapipe" --strip-components 1 \
+        package/vision_bundle.mjs \
+        package/wasm/vision_wasm_module_internal.{js,wasm}
+curl -sLo "$VENDOR/mediapipe/hand_landmarker.task" \
+    https://storage.googleapis.com/mediapipe-models/hand_landmarker/\
+hand_landmarker/float16/1/hand_landmarker.task
+
+echo "inter font ...
 # a desktop chrome agent, so google serves woff2
 UA='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
 UA+=' (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
