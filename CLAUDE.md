@@ -185,15 +185,20 @@ map, never the camera's picture (`hands.js`). mediapipe's hand landmarker
 runs in a module worker (`hands.worker.js`, the wasm's es module build, the
 gpu delegate on an offscreen canvas) and takes each frame as a transferred
 VideoFrame, one in flight, so the map's thread does no inference. a pinch
-grabs the globe and drags it: thumb tip to index tip, in 3d, under 0.25 of
-the palm, the middle tip clear of the thumb by 0.5, for 100 ms, and held to
+grabs the globe and drags it: thumb tip to index tip, in 3d, under 0.3 of
+the palm, the middle tip clear of the thumb by 0.4, for 70 ms, and held to
 0.45, so crossed fingers, a bunched hand or a brush do not grab. two
-pinches pin the ground under them as they zoom and turn; a drag let go
-spins on. every point goes through a one euro filter,
+pinches zoom twice as far as they spread, and keep the ground under their
+middle and its turn; a drag let go spins on. a finger pointed at a flare
+(the index reaching past 1.6 of its knuckle's distance from the wrist, the
+others curled within 1.3) fills a ring round it over 600 ms and opens its
+card as a click on it would. every point goes through a one euro filter,
 and the hands draw and move the map each screen frame, run on from the
 camera frame's capture by the filtered speed (35 ms at most): tuned in a
 simulation, it halves a still hand's jitter and cuts the lag at 1 px/ms
-from 46 px to 18.
+from 46 px to 18. a pinch moves the map by the mean of seven thumb and
+index points under a slower filter, which in the same simulation takes a
+still hand's jitter from 0.77 px a frame to 0.44.
 
 ## layout
 

@@ -2,14 +2,16 @@
 // `h` turns it on and off. each frame goes to hands.worker.js as a
 // VideoFrame, transferred, one in flight, and comes back as points; the
 // video element is never in the page. a pinch of thumb and index grabs the
-// globe and drags it, two pinch, zoom and turn as two fingers do, and a
-// drag let go spins on and slows.
+// globe and drags it, two pinch, zoom (GAIN times as far as the hands
+// spread) and turn, and a drag let go spins on and slows. a finger pointed
+// at a flare for HOLD ms opens its card.
 // the camera gives ~30 frames a second and jitters; the screen wants 60 or
 // more and none. each point goes through a one euro filter (Casiez et al.
 // 2012), steady when slow and quick when fast, and the hands are drawn and
 // move the map every screen frame, run on from the camera frame's capture
 // by the filter's speed, which also covers the time the worker took
 import { palette as DD } from './vendor/dd/dd.js';
+import { FLARES } from './layers.js';
 
 // the bones as runs of landmarks: thumb, the four fingers, the knuckles
 const RUNS = [[0, 1, 2, 3, 4], [0, 5, 6, 7, 8], [9, 10, 11, 12],
@@ -18,9 +20,19 @@ const RUNS = [[0, 1, 2, 3, 4], [0, 5, 6, 7, 8], [9, 10, 11, 12],
 // middle knuckle), the middle tip clear of the thumb by CLEAR, for DWELL
 // ms; it lets go past OUT. so fingers that cross in the camera's view, a
 // hand bunched or curling, or one frame's brush are not a pinch
-const IN = .25, OUT = .45, CLEAR = .5, DWELL = 100,
+const IN = .3, OUT = .45, CLEAR = .4, DWELL = 70,
+    // a point is the index's tip past REACH of its knuckle's distance from
+    // the wrist, the other fingers' within CURL (an open hand's are near 2)
+    REACH = 1.6, CURL = 1.3,
+    AIM = 20, HOLD = 600,   // a flare within AIM px of the tip, held HOLD ms
+    GAIN = 2,               // two pinches zoom this many times their spread
     DECAY = .002,    // the spin's slowing, per ms
     CUT = 1, BETA = 20, DCUT = 2,   // the filter: Hz, Hz per px/ms, Hz
+    // a pinch moves the map by the mean of the thumb and index, GRIP, under
+    // a slower filter, GCUT and GDCUT Hz: seven points, steadier than the two
+    // tips. in the simulation the filter alone takes the step a still hand
+    // jitters by from 0.77 px to 0.44, for 5 px more lag at 1 px/ms
+    GRIP = [2, 3, 4, 5, 6, 7, 8], GCUT = .5, GDCUT = 1,
     // the most a point runs on past its frame, ms. tuned in a simulation
     // of 30 Hz frames 25 ms late to a 60 Hz screen: against the raw points,
     // a still hand's frame-to-frame jitter is halved and the lag behind a
@@ -85,10 +97,17 @@ async function start() {
 const mid = q => [(q[0][0] + q.at(-1)[0]) / 2, (q[0][1] + q.at(-1)[1]) / 2],
     span = q => Math.hypot(q[1][0] - q[0][0], q[1][1] - q[0][1]),
     turn = q => Math.atan2(q[1][1] - q[0][1], q[1][0] - q[0][0]),
-    pair = (p, a = 4, b = 8) => [0, 1].map(j => (p[a][j] + p[b][j]) / 2),
+    mean = (p, I) => [0, 1].map(j => I.reduce((a, i) => a + p[i][j], 0)
+        / I.length),
     // a step of a low-pass at c Hz over dt ms, from a toward b
     low = (a, b, c, dt) => a.map((v, j) =>
-        v + (b[j] - v) / (1 + 1000 / (2 * Math.PI * c * dt)));
+        v + (b[j] - v) / (1 + 1000 / (2 * Math.PI * c * dt))),
+    // a step of the one euro filter at least c Hz, its speed's at e Hz:
+    // point x, speed dx, to q
+    euro = (x, dx, q, dt, c = CUT, e = DCUT) => {
+        const d = low(dx, [0, 1].map(j => (q[j] - x[j]) / dt), e, dt);
+        return [low(x, q, c + BETA * Math.hypot(...d), dt), d];
+    };
 
 // whether a hand (its landmarks in the frame's 0-1, z on x's scale) pinches,
 // given its last state f, at t
@@ -98,8 +117,9 @@ function grip(f, h, t, vw, vh) {
         r = D(4, 8) / D(0, 9);
     if (f?.held) return { held: r < OUT };
     const ok = r < IN && D(4, 12) > CLEAR * D(0, 9),
-        since = ok ? f?.since ?? t : null;
-    return { held: ok && t - since >= DWELL, since };
+        since = ok ? f?.since ?? t : null, ext = i => D(0, i) / D(0, i - 3);
+    return { held: ok && t - since >= DWELL, since,
+        point: ext(8) > REACH && [12, 16, 20].every(i => ext(i) < CURL) };
 }
 
 // a camera frame, taken at t: each hand's points on the screen, filtered,
@@ -112,13 +132,13 @@ function track(s, [t, hands], { videoWidth: vw, videoHeight: vh }) {
             H / 2 + (y - .5) * vh * k];
     s.f = Object.fromEntries(hands.map(([side, h]) => {
         const p = h.map(px), f = s.f[side], dt = t - f?.t,
-            g = grip(f, h, t, vw, vh);
-        if (!(dt > 0))
-            return [side, { t, x: p, dx: p.map(() => [0, 0]), ...g }];
-        const dx = p.map((q, i) => low(f.dx[i],
-            [0, 1].map(j => (q[j] - f.x[i][j]) / dt), DCUT, dt));
-        return [side, { t, dx, ...g, x: p.map((q, i) =>
-            low(f.x[i], q, CUT + BETA * Math.hypot(...dx[i]), dt)) }];
+            g = grip(f, h, t, vw, vh), c = mean(p, GRIP);
+        if (!(dt > 0)) return [side, { t, x: p, dx: p.map(() => [0, 0]),
+            c, dc: [0, 0], ...g }];
+        const e = p.map((q, i) => euro(f.x[i], f.dx[i], q, dt)),
+            [cx, dc] = euro(f.c, f.dc, c, dt, GCUT, GDCUT);
+        return [side, { t, x: e.map(e => e[0]), dx: e.map(e => e[1]),
+            c: cx, dc, ...g }];
     }));
 }
 
@@ -126,17 +146,18 @@ function track(s, [t, hands], { videoWidth: vw, videoHeight: vh }) {
 function draw(s, now) {
     const { cv, map, P: was } = s, W = innerWidth, H = innerHeight,
         r = devicePixelRatio, g = cv.getContext('2d'), P = [];
+    let tip;
     if (cv.width !== W * r || cv.height !== H * r)
         cv.width = W * r, cv.height = H * r;
     g.setTransform(r, 0, 0, r, 0, 0);
     g.clearRect(0, 0, W, H);
     g.lineWidth = 1.5;
     g.lineJoin = 'round';
-    for (const [, { t, x, dx, held }] of Object.entries(s.f)
+    for (const [, { t, x, dx, c, dc, held, point }] of Object.entries(s.f)
         .sort(([a], [b]) => a < b ? -1 : 1)) {
         const a = Math.min(Math.max(now - t, 0), LEAD),
-            p = x.map((q, i) => [q[0] + dx[i][0] * a, q[1] + dx[i][1] * a]),
-            m = pair(p);
+            run = (q, d) => [q[0] + d[0] * a, q[1] + d[1] * a],
+            p = x.map((q, i) => run(q, dx[i]));
         g.strokeStyle = g.fillStyle = DD.white;
         g.globalAlpha = .7;
         g.beginPath();
@@ -149,34 +170,71 @@ function draw(s, now) {
             g.arc(x, y, TIPS.includes(i) ? 3.5 : 2, 0, 7);
             g.fill();
         });
+        if (point) tip ??= p[8];
         if (!held) continue;
-        P.push(m);
-        s.v = pair(dx).map(v => -v);
+        P.push(run(c, dc));
+        s.v = dc.map(v => -v);
         g.beginPath();
-        g.arc(...m, 11, 0, 7);
+        g.arc(...mean(p, [4, 8]), 11, 0, 7);
         g.stroke();
     }
+    aim(s, tip, now, g);
     const n = P.length;
-    // two pinches pin the ground under them where they took hold: each
-    // frame closes the gap between that ground and the hands, a few steps,
-    // as zoom and bearing turn about the centre and the globe pans unevenly
-    if (n > 1 && n !== was.length) s.A = P.map(p => map.unproject(p));
+    // two pinches zoom from where they took hold, GAIN times their spread,
+    // and pin the ground under their middle and the turn of the ground
+    // under each: each frame closes the gap a few steps, as the bearing
+    // turns about the centre and the globe pans unevenly
+    if (n > 1 && n !== was.length) s.A = P.map(p => map.unproject(p)),
+        s.Z = [map.getZoom(), span(P), map.unproject(mid(P))];
     if (n && n === was.length) {
-        const [x, y] = mid(P), [x0, y0] = mid(was),
+        const [x, y] = mid(P), [x0, y0] = mid(was), [z, w, M] = s.Z ?? [],
             at = () => s.A.map(a => map.project(a)).map(p => [p.x, p.y]);
+        if (n > 1) map.jumpTo({ zoom: z + GAIN * Math.log2(span(P) / w) });
         if (n > 1) for (let i = 0; i < 3; i++) {
-            const Q = at(), a = turn(P) - turn(Q);
-            map.jumpTo({ zoom: map.getZoom() + Math.log2(span(P) / span(Q)),
-                bearing: map.getBearing() - 180 / Math.PI
-                    * Math.atan2(Math.sin(a), Math.cos(a)) });
-            const [qx, qy] = mid(at());
-            map.panBy([qx - x, qy - y], { duration: 0 });
+            const a = turn(P) - turn(at());
+            map.jumpTo({ bearing: map.getBearing() - 180 / Math.PI
+                * Math.atan2(Math.sin(a), Math.cos(a)) });
+            const q = map.project(M);
+            map.panBy([q.x - x, q.y - y], { duration: 0 });
         }
         else if (x !== x0 || y !== y0)
             map.panBy([x0 - x, y0 - y], { duration: 0 });
     }
     if (!n && was.length === 1) spin(s);
     s.P = P;
+}
+
+// the flare nearest a pointing tip, within AIM px: a ring round it fills
+// over HOLD ms, then its card opens as a click on it would open it, once
+// until the finger leaves it
+function aim(s, tip, now, g) {
+    const { map } = s, [x, y] = tip ?? [], near = tip && map
+        .queryRenderedFeatures([[x - AIM, y - AIM], [x + AIM, y + AIM]],
+            { layers: FLARES.filter(l => map.getLayer(l)) })
+        .map(f => [f, map.project(f.geometry.coordinates)])
+        .sort(([, a], [, b]) => Math.hypot(a.x - x, a.y - y)
+            - Math.hypot(b.x - x, b.y - y))[0],
+        id = near && String(near[0].properties.id);
+    if (tip) {
+        g.beginPath();
+        g.arc(x, y, 6, 0, 7);
+        g.stroke();
+    }
+    if (id !== s.aim?.id) s.aim = id && { id, t: now };
+    if (!s.aim) return;
+    const q = near[1], k = Math.min((now - s.aim.t) / HOLD, 1);
+    g.globalAlpha = .4;
+    g.beginPath();
+    g.arc(q.x, q.y, 14, 0, 7);
+    g.stroke();
+    g.globalAlpha = 1;
+    g.beginPath();
+    g.arc(q.x, q.y, 14, -Math.PI / 2, (k * 4 - 1) * Math.PI / 2);
+    g.stroke();
+    if (k < 1 || s.aim.done) return;
+    s.aim.done = true;
+    map.fire('click', { point: q, lngLat: map.unproject(q),
+        originalEvent: {} });
 }
 
 // a let-go drag spins on at its speed, in px per ms, and slows, one spin
