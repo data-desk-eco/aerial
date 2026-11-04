@@ -185,14 +185,23 @@ map, never the camera's picture (`hands.js`). mediapipe's hand landmarker
 runs in a module worker (`hands.worker.js`, the wasm's es module build, the
 gpu delegate on an offscreen canvas) and takes each frame as a transferred
 VideoFrame, one in flight, so the map's thread does no inference. a pinch
-grabs the globe and drags it: thumb tip to index tip, in 3d, under 0.3 of
-the palm, the middle tip clear of the thumb by 0.4, for 70 ms, and held to
-0.45, so crossed fingers, a bunched hand or a brush do not grab. two
-pinches zoom twice as far as they spread, and keep the ground under their
-middle and its turn; a drag let go spins on. a finger pointed at a flare
-(the index reaching past 1.6 of its knuckle's distance from the wrist, the
-others curled within 1.3) fills a ring round it over 600 ms and opens its
-card as a click on it would. every point goes through a one euro filter,
+grabs the globe and drags it: the thumb's tip on the index's last bone, in
+3d (depth at half weight), under 0.4 of the palm, the middle tip clear of
+the thumb by 0.25, for 70 ms, held to 0.55; and made, the gap open past
+0.55 in the second before and the hand under 1.5 px/ms, so crossed
+fingers, a curled or bunched hand, one already closed or swinging through,
+or a brush do not grab. a hand with any point off the window holds
+nothing. a faint ring shows a thumb near the index, a full one a pinch.
+two pinches zoom twice as far as they spread, and keep the ground under
+their middle and its turn; a drag let go eases out over a few pixels. a
+finger pointed (the index reaching past 1.6 of its knuckle's distance
+from the wrist, the others curled within 1.3) at anything a mouse could
+click, held 600 ms, clicks it: a control that takes the pointer, through
+shadow roots, as a mouse's events; on the map the nearest marking within
+20 px, or the outline under the tip, as a map click, and the map's hover
+follows the tip. a ring round the target fills as it waits, and a click
+waits for the tip to move away.
+every point goes through a one euro filter,
 and the hands draw and move the map each screen frame, run on from the
 camera frame's capture by the filtered speed (35 ms at most): tuned in a
 simulation, it halves a still hand's jitter and cuts the lag at 1 px/ms

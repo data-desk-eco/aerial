@@ -3,30 +3,35 @@
 // VideoFrame, transferred, one in flight, and comes back as points; the
 // video element is never in the page. a pinch of thumb and index grabs the
 // globe and drags it, two pinch, zoom (GAIN times as far as the hands
-// spread) and turn, and a drag let go spins on and slows. a finger pointed
-// at a flare for HOLD ms opens its card.
+// spread) and turn, and a drag let go eases out over a few pixels. a finger
+// pointed at anything a mouse could click, held HOLD ms, clicks it.
 // the camera gives ~30 frames a second and jitters; the screen wants 60 or
 // more and none. each point goes through a one euro filter (Casiez et al.
 // 2012), steady when slow and quick when fast, and the hands are drawn and
 // move the map every screen frame, run on from the camera frame's capture
 // by the filter's speed, which also covers the time the worker took
 import { palette as DD } from './vendor/dd/dd.js';
-import { FLARES } from './layers.js';
 
 // the bones as runs of landmarks: thumb, the four fingers, the knuckles
 const RUNS = [[0, 1, 2, 3, 4], [0, 5, 6, 7, 8], [9, 10, 11, 12],
     [13, 14, 15, 16], [0, 17, 18, 19, 20], [5, 9, 13, 17]];
-// a pinch is thumb tip to index tip, in 3d, under IN of the palm (wrist to
-// middle knuckle), the middle tip clear of the thumb by CLEAR, for DWELL
-// ms; it lets go past OUT. so fingers that cross in the camera's view, a
-// hand bunched or curling, or one frame's brush are not a pinch
-const IN = .3, OUT = .45, CLEAR = .4, DWELL = 70,
+// a pinch is the thumb's tip on the index's last bone, tip to last joint,
+// in 3d (the landmarker's depth, noisier, weighed at DEPTH), under IN of
+// the palm (wrist to middle knuckle), the middle tip clear of the thumb by
+// CLEAR, held DWELL ms; it lets go past OUT. and it must be made: the gap
+// open past OPEN in the FORM ms before it closes, the wrist slower than
+// STILL px/ms as it does. fingers that cross in the camera's view, a hand
+// curled or bunched, already closed or swinging through, or one frame's
+// brush, are not a pinch
+const IN = .4, OUT = .55, CLEAR = .25, DWELL = 70, OPEN = .55, FORM = 1000,
+    STILL = 1.5, DEPTH = .5,
     // a point is the index's tip past REACH of its knuckle's distance from
     // the wrist, the other fingers' within CURL (an open hand's are near 2)
     REACH = 1.6, CURL = 1.3,
-    AIM = 20, HOLD = 600,   // a flare within AIM px of the tip, held HOLD ms
+    AIM = 20, HOLD = 600,   // a marking within AIM px of the tip, HOLD ms
+    LEAVE = 24,
     GAIN = 2,               // two pinches zoom this many times their spread
-    DECAY = .002,    // the spin's slowing, per ms
+    DECAY = .03,     // the ease's slowing, per ms: 1 px/ms runs on 33 px
     CUT = 1, BETA = 20, DCUT = 2,   // the filter: Hz, Hz per px/ms, Hz
     // a pinch moves the map by the mean of the thumb and index, GRIP, under
     // a slower filter, GCUT and GDCUT Hz: seven points, steadier than the two
@@ -61,7 +66,7 @@ function stop(s = on) {
 async function start() {
     const map = window.aerial?.map;
     if (!map) return;
-    const s = on = { map, f: {}, P: [], v: [0, 0],
+    const s = on = { map, f: {}, P: [], v: [0, 0], lock: [NaN, NaN],
         cv: document.body.appendChild(document.createElement('canvas')),
         worker: new Worker(new URL('./hands.worker.js', import.meta.url),
             { type: 'module' }) };
@@ -112,27 +117,38 @@ const mid = q => [(q[0][0] + q.at(-1)[0]) / 2, (q[0][1] + q.at(-1)[1]) / 2],
 // whether a hand (its landmarks in the frame's 0-1, z on x's scale) pinches,
 // given its last state f, at t
 function grip(f, h, t, vw, vh) {
-    const D = (a, b) => Math.hypot((h[a][0] - h[b][0]) * vw,
-            (h[a][1] - h[b][1]) * vh, (h[a][2] - h[b][2]) * vw),
-        r = D(4, 8) / D(0, 9);
-    if (f?.held) return { held: r < OUT };
+    const P = h.map(([x, y, z]) => [x * vw, y * vh, z * vw * DEPTH]),
+        sub = (a, b) => a.map((v, j) => v - b[j]),
+        dot = (a, b) => a.reduce((s, v, j) => s + v * b[j], 0),
+        D = (a, b) => Math.hypot(...sub(P[a], P[b])),
+        // the thumb's tip to the nearest point of the index's last bone
+        u = sub(P[8], P[7]), w = sub(P[4], P[7]),
+        k = Math.min(Math.max(dot(w, u) / dot(u, u), 0), 1),
+        r = Math.hypot(...sub(w, u.map(v => v * k))) / D(0, 9),
+        open = r > OPEN ? t : f?.open, ext = i => D(0, i) / D(0, i - 3),
+        point = ext(8) > REACH && [12, 16, 20].every(i => ext(i) < CURL);
+    if (f?.held) return { held: r < OUT, open, point: false };
+    const near = r < OPEN;
     const ok = r < IN && D(4, 12) > CLEAR * D(0, 9),
-        since = ok ? f?.since ?? t : null, ext = i => D(0, i) / D(0, i - 3);
-    return { held: ok && t - since >= DWELL, since,
-        point: ext(8) > REACH && [12, 16, 20].every(i => ext(i) < CURL) };
+        since = !ok ? null : f?.since ?? (t - open < FORM
+            && !(Math.hypot(...f.dx[0]) > STILL) ? t : null);
+    return { held: since != null && t - since >= DWELL, since, open, point,
+        near };
 }
 
 // a camera frame, taken at t: each hand's points on the screen, filtered,
 // with their speeds in px per ms, and its grip. a hand not in it is
-// forgotten
+// forgotten, and its pinch with it
 function track(s, [t, hands], { videoWidth: vw, videoHeight: vh }) {
     const W = innerWidth, H = innerHeight, k = Math.max(W / vw, H / vh),
         // mirrored, and over the window as the video would cover it
         px = ([x, y]) => [W / 2 + (.5 - x) * vw * k,
             H / 2 + (y - .5) * vh * k];
     s.f = Object.fromEntries(hands.map(([side, h]) => {
-        const p = h.map(px), f = s.f[side], dt = t - f?.t,
-            g = grip(f, h, t, vw, vh), c = mean(p, GRIP);
+        // a hand with any point off the window holds nothing
+        const p = h.map(px), f = s.f[side], dt = t - f?.t, c = mean(p, GRIP),
+            g = p.some(([x, y]) => x < 0 || x > W || y < 0 || y > H)
+                ? { open: f?.open } : grip(f, h, t, vw, vh);
         if (!(dt > 0)) return [side, { t, x: p, dx: p.map(() => [0, 0]),
             c, dc: [0, 0], ...g }];
         const e = p.map((q, i) => euro(f.x[i], f.dx[i], q, dt)),
@@ -153,8 +169,8 @@ function draw(s, now) {
     g.clearRect(0, 0, W, H);
     g.lineWidth = 1.5;
     g.lineJoin = 'round';
-    for (const [, { t, x, dx, c, dc, held, point }] of Object.entries(s.f)
-        .sort(([a], [b]) => a < b ? -1 : 1)) {
+    for (const [, { t, x, dx, c, dc, held, point, near }] of Object
+        .entries(s.f).sort(([a], [b]) => a < b ? -1 : 1)) {
         const a = Math.min(Math.max(now - t, 0), LEAD),
             run = (q, d) => [q[0] + d[0] * a, q[1] + d[1] * a],
             p = x.map((q, i) => run(q, dx[i]));
@@ -171,12 +187,17 @@ function draw(s, now) {
             g.fill();
         });
         if (point) tip ??= p[8];
+        // a pinch's ring, faint while the thumb nears but has not taken hold
+        if (held || near) {
+            g.globalAlpha = held ? 1 : .35;
+            g.beginPath();
+            g.arc(...mean(p, [4, 8]), 11, 0, 7);
+            g.stroke();
+            g.globalAlpha = 1;
+        }
         if (!held) continue;
         P.push(run(c, dc));
         s.v = dc.map(v => -v);
-        g.beginPath();
-        g.arc(...mean(p, [4, 8]), 11, 0, 7);
-        g.stroke();
     }
     aim(s, tip, now, g);
     const n = P.length;
@@ -204,41 +225,90 @@ function draw(s, now) {
     s.P = P;
 }
 
-// the flare nearest a pointing tip, within AIM px: a ring round it fills
-// over HOLD ms, then its card opens as a click on it would open it, once
-// until the finger leaves it
+// what a pointing tip would click: the control under it, anything that
+// takes the pointer, through shadow roots; or on the map the nearest
+// marking within AIM px, or else the outline under the tip. its key, the
+// point a ring marks, and the click
+function target(map, [x, y]) {
+    let e = document.elementFromPoint(x, y);
+    for (let i; e?.shadowRoot && (i = e.shadowRoot.elementFromPoint(x, y))
+        && i !== e;) e = i;
+    if (!e) return;
+    if (e !== map.getCanvas()) {
+        for (let n = e; n instanceof Element; n = n.parentElement
+            ?? n.getRootNode().host) {
+            if (getComputedStyle(n).cursor !== 'pointer') continue;
+            const r = n.getBoundingClientRect(), at = r.width < 80
+                && r.height < 80 ? [r.x + r.width / 2, r.y + r.height / 2]
+                : [x, y];
+            return { key: n, at, go: () => press(e, at) };
+        }
+        return;
+    }
+    const layers = [...window.aerial.config.detail?.layers ?? [],
+            'sites-hit'].filter(l => map.getLayer(l)),
+        near = map.queryRenderedFeatures([[x - AIM, y - AIM],
+            [x + AIM, y + AIM]], { layers })
+            .filter(f => f.geometry.type === 'Point')
+            .map(f => [f, map.project(f.geometry.coordinates)])
+            .sort(([, a], [, b]) => Math.hypot(a.x - x, a.y - y)
+                - Math.hypot(b.x - x, b.y - y))[0],
+        f = near?.[0] ?? map.queryRenderedFeatures([x, y], { layers })[0],
+        q = near?.[1] ?? new maplibregl.Point(x, y);
+    return f && { key: `${f.layer.id}:${f.properties.id ?? f.id}`,
+        at: [q.x, q.y], go: () => fire(map, 'click', [q.x, q.y]) };
+}
+
+// a mouse event on the map at [x, y], as maplibre would fire it: a layer's
+// listeners read the place from the original event
+const fire = (map, type, [x, y]) => map.fire(type, { originalEvent:
+    new MouseEvent(type, { clientX: x, clientY: y }),
+    point: new maplibregl.Point(x, y), lngLat: map.unproject([x, y]) });
+
+// a mouse's click on e at [x, y], as the page's handlers hear one
+const press = (e, [x, y]) => ['pointerdown', 'mousedown', 'pointerup',
+    'mouseup', 'click'].forEach(t => e.dispatchEvent(new (t[0] === 'p'
+        ? PointerEvent : MouseEvent)(t, { bubbles: true, composed: true,
+        cancelable: true, clientX: x, clientY: y, button: 0,
+        pointerType: 'mouse', isPrimary: true })));
+
+// a pointing tip: a small ring at it, the map's hover where it is over the
+// map, and a ring round its target filling over HOLD ms, then the click
 function aim(s, tip, now, g) {
-    const { map } = s, [x, y] = tip ?? [], near = tip && map
-        .queryRenderedFeatures([[x - AIM, y - AIM], [x + AIM, y + AIM]],
-            { layers: FLARES.filter(l => map.getLayer(l)) })
-        .map(f => [f, map.project(f.geometry.coordinates)])
-        .sort(([, a], [, b]) => Math.hypot(a.x - x, a.y - y)
-            - Math.hypot(b.x - x, b.y - y))[0],
-        id = near && String(near[0].properties.id);
+    const { map } = s;
+    // after a click the tip must move LEAVE px or stop pointing to click
+    // again: a target the click redraws is a new element in the same place
+    if (!tip || Math.hypot(tip[0] - s.lock[0], tip[1] - s.lock[1]) > LEAVE)
+        s.lock = [NaN, NaN];
+    const t = tip && isNaN(s.lock[0]) && target(map, tip);
     if (tip) {
         g.beginPath();
-        g.arc(x, y, 6, 0, 7);
+        g.arc(...tip, 6, 0, 7);
         g.stroke();
+        const [x, y] = tip, [x0, y0] = s.hover ?? [];
+        if (document.elementFromPoint(x, y) === map.getCanvas()
+            && !(Math.hypot(x - x0, y - y0) <= 2))
+            s.hover = tip, fire(map, 'mousemove', tip);
     }
-    if (id !== s.aim?.id) s.aim = id && { id, t: now };
+    if (t?.key !== s.aim?.key) s.aim = t && { ...t, t: now };
     if (!s.aim) return;
-    const q = near[1], k = Math.min((now - s.aim.t) / HOLD, 1);
+    const [x, y] = t.at, k = Math.min((now - s.aim.t) / HOLD, 1);
     g.globalAlpha = .4;
     g.beginPath();
-    g.arc(q.x, q.y, 14, 0, 7);
+    g.arc(x, y, 14, 0, 7);
     g.stroke();
     g.globalAlpha = 1;
     g.beginPath();
-    g.arc(q.x, q.y, 14, -Math.PI / 2, (k * 4 - 1) * Math.PI / 2);
+    g.arc(x, y, 14, -Math.PI / 2, (k * 4 - 1) * Math.PI / 2);
     g.stroke();
     if (k < 1 || s.aim.done) return;
     s.aim.done = true;
-    map.fire('click', { point: q, lngLat: map.unproject(q),
-        originalEvent: {} });
+    s.lock = tip;
+    t.go();
 }
 
-// a let-go drag spins on at its speed, in px per ms, and slows, one spin
-// at a time, until a hand takes hold
+// a let-go drag eases on from its speed, in px per ms, and stops within a
+// few pixels, one at a time, until a hand takes hold
 function spin(s) {
     if (s.spinning) return;
     s.spinning = true;
