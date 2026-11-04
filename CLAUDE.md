@@ -55,7 +55,8 @@ the looks that found nothing are `eog/observations`, which aerial does not read
 viewer. a pan reads nothing: every family is drawn whole and maplibre
 draws what is in view. below z5 all three are one surface, `heat` (60k
 markers placed each frame made the globe crawl): one statement grids every
-point the key passes into mercator cells per zoom, each lighting the 3×3
+point the key passes into one grid of mercator cells (2^12 to the world,
+4 px at z4) at every zoom, each lighting the 3×3
 around its own at the mean band (`band`, `layers.js`) of what lights it,
 drawn opaque on the ramp with a 1 px white outline, the edges only one cell
 has, as a plume mask is; from z5
