@@ -155,13 +155,10 @@ function wireIntro(title) {
 
 // ── the key ──
 
-// sections: [{label, choice, rows: [{swatch: {mark, color}, label, toggle:
-// id | [ids], pred}]}]. a `toggle` row switches layers; `pred` rows are a
+// sections: [{label, rows: [{swatch: {mark, color}, label, toggle: id |
+// [ids], pred}]}]. a `toggle` row switches layers; `pred` rows are a
 // multi-select per section, active rows ORed into the filter (all on is no
-// filter). `choice` ({value, options: [[value, label]], onChange}) heads the
-// section's rows with a dd-toggle, one of its options at a time, for an app
-// that draws one of two instruments in a section's place. the key element
-// collapses itself; set() re-renders.
+// filter). the key element collapses itself; set() re-renders.
 //
 // a section's rows partition one family, and a row is no statement about a
 // feature outside it — so a feature every row admits is outside the section,
@@ -180,21 +177,11 @@ export function initKey(map, onFilter) {
             r.pred ? ` data-row="${si}.${ri}"` : ''}>${
             escapeHtml(r.label)}</dd-key-row>`;
     };
-    const choiceHtml = (c, si) => c ? `<dd-toggle class="fx-choice"
-        data-section="${si}" value="${escapeHtml(c.value)}">${c.options.map(
-        ([v, label]) => `<button value="${escapeHtml(v)}">${
-        escapeHtml(label)}</button>`).join('')}</dd-toggle>` : '';
     const render = () => {
         el.innerHTML = sections.map((s, si) => `<dd-key-group label="${
-            escapeHtml(s.label)}">${choiceHtml(s.choice, si)}${s.rows.map(
-            (r, ri) => rowHtml(r, si, ri)).join('')}</dd-key-group>`).join('');
+            escapeHtml(s.label)}">${s.rows.map((r, ri) => rowHtml(r, si, ri))
+            .join('')}</dd-key-group>`).join('');
     };
-
-    // a choice is the app's to act on: it sets the key anew
-    el.addEventListener('change', e => {
-        const t = e.target.closest('.fx-choice');
-        if (t) sections[+t.dataset.section].choice.onChange(t.value);
-    });
 
     el.addEventListener('click', e => {
         const t = e.target.closest('.fx-toggle');

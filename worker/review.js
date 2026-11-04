@@ -3,8 +3,9 @@
 // folds them into the table's `verified` and `verify_notes`. a write needs a
 // cloudflare access login, checked here as well as at the edge, so a dropped
 // path rule cannot open it. the jump host's audit writes with the AGENT
-// bearer instead, and its verdicts are signed `agent`. reads are open: a verdict is public within the
-// quarter hour anyway, and the host reads with no credential at all.
+// bearer instead, and its verdicts are signed `agent`. reads are open: a
+// verdict is public within the quarter hour anyway, and the host reads with
+// no credential at all.
 const TEAM = 'https://datadesk.cloudflareaccess.com'
 // `open` takes a verdict back: the claim awaits review again
 const VERDICTS = ['confirmed', 'refuted', 'unclear', 'open']

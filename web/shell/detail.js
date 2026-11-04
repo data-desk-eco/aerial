@@ -82,8 +82,8 @@ export const setOverlapping = (features, i = 0) => {
 // moveend too). an unchanged card is not re-rendered, which would drop
 // whatever the reader had selected inside it.
 export function showDetail(feature, fromPermalink, force) {
-    if (!force && shown && shown.n === overlapping.length && shown.i === overlapIndex
-        && sameProps(shown.feature.properties, feature.properties)) return;
+    if (!force && shown && shown.n === overlapping.length
+        && shown.i === overlapIndex && sameProps(shown.feature.properties, feature.properties)) return;
     render(feature, fromPermalink);
 }
 

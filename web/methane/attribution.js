@@ -33,7 +33,8 @@ function recordHtml(rec) {
         + `(confidence: ${escapeHtml(rec.confidence)})</span>` : '';
     const para = rec.paragraph
         ? `<p class="plume-para">${escapeHtml(rec.paragraph)}</p>` : '';
-    return `<div class="plume-attrib">${escapeHtml(rec.source_label || '')} ${confidence}</div>
+    return `<div class="plume-attrib">${escapeHtml(rec.source_label || '')
+        } ${confidence}</div>
         ${para}${evidence}`;
 }
 

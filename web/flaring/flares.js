@@ -1,32 +1,28 @@
-// both flaring families, in the engine. data-desk/flares (s2 clusters) and
-// eog/flares (vnf sites) are a row per site with its quarterly history nested
-// in `quarters`, each small enough to be held as an engine buffer
-// (shell/data.js), so a viewport is one statement: the window summed, the
+// vnf flaring, in the engine. eog/flares is a row per site with its
+// quarterly history nested in `quarters`, small enough to be held as an
+// engine buffer (shell/data.js), so a window is one statement: summed, the
 // site rated and named, and the rows out as the map's properties. the
 // per-date series is read per site on card open, off the object its cell
-// names, which the engine computes from the site's position.
+// names, which the engine computes from the site's position. the sentinels
+// are live (live.js), not read here.
 
 import { sql, from } from '../shell/data.js';
 import { objects } from '../shell/archive.js';
 import { quote, quarterKey } from '../shell/util.js';
 
-// s2: the archive's floor; a rate off three looks is noise, so below it the
-// count is reported and no rate. vnf: the share of the window's nights the
-// sky was read; below it a platform was grounded, and there is no rate
-const MIN_LOOKS = 10, COVERAGE_MIN = 0.8, TERMINAL_M = 7500;
+// the share of the window's nights the sky was read; below it a platform
+// was grounded, and there is no rate
+const COVERAGE_MIN = 0.8, TERMINAL_M = 7500;
 
 // no keys is no window, and admits every quarter
 const ticked = (d, keys) => keys.size
     ? `${quarterKey(d)} IN (${[...keys].map(quote).join(', ')})` : 'true';
 
-// the one reducer both families' `quarters` go through, so no caller can
+// the one reducer `quarters` goes through, so no caller can
 // redefine persistence without changing how it reads. `clear` is the
 // cloud-free count a rate divides by, and `detections_clear` the only
 // numerator that pairs with it; `observations` is every look. `n` counts the
 // quarters kept: 0 means the window measured nothing, not zero.
-//
-// days, observations and clear count days; detections count rows, so an s2
-// rate can pass 1 and is clamped.
 //
 // a field is null unless every kept quarter carried it: summing a null as 0
 // turns "we never counted the passes" into "no pass was ever made".
@@ -50,27 +46,6 @@ const site = (src, keys, where, cols) => `
             WHERE abs(t.lat - f.lat) < ${TERMINAL_M / 111320}
               AND ${D} <= ${TERMINAL_M}) AS terminal, w.*
     FROM ${src} AS f, LATERAL ${reduce(keys)} AS w WHERE ${where}`;
-
-// s2 clusters, rated over the ticked quarters. a producer with no clear-sky
-// pair divides by every pass: a rate a shade low, and `observations` null so
-// the card says cloud-free unknown. `rank` is what the gate ranks on: one
-// quarter puts 90% of sites under MIN_LOOKS, so the published whole-history
-// rate stands in, and a site nothing rated stays null (config.js decides)
-export const s2 = (src, keys, where = 'true') => `
-    SELECT coalesce(terminal, detection_count::BIGINT || ' detection'
-            || CASE detection_count WHEN 1 THEN '' ELSE 's' END) AS name,
-        'flare' AS kind, terminal, lat, lon, id, max_b12,
-        detection_count, rate AS persistence,
-        CASE WHEN n > 0 THEN observations END AS passes,
-        clear AS observations, coalesce(rate, published) AS rank
-    FROM (SELECT *,
-        CASE WHEN clear IS NULL THEN detections
-            ELSE detections_clear END AS detection_count,
-        CASE WHEN n > 0 THEN coalesce(clear, observations) END AS looks,
-        CASE WHEN looks >= ${MIN_LOOKS}
-            THEN least(1, detection_count / looks) END AS rate
-        FROM (${site(src, keys, where,
-            'f.max_b12, f.persistence AS published')}))`;
 
 // vnf sites, brightest first. both counts are clear nights, so the ratio is
 // a rate; null, not 0, where too little was read or no night was clear:
@@ -114,7 +89,7 @@ export const readVNF = async (range, keys) => sql(`SELECT * FROM (${vnf(
     await src('eog'), keys, inWindow(range), true)})
     WHERE persistence IS NOT NULL`);
 
-// #flare= names a vnf site; on this branch an s2 one is live.js's
+// #flare= names a vnf site, where it names no live one (live.js)
 export const readSite = async (id, keys) => (await sql(vnf(await src('eog'),
     keys, `f.id = ${quote(String(id))}`)))[0] ?? null;
 

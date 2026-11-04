@@ -1,6 +1,6 @@
 // the scale each flaring instrument reads on: the stops the intensity ramp
 // steps at (layers.js owns the ramp) and the floor below which a site is not
-// drawn. both draw at once, so there is no current mode: a feature carries its
+// drawn. all draw at once, so there is no current mode: a feature carries its
 // family and every reader looks its table up.
 
 import { RAMP } from '../layers.js';

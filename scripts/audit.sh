@@ -21,7 +21,7 @@ curl -sfI "localhost:$PORT/" >/dev/null \
     document.querySelector('#intro [data-close]').click();
     await wait(15000);
     const f = aerial.map.queryRenderedFeatures(
-        { layers: ['live', 'vnf'] })[0];
+        { layers: ['s2', 'vnf'] })[0];
     if (f) aerial.map.fire('click', { point: aerial.map.project(
         f.geometry.coordinates), lngLat: { lng: f.geometry.coordinates[0],
         lat: f.geometry.coordinates[1] }, originalEvent: {} });

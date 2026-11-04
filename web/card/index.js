@@ -9,13 +9,13 @@ import { dateInQuarters, formatDate } from '../shell/util.js';
 import { renderChart } from './chart.js';
 import { initOverlays, clearOverlays } from './overlays.js';
 import { greyMarkings, choose } from '../sites.js';
-import flare from './flare.js';
+import s2 from './s2.js';
 import vnf from './vnf.js';
 import s3 from './s3.js';
 import plume from './plume.js';
 
-const BODIES = { live: flare, s3, vnf, plume };
-const bodyOf = p => BODIES[p.kind] ?? BODIES.live;
+const BODIES = { s2, s3, vnf, plume };
+const bodyOf = p => BODIES[p.kind] ?? BODIES.s2;
 
 export let map = null;
 let quarterKeys = () => new Set();
@@ -60,6 +60,19 @@ const near = name =>
 export const siteTitle = (p, fallback) =>
     ({ text: (p.terminal ? near(p.name) : p.name) || fallback });
 
+// a live instrument's site (flaring/live.js): its card fills in as reads
+// land, says Loading… until every scene it can has looked at the site,
+// reads the site's last 90 days on open and 90 more on a scroll past the
+// rows' end. hoisted, as the bodies call it while this module is loading
+export function liveBody(x) {
+    return {
+        title: p => ({ ...siteTitle(p, 'Unknown facility'),
+                       note: p.loading && 'Loading…' }),
+        fetch: p => (x.deepen(p.id), Promise.resolve(x.series(p.id))),
+        more: p => x.older(p.id),
+    };
+}
+
 // ── detail hooks ──
 
 export const cardTitle = p => bodyOf(p).title(p);
@@ -101,7 +114,8 @@ let scrolled = null;
 const box = l => l.closest('.visible')?.shadowRoot?.querySelector('.box');
 const reopen = p => {
     const l = document.getElementById('events-list');
-    if (l?.querySelector('.event-item')) scrolled = [l.scrollTop, box(l)?.scrollTop];
+    if (l?.querySelector('.event-item'))
+        scrolled = [l.scrollTop, box(l)?.scrollTop];
     rerender(() => showDetail(featureOf(p), true, moved));
 };
 
@@ -137,7 +151,7 @@ const pct = v => `${Math.round(v * 100)}%`;
 // live site counts every detection it lists
 const seriesStats = (p, b) => [
     ['Instrument', b.instrument],
-    [p.observations == null || p.kind === 'live' || p.kind === 's3'
+    [p.observations == null || p.kind === 's2' || p.kind === 's3'
         ? 'Detections' : 'Detections (clear)',
         p.detection_count],
     ['Persistence', p.persistence != null ? pct(p.persistence) : '—'],

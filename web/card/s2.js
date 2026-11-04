@@ -1,14 +1,11 @@
-// the s2 hotspot body: the series card over the dates this browser's own
-// reads found (flaring/live.js), so it fills in as they land, its title
-// saying Loading… until every scene it can has looked at the site (its card
-// open, live.js deepen() reads its last 90 days, and a scroll past its
-// rows' end 90 more, older()). a
-// date draws the pixels the detector found; and only this family has the
-// copernicus scene for the selected date, and a csv of the series listed.
+// the s2 hotspot body: the series card over the dates burnoff's service
+// found (liveBody). a date draws the pixels the detector found; and only
+// this family has the copernicus scene for the selected date, and a csv of
+// the series listed.
 
 import { MODE } from '../flaring/render.js';
 import { s2 } from '../flaring/live.js';
-import { map, current, currentDets, selectedDetection, coords, siteTitle }
+import { map, current, currentDets, selectedDetection, coords, liveBody }
     from './index.js';
 import { pixelFootprint } from './overlays.js';
 
@@ -49,7 +46,7 @@ function downloadCSV() {
 }
 
 export default {
-    source: 'live',
+    source: 's2',
     cfg: MODE.s2,
     instrument: 'S2',
     passLabel: 'Passes',
@@ -64,10 +61,7 @@ export default {
             and solar panels in a high sun can look like a fire.</p>
         <p>Each date lists what the detector found. Select one to draw its
             pixels on the map, or open the scene.</p>` },
-    title: p => ({ ...siteTitle(p, 'Unknown facility'),
-                   note: p.loading && 'Loading…' }),
-    fetch: p => (s2.deepen(p.id), Promise.resolve(s2.series(p.id))),
-    more: p => s2.older(p.id),
+    ...liveBody(s2),
     select: det => det && pixelFootprint(det, MODE.s2),
     actions: `<dd-btn id="open-image-btn">Open image</dd-btn>
               <dd-btn id="download-btn">Download CSV</dd-btn>`,

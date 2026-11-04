@@ -1,7 +1,7 @@
-// aerial — one map, one date window, three layers: s2 flaring, vnf flaring and
-// methane plumes. this is the whole app declaration; shell/app.js mounts it
-// and everything it names lives in the hook modules. it reads and draws, and
-// does nothing else.
+// aerial — one map, one date window, four layers: s2 and s3 hotspots, vnf
+// flaring and methane plumes. this is the whole app declaration;
+// shell/app.js mounts it and everything it names lives in the hook modules.
+// it reads and draws, and does nothing else.
 
 import { mount } from './shell/app.js';
 import { drawWorldmap } from './vendor/dd/worldmap.js';
@@ -10,10 +10,12 @@ import { viewportBbox, ensureMark, ensureLabel }
 import { canon, padBbox, formatDate, debounce }
     from './shell/util.js';
 import { initArchive, objects } from './shell/archive.js';
-import { prefetchData, fc, from, sql } from './shell/data.js';
+import { prefetchData, fc } from './shell/data.js';
 import { MODE } from './flaring/render.js';
-import { MARKS, PIN, AUDIT, RAMP, band, flareIcon, plumeIcon, TAGS,
+import { MARKS, PIN, AUDIT, FLARES, FAMILIES, flareIcon, plumeIcon,
     tagLayer } from './layers.js';
+import { NEAR, HEAT_LAYERS, initHeat } from './heat.js';
+import { ABOUT } from './about.js';
 import { keySections } from './key.js';
 import { readVNF, readSite, quarters, loadTerminals }
     from './flaring/flares.js';
@@ -54,18 +56,11 @@ const GRID_START = `${YEAR - 3}-01-01`, GRID_END = `${YEAR}-12-31`;
 let CTX, readyResolve;
 const whenReady = new Promise(r => readyResolve = r);
 
-// ── the three layers ──
+// ── the layers ──
 
-// on this branch the sentinels are live layers alone, off burnoff's service
-// (flaring/live.js): s2 by day and s3 by night, both drawn
-
-// far out every family is one surface, `heat`: 60k markers placed each
-// frame made the globe crawl. from NEAR in, each family's own layer draws
-// every point. no value is summed, since that would mash t/hr, b12 and
-// radiant heat: a cell is coloured by the mean band it holds
-const FAMILIES = ['live', 's3', 'vnf', 'plumes'], NEAR = 5;
-const LIVE = [s2, s3], each = f => LIVE.forEach(f);
-const BAND = band(MODE);
+// the sentinels are live layers, off burnoff's service (flaring/live.js):
+// s2 by day and s3 by night
+const each = f => [s2, s3].forEach(f);
 
 // a source this app re-reads has to pass the key's live predicates itself:
 // the shell applies them when a row is toggled, not when the data changes.
@@ -77,78 +72,18 @@ function put(id, features) {
         : all);
 }
 // the surface, the outlines and the table follow a layer only when its
-// set of points changes: the live layer is re-set at every read
+// set of points changes: a live layer is re-set at every read
 const drawn = {};
 function setSource(id, features) {
     put(id, features);
-    const k = features.map(f => `${f.properties.id}:${f.properties[
-        f.properties.kind === 'live' ? MODE.s2.prop : MODE.vnf.prop]}`)
-        .join();
+    const k = features.map(({ properties: p }) =>
+        `${p.id}:${p[MODE[p.kind]?.prop]}`).join();
     if (k === drawn[id]) return;
     drawn[id] = k;
     dispatchEvent(new Event('fx-filters'));   // the table drawer re-renders
 }
 const shown = id => (CTX.sources[id]?.features ?? [])
     .filter(f => f.geometry && (CTX.preds ?? []).every(p => p(f.properties)));
-
-// the far surface, in the engine: every point lights the 3×3 of mercator
-// cells around its own, one grid of 2^12 to the world at every zoom (4 px
-// at z4, NEAR's last), so a region keeps its shape as the map zooms. a
-// cell is the mean band of what lights it, rounded: the brightest made it
-// white all over. a row's cells of one band are one rectangle, and the
-// outline is every cell edge only one cell has, joined where they run on.
-// drawn below NEAR, so nearer in it is redone on the way out
-const N = 2 ** 12;
-const lon = i => `(${i}) / ${N} * 360 - 180`;
-const lat = j => `degrees(atan(sinh(pi() * (1 - 2 * (${j}) / ${N}))))`;
-const run = (t, by) => `SELECT *, ${t} - row_number() OVER
-    (PARTITION BY ${by} ORDER BY ${t}) AS g`;
-// the points go in as one string a column, which parses as one literal
-// where 60k rows of VALUES would parse as 60k; the lite build has no csv
-const col = (vs, type) => `unnest(string_split('${vs.join()}', ',')
-    ::${type}[])`;
-const surface = ([x, y, b]) => `
-WITH p AS (SELECT ${col(x, 'DOUBLE')} AS x, ${col(y, 'DOUBLE')} AS y,
-        ${col(b, 'INT')} AS b),
-c AS (SELECT floor((x + 180) / 360 * ${N})::INT + dx AS i,
-        floor((1 - ln(tan(radians(y)) + 1 / cos(radians(y))) / pi()) / 2
-            * ${N})::INT + dy AS j,
-        round(avg(b))::INT AS b
-    FROM p, range(-1, 2) a(dx), range(-1, 2) d(dy)
-    WHERE abs(y) < 85 GROUP BY ALL),
-f AS (SELECT b, j, min(i) AS t0, max(i) + 1 AS t1
-    FROM (${run('i', 'j, b')} FROM c) GROUP BY b, j, g),
-e AS (SELECT q[1] AS o, q[2] AS k, q[3] AS t
-    FROM (SELECT unnest([[0, j, i], [0, j + 1, i], [1, i, j],
-        [1, i + 1, j]]) AS q FROM c)
-    GROUP BY ALL HAVING count(*) = 1),
-s AS (SELECT o, k, min(t) AS t0, max(t) + 1 AS t1
-    FROM (${run('t', 'o, k')} FROM e) GROUP BY o, k, g)
-SELECT b, ${lon('t0')} AS x0, ${lat('j')} AS y0, ${lon('t1')} AS x1,
-    ${lat('j + 1')} AS y1 FROM f
-UNION ALL
-SELECT NULL, ${lon('if(o = 0, t0, k)')}, ${lat('if(o = 0, k, t0)')},
-    ${lon('if(o = 0, t1, k)')}, ${lat('if(o = 0, k, t1)')} FROM s`;
-const box = (a, b, c, d) => [[[a, b], [c, b], [c, d], [a, d], [a, b]]];
-let stale = false, asked = null, heating = 0;
-async function heat() {
-    stale = false;
-    const fs = FAMILIES.flatMap(shown), q = surface([0, 1].map(i =>
-        fs.map(f => +f.geometry.coordinates[i])).concat([fs.map(f =>
-        BAND(f.properties))]));
-    if (q === asked) return;
-    const e = ++heating;
-    asked = q;
-    const rows = !fs.length ? [] : await sql(q).catch(err =>
-        (console.error('surface failed:', err), null));
-    if (rows && e === heating) put('heat', rows.map(
-        ({ b, x0, y0, x1, y1 }) => ({ type: 'Feature', properties: { b },
-            geometry: b == null
-                ? { type: 'LineString', coordinates: [[x0, y0], [x1, y1]] }
-                : { type: 'Polygon', coordinates: box(x0, y0, x1, y1) } })));
-}
-const reheat = debounce(() => CTX.map.getZoom() < NEAR ? heat()
-    : stale = true, 100);
 
 // a layer's read for the ticked window: features, or null to leave it as it
 // is. every family is read whole, as a window's rates are the same wherever
@@ -159,7 +94,7 @@ const READS = {
     plumes: async ({ startDate, endDate }) =>
         CTX.fc(await readPlumes(startDate, endDate)).features,
     // what burnoff's service found
-    live: async () => s2.features(CTX.quarters.keys()),
+    s2: async () => s2.features(CTX.quarters.keys()),
     s3: async () => s3.features(CTX.quarters.keys()),
     // every outline around the view, held in the engine; drawSites draws
     // the ones a detection holds, so there is no source to set
@@ -210,8 +145,8 @@ async function quarterDots() {
     const q = CTX.quarters, pad = padBbox(viewportBbox(CTX.map));
     const vnf = await quarters('eog', pad, GRID_START, GRID_END).catch(err =>
         (console.error('quarter availability:', err), null));
-    const avail = vnf && new Set([...vnf, ...s2.quarters(pad), ...s3.quarters(pad),
-        ...await availableQuartersPlumes(pad, GRID_START, GRID_END)]);
+    const avail = vnf && new Set([...vnf, ...s2.quarters(pad),
+        ...s3.quarters(pad), ...await availableQuartersPlumes(pad, GRID_START, GRID_END)]);
     [...q.buttons()].forEach(b => b.toggleAttribute('unavailable',
         !!avail && !avail.has(q.key(b))));
 }
@@ -251,7 +186,6 @@ async function resolvePlume(id) {
 const empty = { type: 'FeatureCollection', features: [] };
 const props = id => ({ sources }) =>
     sources[id].features.map(f => f.properties);
-const link = (href, text) => `<a href="${href}" target="_blank">${text}</a>`;
 
 mount({
     title: 'Aerial',
@@ -260,89 +194,7 @@ mount({
     search: true,
     audit: AUDIT,
     map: { ...VIEW, minZoom: 1.5, maxZoom: 18 },
-    about: `
-        <div class="region-row">
-            <div class="fx-fine"><div class="fx-secondary">Facility coverage:
-                </div>Fossil fuels<br>Industrial<br>Waste</div>
-            <svg id="modal-worldmap"></svg>
-        </div>
-        <div class="fx-intro">
-            <p>Aerial is a research tool designed for facility-level
-                attribution of satellite emissions observations. Use it to
-                investigate a specific facility or to browse point source
-                emissions globally.</p>
-            <p>In addition to ${link(
-                'https://github.com/data-desk-eco/burnoff',
-                'hotspot detections')} from Sentinel-2 by day and Sentinel-3
-                by night, the map
-                aggregates methane plumes and detections published by ${link('https://methanedata.unep.org/',
-                'UN IMEO')}, ${link('https://data.carbonmapper.org/',
-                'Carbon Mapper')}, ${link(
-                'https://earth.sron.nl/methane-emissions/', 'SRON')} and
-                ${link('https://eogdata.mines.edu/products/vnf/', 'EOG')}
-                and overlays them on facility boundaries derived from
-                ${link('https://globalenergymonitor.org/projects/'
-                + 'global-gas-infrastructure-tracker/',
-                'Global Energy Monitor')}, ${link(
-                'https://doi.org/10.5281/zenodo.7466757', 'EDF')},
-                ${link('https://edx.netl.doe.gov/dataset/'
-                + 'global-oil-gas-features-database', 'NETL')} and
-                ${link('https://www.openstreetmap.org/copyright',
-                'OpenStreetMap')} data.</p>
-            <p>Firm attribution of an observation to a facility requires
-                further research. Experimentally, we use a system of
-                ${link('https://github.com/data-desk-eco/bricolage',
-                'research agents')} running DeepSeek-V4.1-Flash to publish
-                attributions for all newly observed high-resolution methane
-                plumes.</p>
-            <p class="fx-fine fx-secondary">Design by ${link(
-                'https://mikaeldahlen.com/', 'Mikael Dahlén')}.</p>
-        </div>
-        <details class="methods fx-fine">
-            <summary class="fx-secondary"><svg viewBox="0 0 8 4"><path
-                d="M.5.5 4 3.5l3.5-3"/></svg>Sources</summary>
-            <div class="methods-list fx-secondary">
-                <p>Aybar, C. et al. (2022). CloudSEN12, a global dataset for semantic understanding of cloud and cloud shadow in Sentinel-2. <i>Scientific Data 9, 782</i>. ${link(
-                    'https://doi.org/10.1038/s41597-022-01878-2', 'doi.org/10.1038/s41597-022-01878-2')}</p>
-                <p>Batchu, V. V. et al. (2026). Global monitoring of methane point sources using deep learning on hyperspectral radiance measurements from EMIT. <i>Proceedings of the National Academy of Sciences</i>. ${link(
-                    'https://doi.org/10.1073/pnas.2612145123', 'doi.org/10.1073/pnas.2612145123')}</p>
-                <p>Caseiro, A. et al. (2018). Persistent hot spot detection and characterisation using SLSTR. <i>Remote Sensing 10, 1118</i>. ${link(
-                    'https://doi.org/10.3390/rs10071118', 'doi.org/10.3390/rs10071118')}</p>
-                <p>Caseiro, A. et al. (2020). Gas flaring activity and black carbon emissions in 2017 derived from the Sentinel-3A Sea and Land Surface Temperature Radiometer. <i>Earth System Science Data 12, 2137–2155</i>. ${link(
-                    'https://doi.org/10.5194/essd-12-2137-2020', 'doi.org/10.5194/essd-12-2137-2020')}</p>
-                <p>Duren, R. M. et al. (2025). The Carbon Mapper emissions monitoring system. <i>Atmospheric Measurement Techniques 18, 6933–6975</i>. ${link(
-                    'https://doi.org/10.5194/amt-18-6933-2025', 'doi.org/10.5194/amt-18-6933-2025')}</p>
-                <p>Elvidge, C. D. et al. (2013). VIIRS Nightfire: satellite pyrometry at night. <i>Remote Sensing 5, 4423–4449</i>. ${link(
-                    'https://doi.org/10.3390/rs5094423', 'doi.org/10.3390/rs5094423')}</p>
-                <p>Global Energy Monitor (2026).
-                    Global Energy Monitor trackers: oil and gas, LNG,
-                    pipelines, coal, steel, cement and power. <i>Datasets</i>.
-                    ${link('https://globalenergymonitor.org/',
-                    'globalenergymonitor.org')}</p>
-                <p>Haklay, M. and Weber, P. (2008). OpenStreetMap: user-generated street maps. <i>IEEE Pervasive Computing 7, 12–18</i>. ${link(
-                    'https://doi.org/10.1109/MPRV.2008.80', 'doi.org/10.1109/MPRV.2008.80')}</p>
-                <p>Jervis, D. et al. (2025). Global energy sector methane emissions estimated by using facility-level satellite observations. <i>Science</i>. ${link(
-                    'https://doi.org/10.1126/science.adv3183', 'doi.org/10.1126/science.adv3183')}</p>
-                <p>Marchese, F. et al. (2019). A multi-channel algorithm for mapping volcanic thermal anomalies by means of Sentinel-2 MSI and Landsat-8 OLI data. <i>Remote Sensing 11, 2876</i>. ${link(
-                    'https://doi.org/10.3390/rs11232876', 'doi.org/10.3390/rs11232876')}</p>
-                <p>Mateo-García, G. et al. (2025). Artificial intelligence for methane detection: from continuous monitoring to verified mitigation. <i>arXiv:2511.21777</i>. ${link(
-                    'https://arxiv.org/abs/2511.21777', 'arxiv.org/abs/2511.21777')}</p>
-                <p>Omara, M. et al. (2023). Developing a spatially explicit global oil and gas infrastructure database for characterizing methane emission sources at high resolution. <i>Earth System Science Data 15, 3761–3790</i>. ${link(
-                    'https://doi.org/10.5194/essd-15-3761-2023', 'doi.org/10.5194/essd-15-3761-2023')}</p>
-                <p>Raasveldt, M. and Mühleisen, H. (2019). DuckDB: an embeddable analytical database. <i>Proceedings of the 2019 International Conference on Management of Data (SIGMOD), 1981–1984</i>. ${link(
-                    'https://doi.org/10.1145/3299869.3320212', 'doi.org/10.1145/3299869.3320212')}</p>
-                <p>Rose, K. et al. (2018). Development of an open global oil and gas infrastructure inventory and geodatabase. <i>NETL-TRS-6-2018, National Energy Technology Laboratory</i>. ${link(
-                    'https://doi.org/10.18141/1427573', 'doi.org/10.18141/1427573')}</p>
-                <p>Schuit, B. J. et al. (2023). Automated detection and monitoring of methane super-emitters using satellite data. <i>Atmospheric Chemistry and Physics 23, 9071–9098</i>. ${link(
-                    'https://doi.org/10.5194/acp-23-9071-2023', 'doi.org/10.5194/acp-23-9071-2023')}</p>
-                <p>US EPA (2026). Greenhouse Gas Reporting Program facilities. <i>Envirofacts</i>. ${link(
-                    'https://www.epa.gov/ghgreporting', 'www.epa.gov/ghgreporting')}</p>
-                <p>Varon, D. J. et al. (2018). Quantifying methane point sources from fine-scale satellite observations of atmospheric methane plumes. <i>Atmospheric Measurement Techniques 11, 5673–5686</i>. ${link(
-                    'https://doi.org/10.5194/amt-11-5673-2018', 'doi.org/10.5194/amt-11-5673-2018')}</p>
-                <p>Zhizhin, M. et al. (2026). VIIRS Nightfire super-resolution method for multiyear cataloging of natural gas flaring sites: 2012–2025. <i>Remote Sensing 18, 314</i>. ${link(
-                    'https://doi.org/10.3390/rs18020314', 'doi.org/10.3390/rs18020314')}</p>
-            </div>
-        </details>`,
+    about: ABOUT,
 
     data: {
         files: { attributions: ATTRIBUTIONS },
@@ -354,36 +206,20 @@ mount({
         CTX = ctx;
         // before the layers, or maplibre logs the expression-only ids missing
         MARKS.forEach(id => ensureMark(ctx.map, id));
-        await Promise.all(Object.values(TAGS).map(t =>
-            ensureLabel(ctx.map, `tag-${t}`, { text: t, weight: 300 })));
-        return {
-            sites: empty,
-            live: empty,
-            s3: empty,
-            vnf: empty,
-            plumes: empty,
-            heat: empty,
-        };
+        await Promise.all(FLARES.map(id => ensureLabel(ctx.map,
+            `tag-${id}`, { text: id.toUpperCase(), weight: 300 })));
+        return Object.fromEntries(['sites', ...FAMILIES, 'heat']
+            .map(id => [id, empty]));
     },
 
     // the outlines first, so every detection draws over them
     layers: [
         ...SITE_LAYERS,
-        {
-            // read from s2's zoom, drawn from NEAR and a surface below it
-            id: 'live', type: 'symbol', source: 'live', minzoom: NEAR,
-            layout: { ...PIN, 'icon-image': flareIcon(MODE.s2) },
-        },
-        {
-            id: 's3', type: 'symbol', source: 's3', minzoom: NEAR,
-            layout: { ...PIN, 'icon-image': flareIcon(MODE.s3) },
-        },
-        {
-            // above the sentinels, so the card's heat footprint stays under
-            id: 'vnf', type: 'symbol', source: 'vnf', minzoom: NEAR,
-            layout: { ...PIN, 'icon-image': flareIcon(MODE.vnf) },
-        },
-        tagLayer('live'), tagLayer('s3'), tagLayer('vnf'),
+        // drawn from NEAR, and a surface below it (heat.js); vnf above
+        // the sentinels, so the card's heat footprint stays under
+        ...FLARES.map(id => ({ id, type: 'symbol', source: id, minzoom: NEAR,
+            layout: { ...PIN, 'icon-image': flareIcon(MODE[id]) } })),
+        ...FLARES.map(tagLayer),
         {
             // no value label: colour already says how much, and the card
             // carries the number
@@ -393,17 +229,7 @@ mount({
                 .filter(Boolean).join(' · ') }),
             layout: { ...PIN, 'icon-image': plumeIcon },
         },
-        // the far surface, its fill and its outline, on the ramp and
-        // opaque: this far out there is no imagery to see through to, and
-        // white at the plume mask's 0.5 read as grey
-        { id: 'heat-fill', type: 'fill', source: 'heat', maxzoom: NEAR,
-          filter: ['==', ['geometry-type'], 'Polygon'],
-          paint: { 'fill-color': ['step',
-              ['get', 'b'], RAMP[0], 1, RAMP[1], 2, RAMP[2]] } },
-        { id: 'heat-line', type: 'line', source: 'heat', maxzoom: NEAR,
-          filter: ['==', ['geometry-type'], 'LineString'],
-          paint: { 'line-color': RAMP[2], 'line-width': 1,
-              'line-opacity': 0.8 } },
+        ...HEAT_LAYERS,
     ],
 
     quarters: {
@@ -438,7 +264,7 @@ mount({
         { label: 'Hotspots (VNF)', rows: props('vnf'),
           cols: ['id', 'name', 'country', 'max_rh', 'detection_count',
                  'observations', 'persistence', 'lat', 'lon'] },
-        { label: 'Hotspots (S2)', rows: props('live'),
+        { label: 'Hotspots (S2)', rows: props('s2'),
           empty: () => s2.busy() && 'Detections loading',
           cols: ['id', 'name', 'max_b12', 'detection_count', 'observations',
                  'persistence', 'lat', 'lon'] },
@@ -449,7 +275,7 @@ mount({
     ],
 
     detail: {
-        layers: ['live', 's3', 'vnf', 'plumes'],
+        layers: FAMILIES,
         hashKeys: { flare: resolveFlare, plume: resolvePlume },
         hashKey: p => isPlume(p) ? 'plume' : 'flare',
         idProp: 'id',
@@ -476,41 +302,10 @@ mount({
         ctx.map.on('movestart', () => each(x => x.hold(true)));
         ctx.map.on('moveend', () => { scheduleDots(); SCHEDULED.sites();
             each(x => (x.hold(false), x.view(ctx.map))); });
-        ctx.map.on('zoomend', () => stale && ctx.map.getZoom() < NEAR
-            && heat());
-        addEventListener('fx-filters', reheat);
-        // the numbers are padded with figure spaces, as wide as a digit in
-        // tabular figures (shell.css), so the line keeps its width
-        const pad = v => String(Math.floor(100 * v)).padStart(3, '\u2007');
-        for (const [id, x] of [['live', s2], ['s3', s3]]) {
-            // the live reads land a block at a time: redrawn at most once a
-            // second while they do, and never while the map moves
-            let soon, said, ran;
-            const redraw = () => ctx.map.isMoving() ? ctx.map.once('moveend',
-                redraw) : (soon = null, REFRESH[id](),
-                dispatchEvent(new Event('fx-rows')));
-            x.onChange(() => soon ??= setTimeout(redraw, 1000));
-            // the view's search in the status line as it changes, or a view
-            // is new, taken down once it is done, but only if this view saw
-            // it short of done: a view already searched says nothing. reads
-            // further out change nothing it says, and do not hold it up. out
-            // of reach of the live reads, a line says to zoom in. each
-            // sentinel has its lines
-            x.onRead(fresh => {
-                const z = ctx.map.getZoom(), p = z >= x.zoom && x.progress();
-                ctx.status('zoom' + id, z < x.zoom && z >= x.zoom - 2
-                    ? `Zoom in to detect ${x.label} hotspots` : null);
-                if (z < x.zoom) return said = null, ctx.status(id);
-                if (!p) return;
-                const [a, b] = p, say = a < 1
-                    ? `Recent ${x.label} hotspots: ${pad(a)}%`
-                    : `Older ${x.label} hotspots: ${pad(b)}%`;
-                if (fresh) ran = a < 1 || b < 1;
-                if (!ran || !x.busy()) return said = null, ctx.status(id);
-                if (fresh || say !== said)
-                    said = say, ctx.status(id, say, a < 1 ? a : b);
-            });
-        }
+        initHeat(ctx.map, () => FAMILIES.flatMap(shown),
+            fs => put('heat', fs));
+        each(x => x.watch(ctx.map, ctx.status, () => (REFRESH[x.kind](),
+            dispatchEvent(new Event('fx-rows')))));
 
         // an outline is drawn while a drawn detection is inside it: after
         // any layer is re-set, and after the key re-filters them

@@ -41,7 +41,7 @@ const inside = (p, [w, s, e, n]) =>
 const LIT = 2;
 const summer = (d, lat) => (+d.slice(5, 7) + (lat < 0 ? 2 : 8)) % 12 < 5;
 const S2 = {
-    fn: 'sites', kind: 'live', label: 'S2', zoom: 12, block: 0.1,
+    fn: 'sites', kind: 's2', label: 'S2', zoom: 12, block: 0.1,
     idM: 40, siteM: 100, clear: 0.6, minLooks: 10, first: '2022-01-25',
     card: 0.004, value: f => f?.max_b12,
     drawn: s => {
@@ -233,7 +233,7 @@ export function live(spec) {
                 observations: clear.length,
                 persistence: clear.length >= spec.minLooks
                     ? Math.min(1, n / clear.length) : null } };
-        }).filter(f => f.properties[MODE[label.toLowerCase()].prop] > 0);
+        }).filter(f => f.properties[MODE[kind].prop] > 0);
     }
     // a link's site: its own id, else the one held near where it was found
     const at = id => (([lat, lon]) => ({ lat, lon }))(id.slice(id
@@ -268,11 +268,41 @@ export function live(spec) {
         .filter(([, l]) => l.flare).sort(([a], [b]) => a < b ? -1 : 1)
         .map(([date, { flare: f }]) => ({ date, ...spec.row(f) }));
 
-    return { kind, label, zoom: spec.zoom, view, progress, busy, hold,
-             features, site, quarters, deepen, older, series,
-             onRead: fn => read = fn, onChange: fn => changed = fn,
-             debug: { sites, queue, got } };
+    // ── the page: redraw() at most once a second while reads land, and
+    // never while the map moves; and the view's search in the status line
+    // as it changes, or a view is new, taken down once it is done, but only
+    // if this view saw it short of done: a view already searched says
+    // nothing. reads further out change nothing it says, and do not hold
+    // it up. just out of reach, a line says to zoom in ──
+
+    function watch(map, status, redraw) {
+        let soon, said, ran;
+        const draw = () => map.isMoving() ? map.once('moveend', draw)
+            : (soon = null, redraw());
+        changed = () => soon ??= setTimeout(draw, 1000);
+        read = fresh => {
+            const z = map.getZoom(), p = z >= spec.zoom && progress();
+            status('zoom' + kind, z < spec.zoom && z >= spec.zoom - 2
+                ? `Zoom in to detect ${label} hotspots` : null);
+            if (z < spec.zoom) return said = null, status(kind);
+            if (!p) return;
+            const [a, b] = p, say = a < 1
+                ? `Recent ${label} hotspots: ${pct(a)}%`
+                : `Older ${label} hotspots: ${pct(b)}%`;
+            if (fresh) ran = a < 1 || b < 1;
+            if (!ran || !busy()) return said = null, status(kind);
+            if (fresh || say !== said)
+                said = say, status(kind, say, a < 1 ? a : b);
+        };
+    }
+
+    return { kind, view, busy, hold, watch, features, site, quarters,
+             deepen, older, series, debug: { sites, queue, got } };
 }
+
+// padded with figure spaces, as wide as a digit in tabular figures
+// (shell.css), so the line keeps its width
+const pct = v => String(Math.floor(100 * v)).padStart(3, '\u2007');
 
 export const s2 = live(S2), s3 = live(S3);
 globalThis.burnoff = { s2: s2.debug, s3: s3.debug };

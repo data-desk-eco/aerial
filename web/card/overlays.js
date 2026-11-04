@@ -10,7 +10,7 @@ import { greyMarkings, choose } from '../sites.js';
 
 const FOOTPRINT = 'detection-footprint';   // the layer id and its source
 const PIXELS = 'detection-pixels';         // the source, and its layers' stem
-const UNDER = 'live';   // the lowest flaring layer, which overlays sit under
+const UNDER = 's2';    // the lowest flaring layer, which overlays sit under
 let map = null;
 export const initOverlays = m => { map = m; };
 

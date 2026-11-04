@@ -10,6 +10,7 @@ import { lines } from './vendor/dd/dd.js';
 import { objects } from './shell/archive.js';
 import { sql, from } from './shell/data.js';
 import { ensureLabel } from './shell/map.js';
+import { FLARES, FAMILIES } from './layers.js';
 
 // each kind under its sector, the subtitle's first word
 const SECTORS = {
@@ -44,8 +45,6 @@ const siteLabel = ({ name, kind, operator }) => {
 
 // below this a refinery is a few pixels and the outlines are noise
 export const SITE_ZOOM = 10;
-// the layers whose points an outline must hold to be drawn
-const HELD_BY = ['live', 's3', 'vnf', 'plumes'];
 // how far outside its outline a detection still holds it, in degrees (~500 m):
 // a vnf pixel is 375 m, and a cluster's centre need not fall inside
 const REACH = 0.005;
@@ -105,7 +104,7 @@ let epoch = 0, drawn = null, asked = null, holds = new Map(),
 const str = v => `'${String(v).replace(/'/g, "''")}'`;
 export async function drawSites(map, shown) {
     if (map.getZoom() < SITE_ZOOM) return;
-    const points = HELD_BY.flatMap(id => shown(id)).filter(f =>
+    const points = FAMILIES.flatMap(id => shown(id)).filter(f =>
         f.geometry && inside(f.geometry.coordinates, held, REACH))
         .map(({ properties: { id }, geometry: { coordinates: [x, y] } }) =>
             `(${str(id)}, ${+x}, ${+y})`).join();
@@ -151,7 +150,7 @@ export async function drawSites(map, shown) {
 // flaring card also greys its facility's flaring markings, so its imagery
 // shows through. one writer of the opacities, so nothing undoes another
 const FADE = 0.35, FAINT = 0.12, GREY = 0.6;
-const GREYED = ['live', 's3', 'vnf', 'live-tag', 's3-tag', 'vnf-tag'];
+const GREYED = FLARES.flatMap(id => [id, `${id}-tag`]);
 const MARKINGS = [...GREYED, 'plumes'];
 const OPACITY = { 'sites': 'line-opacity', 'sites-inset': 'line-opacity',
     ...Object.fromEntries(MARKINGS.map(id => [id, 'icon-opacity'])) };

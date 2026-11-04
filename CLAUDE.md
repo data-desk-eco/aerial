@@ -1,15 +1,17 @@
 # aerial
 
 one map of two ways the oil and gas industry puts carbon into the air: gas it
-burns and gas it leaks. flaring is Sentinel-2 archive clusters (S2) and VIIRS
-Nightfire looks (VNF), a layer each and both drawn at once; methane plumes are
-the third layer. one quarter grid sets the date window for all three, and a
-quarter greys only when no layer covers it.
+burns and gas it leaks. flaring is hotspots: Sentinel-2 by day (S2) and
+Sentinel-3 by night (S3), live off burnoff's service, and VIIRS Nightfire
+looks (VNF) off the archive, a layer each and all drawn at once; methane
+plumes are the fourth layer. one quarter grid sets the date window for all
+of them, and a quarter greys only when no layer covers it.
 
-aerial reads parquet off the Data Desk archive with DuckDB and draws it, and does
-nothing else: no detection, no publishing, no live third-party api. the one
-exception is `/review`, behind cloudflare access: a person's verdict on each
-new attribution goes to `worker/review.js`, and the jump host folds it into the
+aerial reads parquet off the Data Desk archive with DuckDB and burnoff's
+service over quack, and draws them, and does nothing else: no publishing,
+and no detection but s2's fallback (below). the one exception is
+`/review`, behind cloudflare access: a person's verdict on each new
+attribution goes to `worker/review.js`, and the jump host folds it into the
 archive. the map shows a claim from a later run only once it is confirmed.
 
 `web/config.js` is the declaration `mount()` takes; everything aerial-specific
@@ -43,28 +45,27 @@ it puts in them, in `--dd-*` tokens only. `make audit` runs
 deviation not declared in `AUDIT` (`layers.js`): the data rasters. a new deviation is a line there, argued in its comment.
 change the elements in the design repository, never in vendor/.
 
-## the three families
+## the families
 
-**flaring.** `flaring/flares.js` is both families: a statement per window,
-the whole world, over `data-desk/flares` (S2 clusters) or `eog/flares` (VNF
-sites), one row per site with its quarterly history nested in `quarters`, both held as engine
-buffers. the per-date series, `data-desk/detections` and `eog/detections`, is
-read per site on card open. every eog detections row is a positive detection;
-the looks that found nothing are `eog/observations`, which aerial does not read
-(see invariants). the S2 methodology is s2-flares, run in the etl; aerial is a
-viewer. a pan reads nothing: every family is drawn whole and maplibre
-draws what is in view. below z5 all three are one surface, `heat` (60k
-markers placed each frame made the globe crawl): one statement grids every
+**vnf.** `flaring/flares.js` is a statement per window, the whole world,
+over `eog/flares`, one row per site with its quarterly history nested in
+`quarters`, held as an engine buffer. the per-date series, `eog/detections`,
+is read per site on card open. every eog detections row is a positive
+detection; the looks that found nothing are `eog/observations`, which aerial
+does not read (see invariants). a pan reads nothing: vnf and the plumes are
+drawn whole and maplibre draws what is in view. below z5 every family is
+one surface, `heat` (`heat.js`; 60k markers placed each frame made the
+globe crawl): one statement grids every
 point the key passes into one grid of mercator cells (2^12 to the world,
 4 px at z4) at every zoom, each lighting the 3×3
 around its own at the mean band (`band`, `layers.js`) of what lights it,
 drawn opaque on the ramp with a 1 px white outline, the edges only one cell
 has, as a plume mask is; from z5
-each family draws every point (S2 is 631 sites in 47 ms, VNF 21k in 0.4 s; per viewport, flares
+each family draws every point (VNF 21k in 0.4 s; per viewport, flares
 lagged and churned the card).
 
-both are named after the export LNG terminal they sit on, where one is within
-7.5 km: `loadTerminals` fills the `terminals` table off `gem/infrastructure`
+vnf sites are named after the export LNG terminal they sit on, where one is
+within 7.5 km: `loadTerminals` fills the `terminals` table off `gem/infrastructure`
 on the card lane, and a site drawn before it lands is renamed on the next
 refresh.
 
@@ -83,13 +84,11 @@ so a table that starts partitioning does not break a reader. its `sizes` say
 what each object weighs and which partitions a table holds (`bytes()`,
 `shell/archive.js`): a hint, listed as the archive publishes.
 
-**live s2 and s3 (experimental, branch burnoff-live).** on this branch the
-sentinels are live layers alone: the archive's s2 sites are not read or
-drawn, and the ui says hotspots, not flares. s2 by day and s3 by
-night are both drawn, in one key group with vnf (`S2/S3/VNF hotspots`), while
-s3 is tested; the shell's key `choice` (`shell/ui.js`, `ctx.setKey`) once
-chose between them and is kept. a `#flare=` link waits for the view's reads
-to hold its site (`until`).
+**live s2 and s3.** the sentinels are live layers: the archive's s2
+clusters (`data-desk/flares`) are not read, and the ui says hotspots, not
+flares. s2 by day and s3 by night are both drawn, in one key group with vnf
+(`S2/S3/VNF hotspots`). a `#flare=` link waits for the view's reads to hold
+its site (`until`).
 
 both come from burnoff's service (its `serve/` on the jump host, at
 `https://dev.datadesk.eco`, `?api=` on the page naming another) over
@@ -127,15 +126,16 @@ north): roofs and solar panels that catch a high sun, which the detector's
 heat test (b8a against b12, burnoff's AGENTS.md) cannot tell from a fire. in
 a year of scenes the heat test took london from ~2000 drawn sites to 87 and
 the summer rule to 54; madrid 704, 114, 43; the permian's sites by a viirs
-flare 327, 308, 301. kind `live` draws, clusters and filters as an s2 site
-(`key.js`, `layers.js` band, FAMILIES) and opens the s2 card
-(`card/flare.js`), named by every detection it lists, cloudy ones too, whose title says Loading…
-in grey until every scene of the year has looked at the site (`loading`), and where a date draws the detector's
-own pixels, each on the ramp by its b12 inside a hairline outline, as a
+flare 327, 308, 301. kind `s2` (its ids still `live:`, as the service
+names them) draws, clusters and filters on s2's stops (`key.js`, `layers.js`
+band) and opens the s2 card (`card/s2.js`, `liveBody` with s3's), named
+by every detection it lists, cloudy ones too, whose title says Loading… in
+grey until every scene of the year has looked at the site (`loading`), and
+where a date draws the detector's own pixels, each on the ramp by its b12 inside a hairline outline, as a
 plume mask is drawn. the table's s2 tab says Detections loading, not No rows
 in view, while the view's search is not done (`busy`; a live redraw
 sends `fx-rows`). one line at the map's top right says what is still being
-read, the newest read's (`status`, `shell/ui.js`): the engine at start, each
+read, the newest read's (`status`, `shell/ui.js`; `watch`, `live.js`): the engine at start, each
 layer's read, and the view's live search, Recent S2 hotspots: x%, then Older
 S2 hotspots: x% (each the mean over the view's squares of their scenes read,
 so it moves with every read, never falls while the view is still and is the
@@ -186,20 +186,26 @@ fired once still).
 web/
   config.js          the declaration: sources, layers, the one refresh path,
                      quarter availability, the table's tabs, deep links
-  layers.js          marking / ramp / colour policy and the key's bands.
+  about.js           the intro and its sources
+  heat.js            the far surface, below z5, in sql
+  layers.js          marking / ramp / colour policy and the key's bands;
+                     FLARES and FAMILIES, the layer ids.
                      shape categorises, colour is measurement
   key.js             the key: a group of bands per family
   sites.js           data-desk/sites, the outlines a detection sits in
   card/              one header, one body per feature kind
-    index.js         the registry, the shared series card,
+    index.js         the registry, the shared series card, liveBody,
                      reselectCurrentFeature
     overlays.js      the open card's map overlays
     chart.js         the intensity chart
-    flare.js s3.js vnf.js plume.js   the bodies
+    s2.js s3.js vnf.js plume.js   the bodies
   flaring/
     render.js        MODE: the scale each instrument reads on, the S2 floor
-    flares.js        both families in sql: the reducer, s2() and vnf(),
-                     the terminals, availability, coverage(), the series
+    flares.js        vnf in sql: the reducer, vnf(), the terminals,
+                     availability, the series
+    live.js          s2 and s3 off burnoff's service, live(spec) each
+    service.js       the quack pool
+    fallback.js      s2's detector in the browser, where the service fails
   methane/           plumes.js reader, attribution.js, candidates.js,
                      overlay.js, mask.js
   shell/             app.js mount, map.js, ui.js, detail.js, table.js,
@@ -238,7 +244,7 @@ divides by; `observations` is every look. the only numerator that pairs with
 broke `lng-flaring` — and reading `observations` where `clear` belongs
 silently redefines persistence.
 
-**one reducer.** both families go through `reduce` in `flaring/flares.js`, a
+**one reducer.** vnf's window goes through `reduce` in `flaring/flares.js`, a
 subquery over `unnest(quarters)`. it returns null, not 0, for any field absent
 from any quarter in the window (`count(q.x) = count(*)`): summing that as zero
 turns "we never counted the passes" into "no pass was ever made". keep it the
@@ -246,17 +252,13 @@ single path.
 
 **do not wire through the published `persistence` column** for the card's
 rate: the app recomputes over exactly the ticked quarters, and the published
-value would stop the quarter picker affecting the number. its use is as the
-gate's `rank` fallback (`flares.js`), a different question.
+value would stop the quarter picker affecting the number.
 
-**the two null branches stay split.** in S2 a null persistence is unrated and
-passes the gate; in VNF it is a finding — no clear night — and the flare is
-dropped. the split is in `readS2` and `readVNF` (`flares.js`): S2 has no
-persistence gate, VNF keeps `persistence IS NOT NULL`. it is sql, not a layer
-filter, because a cluster counts what its source holds. the old slider at
-0.25 sank the whole archive when S2 coalesced to 0. (on burnoff-live
-`readS2` is gone with the archive's s2 layer; a live site with no rate is
-drawn, as an archive one was.)
+**the null branches stay split.** a live site with no rate is unrated and
+drawn; in VNF a null persistence is a finding — no clear night — and the
+flare is dropped: `readVNF` (`flares.js`) keeps `persistence IS NOT NULL`,
+in sql, not a layer filter. the old slider at 0.25 sank the whole archive
+when S2 coalesced to 0.
 
 **intensity is the key's.** there is no persistence slider: it only hid
 flares. B12 reflectance and radiant heat
@@ -267,8 +269,8 @@ the *maximum*, at exactly the breaks `flareIcon` steps at — `flareBands` in
 about (`p.kind !== kind || …`, `key.js`), so switching a group off drops that
 family and nothing else.
 
-**floors:** `MIN_LOOKS = 10` for S2, `COVERAGE_MIN = 0.8` for VNF, both in
-`flares.js`. below them, publish no rate; the card shows an em dash.
+**floors:** `minLooks` (10 clear looks) for S2 and S3 (`live.js`),
+`COVERAGE_MIN = 0.8` for VNF (`flares.js`). below them, publish no rate; the card shows an em dash.
 
 **`reselectCurrentFeature()` is load-bearing.** every dot carries the numbers
 for the ticked quarters alone, and an open card holds a copy. every layer
@@ -297,11 +299,6 @@ read is a second place to get the pairing wrong.
 **at dense complexes:** sum radiant heat across detection points rather than
 averaging, always check `n_sats`, and read a day with files but no detections
 as cloud, not as zero activity (`docs/ras-laffan-monitoring.md`).
-
-**the negation in the S2 intensity gate is deliberate.**
-`NOT coalesce(f.avg_b12 < floor, false)` (`readS2`) lets a cluster the table
-gives no intensity for through: `avg_b12 >= 0.85` is null for such a row, and
-a null WHERE drops it. (main only: burnoff-live reads no archive s2.)
 
 **VNF has no intensity floor.** a 3 MW floor on the average hid every dim
 flare — most onshore gas plants, and the LNG trains at Darwin and Ichthys.
@@ -356,11 +353,11 @@ the etl that publishes everything this map reads lives in `~/data-desk/etl`;
 `sql/tables/` there holds the definitions and their `*.checks.sql`, which state
 exactly what a reader may rely on.
 
-- `data-desk/flares`, `data-desk/detections` — S2 clusters and their per-date
-  series. flares carries `quarters`: `quarter, days, observations, clear,
-  detections, detections_clear, rh_sum, rh_max`.
-- `eog/flares`, `eog/detections` — VNF sites and their nightly detections, the
-  same `quarters` struct. `eog/observations` exists and is not read here.
+- `eog/flares`, `eog/detections` — VNF sites and their nightly detections.
+  flares carries `quarters`: `quarter, days, observations, clear,
+  detections, detections_clear, rh_sum, rh_max`. `data-desk/flares`, the
+  archive's S2 clusters, is not read: the sentinels are live; nor is
+  `eog/observations`.
 - `<provider>/detections` — methane plumes, `kind = 'plume'`, with `valid`
   false on a retrieval the producer does not trust, and `wind_ms`,
   `wind_from_deg` where the producer gives a wind.

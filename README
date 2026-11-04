@@ -5,58 +5,59 @@ gas it leaks — on one map, under one date window.
 
   make serve     # static server on :8000
   make test      # the reducer's rules, in node
+  make audit     # the page against the dd brand, headless
   make vendor    # re-vendor maplibre, duckdb, the dd design system and inter
 
-Three detection layers, all drawn at once, one quarter grid over all of them:
+Four detection layers, all drawn at once, one quarter grid over all of them:
 
-  - S2: Sentinel-2 flare clusters from the data-desk tables in the Data Desk
-    CloudFerro archive, read through DuckDB-Wasm.
-  - VNF: VIIRS Nightfire, from the eog tables in the same archive, which sees
-    flares at night and measures their radiant heat.
+  - S2 and S3: Sentinel-2 hotspots by day and Sentinel-3 hotspots by night,
+    read live from burnoff's service (github.com/data-desk-eco/burnoff) for
+    the view. Where the service fails, S2 runs burnoff's detector in the
+    browser.
+  - VNF: VIIRS Nightfire, from the eog tables in the Data Desk archive, read
+    through DuckDB-Wasm, which sees flares at night and measures their
+    radiant heat.
   - Methane: dated plume observations from Carbon Mapper, IMEO, SRON, Nature
     Trace and Data Desk. Most carry a measured release rate; Nature Trace
     carries a modeled methane enhancement (ppm·m) and a model confidence, shown
     in place of a rate so it is never read as a mass.
 
-A fourth, experimental layer, live S2, runs the burnoff detector in the
-browser from zoom 12 (web/flaring/live.js).
+Aerial reads and draws. It publishes nothing: the archive it draws is built by
+the etl repo, and the hotspots by burnoff.
 
-Aerial reads. It publishes nothing, and except for live S2 it detects nothing: the archive it
-draws is built by the etl repo, and the methodology behind the Sentinel-2 tables
-is s2-flares (github.com/data-desk-eco/s2-flares).
-
-Shape says whether a feature burned or leaked, and colour says only how much —
-flaring on the Data Desk intensity ramp, methane on viridis, because gas
-released and gas burned are not one quantity. The two flaring instruments read
-on scales that are not comparable either, so the key states each one's units and
-its rows are that layer's colour bands: turn a band off to filter it out, turn
-them all off to take the layer off the map.
+Shape says whether a feature burned or leaked, and colour says only how much,
+each family on its own scale of the Data Desk intensity ramp. The scales are
+not comparable, so the key states each one's units and its rows are the
+colour bands: turn a band off to filter it out, turn them all off to take the
+layer off the map.
 
 Where things live:
 
-  web/config.js      the whole app declaration, and the orchestration around it
+  web/config.js      the whole app declaration
+  web/about.js       the intro and its sources
+  web/heat.js        the far surface, below zoom 5
   web/layers.js      marking, ramp and colour policy for every layer
   web/key.js         the key: a group of colour bands per family
+  web/sites.js       facility outlines, and what a selection lights
   web/shell/         the map shell: mount, panels, key, quarters, card, drawer
   web/card/          one card header, one body per feature kind
-  web/nearby.js      the "also here" row across the families
-  web/flaring/       the S2 archive and VNF readers, and the feature builders
-  web/methane/       plume reader, attribution, candidates, licences, overlay
-  web/vendor/        the dd design system, DuckDB, MapLibre, Inter
+  web/flaring/       the live S2 and S3 reads, the VNF reader, the scales
+  web/methane/       plume reader, attribution, candidates, overlay, mask
+  web/vendor/        the dd design system, DuckDB, MapLibre, quack, Inter
 
-web/shell/ was the cartograph library until August 2026; the other maps that
-vendored it now forward here, so it is first-party code. CLAUDE.md carries the
-invariants: read them before changing how a rate is computed.
+CLAUDE.md carries the invariants: read them before changing how a rate is
+computed.
 
-Zero npm dependencies. MapLibre GL and DuckDB-Wasm are vendored; everything else
-is browser built-ins.
+Zero npm dependencies. Every library is vendored; everything else is browser
+built-ins.
 
 References
 
-Faruolo et al. (2024) The DAFI v2 algorithm for gas flare detection
-https://doi.org/10.1088/1748-9326/ad82fb
 Elvidge et al. (2013) VIIRS Nightfire: satellite pyrometry at night
 https://doi.org/10.3390/rs5094423
+Caseiro et al. (2018) Persistent hot spot detection and characterisation using
+SLSTR
+https://doi.org/10.3390/rs10071118
 Jacob et al. (2022) Quantifying methane emissions from the global scale down to
 point sources
 https://doi.org/10.5194/acp-22-9617-2022

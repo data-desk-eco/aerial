@@ -21,7 +21,7 @@ export const keySections = () => [{
     label: `S2/S3/VNF hotspots\n(${MODE.s2.unit}/${MODE.vnf.unit})`,
     rows: s2.map(([a, color, inS2], i) => {
         const [b, , inVNF] = vnf[i], [, , inS3] = s3[i];
-        const ins = [of('live', inS2), of('s3', inS3), of('vnf', inVNF)];
+        const ins = [of('s2', inS2), of('s3', inS3), of('vnf', inVNF)];
         return { swatch: { mark: 'flare', color },
             label: a === b ? a : `${a} / ${b}`,
             pred: p => ins.every(f => f(p)) };

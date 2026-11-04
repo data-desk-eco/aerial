@@ -9,7 +9,7 @@ import { describe, it } from 'node:test';
 
 import { execFileSync } from 'node:child_process';
 
-import { s2, vnf } from '../web/flaring/flares.js';
+import { vnf } from '../web/flaring/flares.js';
 import { quote } from '../web/shell/util.js';
 
 // the statements run in the duckdb cli, as the engine runs them: spatial
@@ -32,14 +32,10 @@ const Q = (quarter, o = {}) => ({
     quarter, days: 90, observations: 80, clear: 40,
     detections: 20, detections_clear: 10, rh_sum: 100, rh_max: 5, ...o,
 });
-const thin = { clear: 4, detections_clear: 2 };
 
-const S2 = { id: 'a1', cell: '81013ffffffffff', lat: 25, lon: 52,
-             first_seen: '2020-01-01', last_seen: '2026-12-31',
-             max_b12: 1, avg_b12: 1, persistence: null };
-const site = (quarters, o = {}, keys = KEYS) =>
-    run(s2(src({ ...S2, quarters, ...o }), keys))[0];
-const VNF = { ...S2, id: 'v1', detail: '', country: '' };
+const VNF = { id: 'v1', cell: '81013ffffffffff', lat: 25, lon: 52,
+              first_seen: '2020-01-01', last_seen: '2026-12-31',
+              detail: '', country: '' };
 const night = (quarters, keys = KEYS) =>
     run(vnf(src({ ...VNF, quarters }), keys));
 
@@ -68,55 +64,10 @@ describe('the reducer', () => {
 
     it('an empty window measures nothing rather than zero', () => {
         assert.equal(night([Q('2025-01-01')]).length, 0);
-        assert.equal(site([Q('2025-01-01')]).passes, null);
     });
 
     it('no ticked quarter is no window, and admits them all', () => {
         assert.equal(night([Q('2025-01-01')], new Set())[0].observations, 40);
-    });
-});
-
-describe('s2', () => {
-    // the only numerator that pairs with `clear` is `detections_clear`
-    it('divides clear-sky detections by clear-sky looks', () => {
-        const p = site([Q('2026-01-01'), Q('2026-04-01')]);
-        assert.equal(p.detection_count, 20);
-        assert.equal(p.observations, 80);
-        assert.equal(p.persistence, 20 / 80);
-        assert.equal(p.name, '20 detections');
-    });
-
-    // below MIN_LOOKS a rate is noise: report the count and no rate
-    it('publishes no rate under the looks floor', () => {
-        const p = site([Q('2026-01-01', thin)]);
-        assert.equal(p.detection_count, 2);
-        assert.equal(p.persistence, null);
-    });
-
-    // s2 can write several blobs for one site on one day, so the numerator
-    // counts rows where the denominator counts days
-    it('clamps a rate the grain can push over 1', () => {
-        const p = site([Q('2026-01-01', { detections_clear: 400 })]);
-        assert.equal(p.persistence, 1);
-    });
-
-    // no cloud mask: every pass is the denominator, and the card says the
-    // cloud-free count is unknown rather than claiming one
-    it('falls back to every look where no clear count is published', () => {
-        const p = site(
-            [Q('2026-01-01', { clear: null, detections_clear: null })]);
-        assert.equal(p.detection_count, 20);
-        assert.equal(p.observations, null);
-        assert.equal(p.persistence, 20 / 80);
-    });
-
-    // the gate ranks on the window's rate, then the published one, and leaves a
-    // site nothing has ever rated unrated — the old slider hid such a site
-    it('ranks on the window, then the published rate, then not at all', () => {
-        assert.equal(site([Q('2026-01-01')], { persistence: 0.9 }).rank, 0.25);
-        assert.equal(site([Q('2026-01-01', thin)], { persistence: 0.9 }).rank,
-            0.9);
-        assert.equal(site([Q('2026-01-01', thin)]).rank, null);
     });
 });
 

@@ -88,9 +88,6 @@ export async function mount(config) {
     let applyFilters;
     const key = initKey(map, () => applyFilters());
     applyFilters = wireFilters(map, ctx.sources, key.preds, ctx);
-    // ctx.setKey re-sets it, as a key choice does: rows drawn anew, so
-    // every row on and the filter re-applied
-    ctx.setKey = sections => { key.set(sections); applyFilters(); };
     if (config.key) await key.set(config.key(ctx));
     applyFilters(true);
 

@@ -52,7 +52,7 @@ export const plumeIcon = ['case',
 // same across the families the far surface mixes; no value is the foot, as
 // in flareIcon. MODE's stops are passed in, as render.js imports this module
 export const band = ({ s2, vnf, s3 }) => {
-    const of = { live: s2, vnf, s3,
+    const of = { s2, vnf, s3,
         plume: { prop: 'rate_kg_h', stops: [0, ...PLUME_STOPS] } };
     return p => {
         const c = of[p.kind], v = c && p[c.prop], [, mid, hi] = c?.stops ?? [];
@@ -106,13 +106,14 @@ export const RATE_LABEL = {
     'text-font': ['Montserrat Regular'], 'text-size': 11,
     'text-anchor': 'bottom-left', 'text-offset': [0.7, -0.7],
 };
+// the flaring families, which are its instruments too, and every family
+export const FLARES = ['s2', 's3', 'vnf'], FAMILIES = [...FLARES, 'plumes'];
 // a hotspot's instrument, an inter label up and right of it from z10
 // (shell/map.js ensureLabel), never dropped: one marking alone has no key to
 // tell s2's scale from vnf's. a layer of its own over the family's source,
 // as a symbol takes one icon
-export const TAGS = { live: 'S2', s3: 'S3', vnf: 'VNF' };
 export const tagLayer = id => ({
     id: `${id}-tag`, type: 'symbol', source: id, minzoom: 10,
-    layout: { ...PIN, 'icon-image': `tag-${TAGS[id]}`,
+    layout: { ...PIN, 'icon-image': `tag-${id}`,
               'icon-anchor': 'bottom-left', 'icon-offset': [7, -7] },
 });
