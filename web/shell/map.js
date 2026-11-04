@@ -68,5 +68,5 @@ export function wireWorldmap(map, el) {
             : [[a, s, b, n]], 0);
     };
     drawWorldmap(el).then(update);
-    map.on('move', update).on('resize', update);
+    for (const e of ['move', 'resize']) map.on(e, update);
 }
