@@ -55,9 +55,18 @@ export function viewportBbox(map) {
     return [sw.lng, sw.lat, ne.lng, ne.lat];
 }
 
-// the worldmap with the live viewport as its box (pdf:83)
+// the worldmap with the view's true extent as its box (pdf:83): getBounds
+// follows the globe's horizon, where an off-globe corner unprojects to
+// nonsense, and a box across the antimeridian is split in two. no minimum:
+// a deep zoom is a dot
 export function wireWorldmap(map, el) {
-    const update = () => setBoxes(el, [viewportBbox(map)]);
+    const update = () => {
+        const [[w, s], [e, n]] = map.getBounds().toArray(),
+            a = ((w + 180) % 360 + 360) % 360 - 180, b = a + e - w;
+        setBoxes(el, e - w >= 360 ? [[-180, s, 180, n]]
+            : b > 180 ? [[a, s, 180, n], [-180, s, b - 360, n]]
+            : [[a, s, b, n]], 0);
+    };
     drawWorldmap(el).then(update);
-    map.on('move', update);
+    map.on('move', update).on('resize', update);
 }
