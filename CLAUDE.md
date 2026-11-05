@@ -180,7 +180,7 @@ shuts into the ⓘ that raised it. a click groups only the markings within
 2 px of it as ‹ n/N ›. the panels' fold is the kernel's (200 ms, `toggle`
 fired once still).
 
-**hands.** `h` turns on the camera and traces the hands it sees over the
+**hands.** typing `hands` turns on the camera and traces the hands it sees over the
 map, never the camera's picture (`hands.js`). mediapipe's hand landmarker
 runs in a module worker (`hands.worker.js`, the wasm's es module build, the
 gpu delegate on an offscreen canvas) and takes each frame as a transferred

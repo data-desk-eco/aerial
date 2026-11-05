@@ -1,5 +1,5 @@
 // hands: the camera's hands traced over the map, and the camera never shown.
-// `h` turns it on and off. each frame goes to hands.worker.js as a
+// typing hands turns it on and off. each frame goes to hands.worker.js as a
 // VideoFrame, transferred, one in flight, and comes back as points; the
 // video element is never in the page. a pinch of thumb and index grabs the
 // globe and drags it, two pinch, zoom (GAIN times as far as the hands
@@ -45,13 +45,14 @@ const IN = .5, OUT = .7, CLEAR = .2, DWELL = 70, OPEN = .7, FORM = 2000,
     LEAD = 35,
     TIPS = [4, 8, 12, 16, 20];
 
-let on;
+let on, typed = '';
 
 addEventListener('keydown', e => {
     const t = e.composedPath()[0];
-    if (e.key !== 'h' || e.metaKey || e.ctrlKey || e.altKey ||
-        t.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(t.tagName))
-        return;
+    if (e.metaKey || e.ctrlKey || e.altKey || t.isContentEditable ||
+        /INPUT|TEXTAREA|SELECT/.test(t.tagName) ||
+        (typed = (typed + e.key).slice(-5)) !== 'hands') return;
+    typed = '';
     if (on) return stop();
     start().catch(err => { console.warn('hands:', err); stop(); });
 });
