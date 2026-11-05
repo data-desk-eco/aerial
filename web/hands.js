@@ -23,7 +23,7 @@ const RUNS = [[0, 1, 2, 3, 4], [0, 5, 6, 7, 8], [9, 10, 11, 12],
 // STILL px/ms as it does. fingers that cross in the camera's view, a hand
 // curled or bunched, already closed or swinging through, or one frame's
 // brush, are not a pinch
-const IN = .4, OUT = .55, CLEAR = .25, DWELL = 70, OPEN = .55, FORM = 1000,
+const IN = .5, OUT = .7, CLEAR = .2, DWELL = 70, OPEN = .7, FORM = 2000,
     STILL = 1.5, DEPTH = .5,
     // a point is the index's tip past REACH of its knuckle's distance from
     // the wrist, the other fingers' within CURL (an open hand's are near 2)

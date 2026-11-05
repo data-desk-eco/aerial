@@ -186,9 +186,9 @@ runs in a module worker (`hands.worker.js`, the wasm's es module build, the
 gpu delegate on an offscreen canvas) and takes each frame as a transferred
 VideoFrame, one in flight, so the map's thread does no inference. a pinch
 grabs the globe and drags it: the thumb's tip on the index's last bone, in
-3d (depth at half weight), under 0.4 of the palm, the middle tip clear of
-the thumb by 0.25, for 70 ms, held to 0.55; and made, the gap open past
-0.55 in the second before and the hand under 1.5 px/ms, so crossed
+3d (depth at half weight), under 0.5 of the palm, the middle tip clear of
+the thumb by 0.2, for 70 ms, held to 0.7; and made, the gap open past
+0.7 in the two seconds before and the hand under 1.5 px/ms, so crossed
 fingers, a curled or bunched hand, one already closed or swinging through,
 or a brush do not grab. a hand with any point off the window holds
 nothing. a faint ring shows a thumb near the index, a full one a pinch.
