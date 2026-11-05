@@ -43,12 +43,12 @@ export function buildShell(config) {
         ${config.quarters ? QUARTERS : ''}
     </dd-panel>
 
-    <div class="fx-status" id="status">${
-        escapeHtml(lines.get('start'))}</div>
-
     <dd-key class="fx-key" id="key-panel"></dd-key>
 
     <dd-panel class="fx-detail" id="detail" collapsible></dd-panel>
+
+    <div class="fx-status" id="status">${
+        escapeHtml(lines.get('start'))}</div>
 
     ${logo}
 

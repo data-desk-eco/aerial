@@ -157,4 +157,8 @@ export function initTable(ctx) {
             if (width !== sw) ctx.map.fire('moveend');
         }, { once: true });
     });
+    // a phone has no drawer: one left open would hold the card and the
+    // status line in from the right, and pad the map, by its width
+    const phone = matchMedia('(max-width: 768px)');
+    phone.addEventListener('change', () => phone.matches && setWidth(0));
 }

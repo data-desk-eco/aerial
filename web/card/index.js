@@ -242,8 +242,12 @@ function renderEvents(el, detections, b, keep) {
     else if (items.length) {
         const n = Math.min(items.length, rows);
         const gap = parseFloat(getComputedStyle(list).rowGap) || 0;
-        // unrounded, or the list scrolls by a fraction and clips the top row
+        // unrounded, or the list scrolls by a fraction and clips the top row;
+        // measured open, as a shut card's rows are 0 tall
+        const c = el.hasAttribute('collapsed');
+        el.removeAttribute('collapsed');
         const h = items[0].getBoundingClientRect().height;
+        el.toggleAttribute('collapsed', c);
         list.style.maxHeight = `${Math.ceil(h * n + gap * (n - 1))}px`;
     } else {
         chart.innerHTML = '';
