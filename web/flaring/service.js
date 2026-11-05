@@ -1,5 +1,5 @@
 // burnoff's service (data-desk-eco/burnoff, its serve/ on the jump host),
-// over duckdb's quack protocol: `FROM sites(w, s, e, n, 'a', 'b')` and the
+// over duckdb's quack protocol: `FROM s2_sites(w, s, e, n, 'a', 'b')` and the
 // same of s3_sites, each one row of geojson. the client (vendor/quack) is
 // loaded with the first call. it queues a connection's statements, so a few
 // connections serve the reads in flight, each made when first wanted and

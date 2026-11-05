@@ -1,7 +1,7 @@
 // live flaring from burnoff's service (data-desk-eco/burnoff, its serve/ on
 // the jump host, over quack: service.js), which reads the view's scenes off
 // eodata in region, off its store where it holds them: sentinel-2 by day
-// (`sites`) and sentinel-3 by night (`s3_sites`), an instrument each, made
+// (`s2_sites`) and sentinel-3 by night (`s3_sites`), an instrument each, made
 // by live(spec). the view, from the instrument's zoom in, asks for fixed
 // block degree blocks of sites: the last RECENT days STEP at a time first,
 // then the rest back to DAYS a month at a time, the view's middle first.
@@ -39,7 +39,7 @@ const inside = (p, [w, s, e, n]) =>
 const LIT = 2;
 const summer = (d, lat) => (+d.slice(5, 7) + (lat < 0 ? 2 : 8)) % 12 < 5;
 const S2 = {
-    fn: 'sites', kind: 's2', label: 'S2', zoom: 12, block: 0.1,
+    fn: 's2_sites', kind: 's2', label: 'S2', zoom: 12, block: 0.1,
     idM: 40, siteM: 100, clear: 0.6, minLooks: 10, first: '2022-01-25',
     card: 0.004, value: f => f?.max_b12,
     drawn: s => {

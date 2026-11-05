@@ -92,7 +92,7 @@ its site (`until`).
 
 both come from burnoff's service (its `serve/` on the jump host, at
 `https://dev.datadesk.eco`, `?api=` on the page naming another) over
-duckdb's quack protocol: `FROM sites(w, s, e, n, 'a', 'b')` for s2 and
+duckdb's quack protocol: `FROM s2_sites(w, s, e, n, 'a', 'b')` for s2 and
 `s3_sites` for s3, each one row of geojson (`flaring/service.js`, the
 `@quack-protocol/sdk` client vendored in `vendor/quack/` with flechette,
 its one dependency, loaded on the first call; a pool of four connections,
