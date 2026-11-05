@@ -146,9 +146,11 @@ function track(s, [t, hands], { videoWidth: vw, videoHeight: vh }) {
         px = ([x, y]) => [W / 2 + (.5 - x) * vw * k,
             H / 2 + (y - .5) * vh * k];
     s.f = Object.fromEntries(hands.map(([side, h]) => {
-        // a hand with any point off the window holds nothing
+        // a hand with its thumb or index tip off the window holds nothing;
+        // the rest may be off it, as a wrist low in the frame is
         const p = h.map(px), f = s.f[side], dt = t - f?.t, c = mean(p, GRIP),
-            g = p.some(([x, y]) => x < 0 || x > W || y < 0 || y > H)
+            g = [4, 8].some(i => p[i][0] < 0 || p[i][0] > W || p[i][1] < 0
+                || p[i][1] > H)
                 ? { open: f?.open } : grip(f, h, t, vw, vh);
         if (!(dt > 0)) return [side, { t, x: p, dx: p.map(() => [0, 0]),
             c, dc: [0, 0], ...g }];
