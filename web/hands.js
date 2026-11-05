@@ -25,7 +25,7 @@ const RUNS = [[0, 1, 2, 3, 4], [0, 5, 6, 7, 8], [9, 10, 11, 12],
 // STILL px/ms as it does. fingers that cross in the camera's view, a hand
 // curled or bunched, already closed or swinging through, or one frame's
 // brush, are not a pinch
-const IN = .3, OUT = .4, LONG = 1.1, CLEAR = .2, DWELL = 70, OPEN = .7,
+const IN = .35, OUT = .45, LONG = 1.1, CLEAR = .2, DWELL = 70, OPEN = .7,
     FORM = 2000, STILL = 1.5, DEPTH = .5,
     // a point is the index's tip past REACH of its knuckle's distance from
     // the wrist, the other fingers' within CURL (an open hand's are near 2)
@@ -36,10 +36,11 @@ const IN = .3, OUT = .4, LONG = 1.1, CLEAR = .2, DWELL = 70, OPEN = .7,
     DECAY = .03,     // the ease's slowing, per ms: 1 px/ms runs on 33 px
     CUT = 1, BETA = 20, DCUT = 2,   // the filter: Hz, Hz per px/ms, Hz
     // a pinch moves the map by the mean of the thumb and index, GRIP, under
-    // a slower filter, GCUT and GDCUT Hz: seven points, steadier than the two
-    // tips. in the simulation the filter alone takes the step a still hand
-    // jitters by from 0.77 px to 0.44, for 5 px more lag at 1 px/ms
-    GRIP = [2, 3, 4, 5, 6, 7, 8], GCUT = .5, GDCUT = 1,
+    // a slower filter, GCUT and GDCUT Hz, GBETA Hz per px/ms: seven points,
+    // steadier than the two tips. in the simulation the filter alone takes
+    // the step a still hand jitters by from 0.77 px to 0.44, and the slower
+    // speed and BETA a shaky hand's (an 8 Hz tremor) from 0.26 to 0.13
+    GRIP = [2, 3, 4, 5, 6, 7, 8], GCUT = .3, GDCUT = .5, GBETA = 4,
     // the most a point runs on past its frame, ms. tuned in a simulation
     // of 30 Hz frames 25 ms late to a 60 Hz screen: against the raw points,
     // a still hand's frame-to-frame jitter is halved and the lag behind a
@@ -110,11 +111,11 @@ const mid = q => [(q[0][0] + q.at(-1)[0]) / 2, (q[0][1] + q.at(-1)[1]) / 2],
     // a step of a low-pass at c Hz over dt ms, from a toward b
     low = (a, b, c, dt) => a.map((v, j) =>
         v + (b[j] - v) / (1 + 1000 / (2 * Math.PI * c * dt))),
-    // a step of the one euro filter at least c Hz, its speed's at e Hz:
-    // point x, speed dx, to q
-    euro = (x, dx, q, dt, c = CUT, e = DCUT) => {
+    // a step of the one euro filter at least c Hz, b more per px/ms, its
+    // speed's at e Hz: point x, speed dx, to q
+    euro = (x, dx, q, dt, c = CUT, e = DCUT, b = BETA) => {
         const d = low(dx, [0, 1].map(j => (q[j] - x[j]) / dt), e, dt);
-        return [low(x, q, c + BETA * Math.hypot(...d), dt), d];
+        return [low(x, q, c + b * Math.hypot(...d), dt), d];
     };
 
 // whether a hand (its landmarks in the frame's 0-1, z on x's scale) pinches,
@@ -169,7 +170,7 @@ function track(s, [t, hands], { videoWidth: vw, videoHeight: vh }) {
         if (!(dt > 0)) { next[key] = { t, x: p, dx: p.map(() => [0, 0]),
             c, dc: [0, 0], ...g }; continue; }
         const e = p.map((q, i) => euro(f.x[i], f.dx[i], q, dt)),
-            [cx, dc] = euro(f.c, f.dc, c, dt, GCUT, GDCUT);
+            [cx, dc] = euro(f.c, f.dc, c, dt, GCUT, GDCUT, GBETA);
         next[key] = { t, x: e.map(e => e[0]), dx: e.map(e => e[1]),
             c: cx, dc, ...g };
     }

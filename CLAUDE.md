@@ -184,10 +184,10 @@ runs in a module worker (`hands.worker.js`, the wasm's es module build, the
 gpu delegate on an offscreen canvas) and takes each frame as a transferred
 VideoFrame, one in flight, so the map's thread does no inference. a pinch
 grabs the globe and drags it: the thumb's tip on the outer half of the
-index's last bone, in 3d (depth at half weight), under 0.3 of the palm,
+index's last bone, in 3d (depth at half weight), under 0.35 of the palm,
 the index tip past 1.1 of its knuckle's distance from the wrist (a fist's
 lies in the palm), the middle tip clear of the thumb by 0.2, for 70 ms,
-held to 0.4 while the index stays out; and made, the gap open past
+held to 0.45 while the index stays out; and made, the gap open past
 0.7 in the two seconds before and the hand under 1.5 px/ms, so crossed
 fingers, a curled or bunched hand, one already closed or swinging through,
 or a brush do not grab. a hand with its thumb or index tip off the
@@ -211,7 +211,8 @@ camera frame's capture by the filtered speed (35 ms at most): tuned in a
 simulation, it halves a still hand's jitter and cuts the lag at 1 px/ms
 from 46 px to 18. a pinch moves the map by the mean of seven thumb and
 index points under a slower filter, which in the same simulation takes a
-still hand's jitter from 0.77 px a frame to 0.44.
+still hand's jitter from 0.77 px a frame to 0.44, and a shaky one's (an
+8 Hz tremor) from 0.26 to 0.13.
 
 ## layout
 
