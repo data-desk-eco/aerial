@@ -35,12 +35,16 @@ const IN = .35, OUT = .45, LONG = 1.1, CLEAR = .2, DWELL = 70, OPEN = .7,
     GAIN = 2,               // two pinches zoom this many times their spread
     DECAY = .03,     // the ease's slowing, per ms: 1 px/ms runs on 33 px
     CUT = 1, BETA = 20, DCUT = 2,   // the filter: Hz, Hz per px/ms, Hz
-    // a pinch moves the map by the mean of the thumb and index, GRIP, under
-    // a slower filter, GCUT and GDCUT Hz, GBETA Hz per px/ms: seven points,
-    // steadier than the two tips. in the simulation the filter alone takes
-    // the step a still hand jitters by from 0.77 px to 0.44, and the slower
-    // speed and BETA a shaky hand's (an 8 Hz tremor) from 0.26 to 0.13
-    GRIP = [2, 3, 4, 5, 6, 7, 8], GCUT = .3, GDCUT = .5, GBETA = 4,
+    // a pinch moves the map by the mean of the thumb and index, GRIP, seven
+    // points steadier than the two tips, under a filter of GCUT Hz, GBETA
+    // more per px/ms, its speed at GDCUT, run on up to GLEAD ms, and then
+    // followed each screen frame at FOLLOW Hz: the landmarker answers every
+    // 30 to 130 ms, and the map stepped 25 px on each answer and 2 px on
+    // each screen frame between. simulated, with an 8 Hz tremor, the change
+    // in the step from one screen frame to the next falls from 31 px to 3
+    // at 1 px/ms and from 5.7 to 1 at 0.2, for 5 px more lag at 1 px/ms
+    GRIP = [2, 3, 4, 5, 6, 7, 8], GCUT = 1, GDCUT = 2, GBETA = 8,
+    GLEAD = 100, FOLLOW = 3,
     // the most a point runs on past its frame, ms. tuned in a simulation
     // of 30 Hz frames 25 ms late to a 60 Hz screen: against the raw points,
     // a still hand's frame-to-frame jitter is halved and the lag behind a
@@ -172,7 +176,7 @@ function track(s, [t, hands], { videoWidth: vw, videoHeight: vh }) {
         const e = p.map((q, i) => euro(f.x[i], f.dx[i], q, dt)),
             [cx, dc] = euro(f.c, f.dc, c, dt, GCUT, GDCUT, GBETA);
         next[key] = { t, x: e.map(e => e[0]), dx: e.map(e => e[1]),
-            c: cx, dc, ...g };
+            c: cx, dc, m: f.m, mt: f.mt, ...g };
     }
 }
 
@@ -187,10 +191,13 @@ function draw(s, now) {
     g.clearRect(0, 0, W, H);
     g.lineWidth = 1.5;
     g.lineJoin = 'round';
-    for (const [, { t, x, dx, c, dc, held, point, near }] of Object
-        .entries(s.f).sort(([a], [b]) => a < b ? -1 : 1)) {
-        const a = Math.min(Math.max(now - t, 0), LEAD),
-            run = (q, d) => [q[0] + d[0] * a, q[1] + d[1] * a],
+    for (const [, h] of Object.entries(s.f)
+        .sort(([a], [b]) => a < b ? -1 : 1)) {
+        const { t, x, dx, c, dc, held, point, near } = h,
+            run = (q, d, l = LEAD) => {
+                const a = Math.min(Math.max(now - t, 0), l);
+                return [q[0] + d[0] * a, q[1] + d[1] * a];
+            },
             p = x.map((q, i) => run(q, dx[i]));
         g.strokeStyle = g.fillStyle = DD.white;
         g.globalAlpha = .7;
@@ -213,8 +220,10 @@ function draw(s, now) {
             g.stroke();
             g.globalAlpha = 1;
         }
-        if (!held) continue;
-        P.push(run(c, dc));
+        if (!held) { h.m = null; continue; }
+        const q = run(c, dc, GLEAD);
+        P.push(h.m = h.m ? low(h.m, q, FOLLOW, now - h.mt) : q);
+        h.mt = now;
         s.v = dc.map(v => -v);
     }
     aim(s, tip, now, g);

@@ -210,9 +210,11 @@ and the hands draw and move the map each screen frame, run on from the
 camera frame's capture by the filtered speed (35 ms at most): tuned in a
 simulation, it halves a still hand's jitter and cuts the lag at 1 px/ms
 from 46 px to 18. a pinch moves the map by the mean of seven thumb and
-index points under a slower filter, which in the same simulation takes a
-still hand's jitter from 0.77 px a frame to 0.44, and a shaky one's (an
-8 Hz tremor) from 0.26 to 0.13.
+index points under a filter of its own, run on up to 100 ms and then
+followed each screen frame at 3 Hz: the landmarker answers every 30 to
+130 ms, and the map stepped on each answer. simulated with an 8 Hz tremor,
+the change in step from one screen frame to the next falls from 31 px to
+3 at 1 px/ms, for 5 px more lag.
 
 ## layout
 
