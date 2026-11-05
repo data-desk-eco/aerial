@@ -12,8 +12,7 @@ Four detection layers, all drawn at once, one quarter grid over all of them:
 
   - S2 and S3: Sentinel-2 hotspots by day and Sentinel-3 hotspots by night,
     read live from burnoff's service (github.com/data-desk-eco/burnoff) for
-    the view. Where the service fails, S2 runs burnoff's detector in the
-    browser.
+    the view.
   - VNF: VIIRS Nightfire, from the eog tables in the Data Desk archive, read
     through DuckDB-Wasm, which sees flares at night and measures their
     radiant heat.

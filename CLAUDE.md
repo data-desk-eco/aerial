@@ -9,7 +9,7 @@ of them, and a quarter greys only when no layer covers it.
 
 aerial reads parquet off the Data Desk archive with DuckDB and burnoff's
 service over quack, and draws them, and does nothing else: no publishing,
-and no detection but s2's fallback (below). the one exception is
+and no detection. the one exception is
 `/review`, behind cloudflare access: a person's verdict on each new
 attribution goes to `worker/review.js`, and the jump host folds it into the
 archive. the map shows a claim from a later run only once it is confirmed.
@@ -106,9 +106,8 @@ blocks (the service takes up to 1°: it reads a granule once for all a
 box's cells); each block asks the last 30 days 10 at a time, then back to
 180 days a month at a time, the view's middle first, four in flight. an
 open card asks its site's last 90 days, and a scroll past its rows' end
-90 more, back to 2022-01-25 (s2) or 2018-06-01 (s3). where the service
-fails, s2 falls back to burnoff's detector in the browser (`fallback.js`,
-`vendor/burnoff/`, google's sentinel-2 mirror); s3 has none. `?asof=`
+90 more, back to 2022-01-25 (s2) or 2018-06-01 (s3). a block the service
+fails twice is left empty until a reload. `?asof=`
 reads as if on a past date, for a service whose mirror stops short of
 today (a local one off meeo's).
 
@@ -116,9 +115,8 @@ a site is every date's detections linked within 40 m, never two of one
 date over 30 m apart (burnoff's `serve/sites.sql`), named by its
 detections' mean place rounded to 40 m (`live:<lat>,<lon>`), the same
 for any block or window; as the store fills, the mean can cross a
-rounding edge, so a site joins one held within 40 m (the
-fallback's detections, within 100 m; a link falls back to the site
-nearest its place), and a look is clear
+rounding edge, so a site joins one held within 40 m (a link falls back
+to the site within 100 m of its place), and a look is clear
 under 0.6 cloud, as in the archive. it is drawn as the archive's are, lit on
 two dates with its mean b12 over MODE.s2.floor, unless lit only in its
 hemisphere's summer (the archive's `seasonal`, april to august in the
@@ -240,7 +238,6 @@ web/
                      availability, the series
     live.js          s2 and s3 off burnoff's service, live(spec) each
     service.js       the quack pool
-    fallback.js      s2's detector in the browser, where the service fails
   methane/           plumes.js reader, attribution.js, candidates.js,
                      overlay.js, mask.js
   shell/             app.js mount, map.js, ui.js, detail.js, table.js,

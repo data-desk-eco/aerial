@@ -11,9 +11,7 @@
 // the store fills, so a site joins one held within the spec's idM, never
 // two of one answer, which the service keeps apart. the browser's http cache
 // is no help over quack, so a reload asks again, and the service answers
-// from its store. where the service fails, an instrument with a fallback
-// (s2's: burnoff's detector here, fallback.js, loaded only then) reads the
-// block itself.
+// from its store.
 
 import { dateInQuarters, quarterOf } from '../shell/util.js';
 import { MODE } from './render.js';
@@ -53,7 +51,6 @@ const S2 = {
     props: on => ({ max_b12: Math.max(0, ...on.map(f => f.max_b12)) }),
     row: f => ({ max_b12: f.max_b12, pixels: f.pixels, raw_lat: f.lat,
                  raw_lon: f.lon, px: f.px }),
-    fallback: () => import('./fallback.js'),
 };
 // s3: a site is drawn lit on LIT nights; a night is clear where the 0.02°
 // square under the site was half clear or more (docs/s3.md: lit nights are
@@ -92,7 +89,7 @@ export function live(spec) {
             }
         return best;
     };
-    const found = (id, lat, lon, r = siteM, skip) => (s => skip?.has(s)
+    const found = (id, lat, lon, r, skip) => (s => skip?.has(s)
         ? undefined : s)(byId.get(id)) ?? near({ lat, lon }, r, skip)
         ?? (s => {
             sites.push(s), byId.set(id, s);
@@ -120,18 +117,6 @@ export function live(spec) {
             s.ok = spec.drawn(s);
         }
     }
-    // the fallback's scenes
-    const land = (box, scenes) => scenes.forEach(x => {
-        if (x.error) return console.warn('burnoff:', x.url, x.error);
-        for (const f of x.hotspots)
-            look(found(`live:${f.lat.toFixed(5)},${f.lon.toFixed(5)}@${
-                x.tile}_${x.date}`, f.lat, f.lon), x.date, f.cloud,
-                { ...f, date: x.date });
-        if (x.cloud >= 0) sites.forEach(s => inside(s, box) && look(s,
-            x.date, x.cloud));
-        sites.forEach(s => s.ok = spec.drawn(s));
-    });
-
     // ── requests: a box's sites from a to b, kept by key in memory; FLY
     // at once, the most wanted first ──
 
@@ -144,12 +129,10 @@ export function live(spec) {
     const get = (box, a, b) => call(spec.fn, box, a, b)
         .then(({ features }) => absorb(features));
     // a failed request is made once more, 5 s on (the service restarts on
-    // a deploy), before the fallback reads the box, if there is one
+    // a deploy)
     const fetchBlock = (box, a, b) => get(box, a, b).catch(() =>
         new Promise(ok => setTimeout(ok, 5000)).then(() => get(box, a, b)))
-        .catch(e => (console.warn(`burnoff ${label}: service`, e),
-            spec.fallback ? spec.fallback().then(m => m.detect(box, a, b))
-                .then(x => land(box, x)) : undefined));
+        .catch(e => console.warn(`burnoff ${label}: service`, e));
     const want = (box, a, b, r, pri) => {
         const k = `${box} ${a} ${b}`;
         got.has(k) || queue.push(got.set(k, { box, a, b, r, pri }).get(k)),
