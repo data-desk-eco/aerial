@@ -191,8 +191,11 @@ the thumb by 0.2, for 70 ms, held to 0.7; and made, the gap open past
 0.7 in the two seconds before and the hand under 1.5 px/ms, so crossed
 fingers, a curled or bunched hand, one already closed or swinging through,
 or a brush do not grab. a hand with its thumb or index tip off the
-window holds nothing; its wrist may be off it. a faint ring shows a thumb
-near the index, a full one a pinch.
+window holds nothing; its wrist may be off it. the 70 ms runs while the
+thumb stays near, so a frame's jitter does not restart it, and a hand is
+the last frame's whose wrist is nearest, within two palms, not the side
+the landmarker names, which flips. a faint ring shows a thumb near the
+index, a full one a pinch.
 two pinches zoom twice as far as they spread, and keep the ground under
 their middle and its turn; a drag let go eases out over a few pixels. a
 finger pointed (the index reaching past 1.6 of its knuckle's distance

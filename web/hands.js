@@ -129,36 +129,46 @@ function grip(f, h, t, vw, vh) {
         open = r > OPEN ? t : f?.open, ext = i => D(0, i) / D(0, i - 3),
         point = ext(8) > REACH && [12, 16, 20].every(i => ext(i) < CURL);
     if (f?.held) return { held: r < OUT, open, point: false };
-    const near = r < OPEN;
-    const ok = r < IN && D(4, 12) > CLEAR * D(0, 9),
-        since = !ok ? null : f?.since ?? (t - open < FORM
+    // the dwell runs from the first frame it is made while the thumb stays
+    // near, so a frame's jitter past IN or CLEAR does not restart it
+    const near = r < OPEN, ok = r < IN && D(4, 12) > CLEAR * D(0, 9),
+        since = !near ? null : f?.since ?? (ok && t - open < FORM
             && !(Math.hypot(...f.dx[0]) > STILL) ? t : null);
-    return { held: since != null && t - since >= DWELL, since, open, point,
-        near };
+    return { held: ok && since != null && t - since >= DWELL, since, open,
+        point, near };
 }
 
 // a camera frame, taken at t: each hand's points on the screen, filtered,
-// with their speeds in px per ms, and its grip. a hand not in it is
-// forgotten, and its pinch with it
+// with their speeds in px per ms, and its grip. a hand is the last frame's
+// whose wrist is nearest, within two palms, whatever side the landmarker
+// names, as it flips one hand's side from frame to frame; a hand not in it
+// is forgotten, and its pinch with it
 function track(s, [t, hands], { videoWidth: vw, videoHeight: vh }) {
     const W = innerWidth, H = innerHeight, k = Math.max(W / vw, H / vh),
         // mirrored, and over the window as the video would cover it
         px = ([x, y]) => [W / 2 + (.5 - x) * vw * k,
-            H / 2 + (y - .5) * vh * k];
-    s.f = Object.fromEntries(hands.map(([side, h]) => {
-        // a hand with its thumb or index tip off the window holds nothing;
-        // the rest may be off it, as a wrist low in the frame is
-        const p = h.map(px), f = s.f[side], dt = t - f?.t, c = mean(p, GRIP),
+            H / 2 + (y - .5) * vh * k],
+        far = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]),
+        was = s.f, next = s.f = {};
+    for (const [side, h] of hands) {
+        const p = h.map(px), c = mean(p, GRIP),
+            [key = side in next ? side + 2 : side, f] = Object.entries(was)
+                .filter(([k, f]) => !(k in next)
+                    && far(f.x[0], p[0]) < 2 * far(p[0], p[9]))
+                .sort(([, a], [, b]) => far(a.x[0], p[0]) - far(b.x[0], p[0]))
+                [0] ?? [],
+            dt = t - f?.t,
+            // a hand with its thumb or index tip off the window holds
+            // nothing; the rest may be off it, as a wrist low in the frame is
             g = [4, 8].some(i => p[i][0] < 0 || p[i][0] > W || p[i][1] < 0
-                || p[i][1] > H)
-                ? { open: f?.open } : grip(f, h, t, vw, vh);
-        if (!(dt > 0)) return [side, { t, x: p, dx: p.map(() => [0, 0]),
-            c, dc: [0, 0], ...g }];
+                || p[i][1] > H) ? { open: f?.open } : grip(f, h, t, vw, vh);
+        if (!(dt > 0)) { next[key] = { t, x: p, dx: p.map(() => [0, 0]),
+            c, dc: [0, 0], ...g }; continue; }
         const e = p.map((q, i) => euro(f.x[i], f.dx[i], q, dt)),
             [cx, dc] = euro(f.c, f.dc, c, dt, GCUT, GDCUT);
-        return [side, { t, x: e.map(e => e[0]), dx: e.map(e => e[1]),
-            c: cx, dc, ...g }];
-    }));
+        next[key] = { t, x: e.map(e => e[0]), dx: e.map(e => e[1]),
+            c: cx, dc, ...g };
+    }
 }
 
 // a screen frame: the hands as they are now, drawn, and the map moved
