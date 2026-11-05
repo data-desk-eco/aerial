@@ -80,22 +80,18 @@ d='M0 0 8 8M8 0 0 8' stroke='%23000' stroke-width='1.4'/%3E%3C/svg%3E")
 .fx-quarters > span:nth-child(5n) { text-align: right; }
 
 /* what is still being read, one line of plain text at the map's top
-   right, or under an open card: anchored to it, so it comes after the
-   card in the page, and the card leaves it a line */
+   right, or in an open card under its place, in line with its text */
 .fx-status {
-    /* top twice: a browser without anchors keeps the first */
-    position: absolute; top: 0; top: anchor(--card bottom, 0); right: 0;
-    margin: var(--dd-margin);
+    position: absolute; top: 0; right: 0; margin: var(--dd-margin);
     color: var(--dd-ui-text); white-space: nowrap; pointer-events: none;
     font-variant-numeric: tabular-nums;
     /* a bar beneath, as wide as the share done (ui.js status) */
     padding-bottom: 4px; background: linear-gradient(currentColor,
         currentColor) 0 100% / calc(var(--p, 0) * 100%) 2px no-repeat;
 }
-.fx-status:empty { display: none; }
-/* under a card, set in a little from its border */
-body:has(.fx-detail.visible) .fx-status {
-    margin-right: calc(var(--dd-margin) + var(--dd-button-pad-x)); }
+.fx-status:empty, body:has(.fx-detail.visible) #status { display: none; }
+.fx-detail .fx-status { position: static; margin: 0;
+    align-self: flex-start; }
 
 /* --- key --- */
 
@@ -108,9 +104,8 @@ body:has(.fx-detail.visible) .fx-status {
     top: 0;
     right: 0;
     width: 270px;
-    max-height: calc(100vh - 3 * var(--dd-margin) - 1lh - 4px);
+    max-height: calc(100vh - 2 * var(--dd-margin));
     display: none;
-    anchor-name: --card;
 }
 .fx-detail.visible { display: flex; }
 .fx-overlap { white-space: nowrap; }
@@ -230,10 +225,8 @@ body:has(.fx-detail.visible) .fx-status {
     /* the key moves to the opposite corner, so it sizes to its own content
        rather than sharing the main panel's width */
     .fx-key { bottom: auto; top: 0; right: 0; left: auto; width: auto; }
-    /* and the status line, which sat behind it there, to the bottom left,
-       over the card */
-    .fx-status { top: auto; right: auto; bottom: 0;
-        bottom: anchor(--card top, 0); left: 0; }
+    /* and the status line, which sat behind it there, to the bottom left */
+    .fx-status { top: auto; right: auto; bottom: 0; left: 0; }
     /* left and right, not width, so it sits inside the margins */
     .fx-detail {
         top: auto;

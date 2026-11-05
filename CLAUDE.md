@@ -132,8 +132,8 @@ grey until every scene of the year has looked at the site (`loading`), and
 where a date draws the detector's own pixels, each on the ramp by its b12 inside a hairline outline, as a
 plume mask is drawn. the table's s2 tab says Detections loading, not No rows
 in view, while the view's search is not done (`busy`; a live redraw
-sends `fx-rows`). one line at the map's top right says what is still being
-read, the newest read's (`status`, `shell/ui.js`; `watch`, `live.js`): the engine at start, each
+sends `fx-rows`). one line at the map's top right, or in an open card
+under its place, says what is still being read, the newest read's (`status`, `shell/ui.js`; `watch`, `live.js`): the engine at start, each
 layer's read, and the view's live search, Recent S2 hotspots: x%, then Older
 S2 hotspots: x% (each the mean over the view's squares of their scenes read,
 so it moves with every read, never falls while the view is still and is the

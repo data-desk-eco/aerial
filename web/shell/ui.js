@@ -12,17 +12,18 @@ const SEARCH = `<input type="search" class="fx-search" id="search"
     placeholder="Address or lat, lon" spellcheck="false" autocomplete="off">`;
 const QUARTERS = `<div class="fx-quarters" id="quarters"></div>`;
 
-// a line at the map's top right saying what is still being read: the newest
-// read's, and an update keeps its place. on a slow line an empty map and a
-// loading one look the same. status(k) takes read k down, and the start
-// goes once the first reads settle. a line with a share done, p, draws it
-// as a bar beneath
+// a line at the map's top right, or in an open card under its place,
+// saying what is still being read: the newest read's, and an update keeps
+// its place. on a slow line an empty map and a loading one look the same.
+// status(k) takes read k down, status() redraws, and the start goes once
+// the first reads settle. a line with a share done, p, draws it as a bar
+// beneath
 const lines = new Map([['start', ['Loading the engine and archive']]]);
 export function status(k, text, p) {
     text ? lines.set(k, [text, p]) : lines.delete(k);
-    const el = document.getElementById('status'), [t, q] =
-        [...lines.values()].at(-1) ?? [''];
-    if (el) el.textContent = t, el.style.setProperty('--p', q ?? 0);
+    const [t, q] = [...lines.values()].at(-1) ?? [''];
+    for (const el of document.querySelectorAll('.fx-status'))
+        el.textContent = t, el.style.setProperty('--p', q ?? 0);
 }
 export const loaded = () => status('start');
 
@@ -43,12 +44,12 @@ export function buildShell(config) {
         ${config.quarters ? QUARTERS : ''}
     </dd-panel>
 
+    <div class="fx-status" id="status">${
+        escapeHtml(lines.get('start')[0])}</div>
+
     <dd-key class="fx-key" id="key-panel"></dd-key>
 
     <dd-panel class="fx-detail" id="detail" collapsible></dd-panel>
-
-    <div class="fx-status" id="status">${
-        escapeHtml(lines.get('start'))}</div>
 
     ${logo}
 

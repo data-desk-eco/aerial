@@ -19,7 +19,7 @@
 // }
 
 import { escapeHtml, fmtCoords, readHashKeys, writeHashKeys } from './util.js';
-import { openModal } from './ui.js';
+import { openModal, status } from './ui.js';
 
 let map, cfg, allFeatures;
 let overlapping = [], overlapIndex = 0;
@@ -112,11 +112,12 @@ function render(feature, fromPermalink) {
             }">${escapeHtml(t.text)}${t.note ? ` <span class="fx-secondary">${
             escapeHtml(t.note)}</span>` : ''}</span>
         <div slot="subtitle" class="fx-sub"><span>${fmtCoords(lat, lon)
-            }${nav}</span><div class="fx-stats">${cfg.stats?.(p) || ''
-            }</div></div>
+            }${nav}</span><div class="fx-status"></div>
+            <div class="fx-stats">${cfg.stats?.(p) || ''}</div></div>
         ${cfg.html?.(p) || ''}`;
     el.toggleAttribute('info', !!cfg.about?.(p));
     el.classList.add('visible');
+    status();
     shown = { feature, n, i: overlapIndex };
     cfg.onShow?.(p, el);
 }
