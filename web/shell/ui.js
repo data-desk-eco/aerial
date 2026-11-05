@@ -6,7 +6,7 @@ import '../vendor/dd/dd.js';
 import { escapeHtml } from './util.js';
 
 export const logo = '<dd-logo class="fx-logo" '
-    + 'href="https://research.datadesk.eco/"></dd-logo>';
+    + 'href="https://datadesk.eco/"></dd-logo>';
 
 const SEARCH = `<input type="search" class="fx-search" id="search"
     placeholder="Address or lat, lon" spellcheck="false" autocomplete="off">`;
