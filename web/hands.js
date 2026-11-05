@@ -15,16 +15,18 @@ import { palette as DD } from './vendor/dd/dd.js';
 // the bones as runs of landmarks: thumb, the four fingers, the knuckles
 const RUNS = [[0, 1, 2, 3, 4], [0, 5, 6, 7, 8], [9, 10, 11, 12],
     [13, 14, 15, 16], [0, 17, 18, 19, 20], [5, 9, 13, 17]];
-// a pinch is the thumb's tip on the index's last bone, tip to last joint,
+// a pinch is the thumb's tip on the outer half of the index's last bone,
 // in 3d (the landmarker's depth, noisier, weighed at DEPTH), under IN of
-// the palm (wrist to middle knuckle), the middle tip clear of the thumb by
-// CLEAR, held DWELL ms; it lets go past OUT. and it must be made: the gap
+// the palm (wrist to middle knuckle), the index's tip past LONG of its
+// knuckle's distance from the wrist (a fist's is in the palm, under 1),
+// the middle tip clear of the thumb by CLEAR, held DWELL ms; it lets go
+// past OUT, or as the index curls in. and it must be made: the gap
 // open past OPEN in the FORM ms before it closes, the wrist slower than
 // STILL px/ms as it does. fingers that cross in the camera's view, a hand
 // curled or bunched, already closed or swinging through, or one frame's
 // brush, are not a pinch
-const IN = .5, OUT = .7, CLEAR = .2, DWELL = 70, OPEN = .7, FORM = 2000,
-    STILL = 1.5, DEPTH = .5,
+const IN = .3, OUT = .4, LONG = 1.1, CLEAR = .2, DWELL = 70, OPEN = .7,
+    FORM = 2000, STILL = 1.5, DEPTH = .5,
     // a point is the index's tip past REACH of its knuckle's distance from
     // the wrist, the other fingers' within CURL (an open hand's are near 2)
     REACH = 1.6, CURL = 1.3,
@@ -122,16 +124,18 @@ function grip(f, h, t, vw, vh) {
         sub = (a, b) => a.map((v, j) => v - b[j]),
         dot = (a, b) => a.reduce((s, v, j) => s + v * b[j], 0),
         D = (a, b) => Math.hypot(...sub(P[a], P[b])),
-        // the thumb's tip to the nearest point of the index's last bone
+        // the thumb's tip to the nearest point of the bone's outer half: a
+        // fist's thumb lies on the joint, a flat hand's beside the knuckles
         u = sub(P[8], P[7]), w = sub(P[4], P[7]),
-        k = Math.min(Math.max(dot(w, u) / dot(u, u), 0), 1),
+        k = Math.min(Math.max(dot(w, u) / dot(u, u), .5), 1),
         r = Math.hypot(...sub(w, u.map(v => v * k))) / D(0, 9),
         open = r > OPEN ? t : f?.open, ext = i => D(0, i) / D(0, i - 3),
+        long = ext(8) > LONG,
         point = ext(8) > REACH && [12, 16, 20].every(i => ext(i) < CURL);
-    if (f?.held) return { held: r < OUT, open, point: false };
+    if (f?.held) return { held: r < OUT && long, open, point: false };
     // the dwell runs from the first frame it is made while the thumb stays
     // near, so a frame's jitter past IN or CLEAR does not restart it
-    const near = r < OPEN, ok = r < IN && D(4, 12) > CLEAR * D(0, 9),
+    const near = r < OPEN, ok = r < IN && long && D(4, 12) > CLEAR * D(0, 9),
         since = !near ? null : f?.since ?? (ok && t - open < FORM
             && !(Math.hypot(...f.dx[0]) > STILL) ? t : null);
     return { held: ok && since != null && t - since >= DWELL, since, open,

@@ -183,9 +183,11 @@ map, never the camera's picture (`hands.js`). mediapipe's hand landmarker
 runs in a module worker (`hands.worker.js`, the wasm's es module build, the
 gpu delegate on an offscreen canvas) and takes each frame as a transferred
 VideoFrame, one in flight, so the map's thread does no inference. a pinch
-grabs the globe and drags it: the thumb's tip on the index's last bone, in
-3d (depth at half weight), under 0.5 of the palm, the middle tip clear of
-the thumb by 0.2, for 70 ms, held to 0.7; and made, the gap open past
+grabs the globe and drags it: the thumb's tip on the outer half of the
+index's last bone, in 3d (depth at half weight), under 0.3 of the palm,
+the index tip past 1.1 of its knuckle's distance from the wrist (a fist's
+lies in the palm), the middle tip clear of the thumb by 0.2, for 70 ms,
+held to 0.4 while the index stays out; and made, the gap open past
 0.7 in the two seconds before and the hand under 1.5 px/ms, so crossed
 fingers, a curled or bunched hand, one already closed or swinging through,
 or a brush do not grab. a hand with its thumb or index tip off the
