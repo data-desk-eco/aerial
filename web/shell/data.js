@@ -43,7 +43,7 @@ export function prefetchData(name) {
     const u = url(name);
     if (!buffers.has(u)) buffers.set(u, bytes(u).then(async n => {
         if (!(n <= PREFETCH_CAP)) return null;
-        const res = await fetch(u);
+        const res = await fetch(`${u}?v=${n}`);
         if (!res.ok) return null;
         const data = new Uint8Array(await res.arrayBuffer());
         const buf = `prefetch${bufSeq++}.parquet`;
@@ -52,10 +52,14 @@ export function prefetchData(name) {
     }).catch(() => null));
     return buffers.get(u);
 }
-// a read of a prefetched object waits for its buffer, not the network
+// a read of a prefetched object waits for its buffer, not the network. a
+// ranged read names the object's size, so a republish is a new url: the
+// archive sends no cache-control, and a browser held the old object's
+// length for days and read the new one's footer at it ("no magic bytes")
 const viaBuffer = async source => Array.isArray(source)
     ? Promise.all(source.map(viaBuffer))
-    : (buffers.has(source) ? await buffers.get(source) : null) ?? source;
+    : (buffers.has(source) ? await buffers.get(source) : null)
+        ?? bytes(source).then(n => n ? `${source}?v=${n}` : source);
 
 const ident = name => `"${String(name).replaceAll('"', '""')}"`;
 // canonical, so a prefetch and a later read key one object one way
