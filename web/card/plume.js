@@ -70,17 +70,20 @@ export default {
     source: 'plumes',
     init: deps => { archive = deps.archive; },
     about: { title: 'Methane plume', html: `
-        <p>A methane plume as its provider published it: UN IMEO, Carbon
-            Mapper, SRON or Data Desk. Rate is the provider's estimate in
-            tonnes of methane an hour, with its uncertainty where given; a
-            plume with no rate is grey on the map. Wind is the provider's
-            own, at the plume.</p>
-        <p>The map draws the plume's outline, the probability surface where
-            the provider gives one, and the infrastructure around it as
-            triangles, the attributed source a square.</p>
-        <p>Analysis is an attribution to a nearby source by research
-            agents. It is experimental, and it requires further
-            research.</p>` },
+        <p>Methane plume data from UN IMEO, Carbon Mapper, SRON, Nature
+            Trace or Data Desk. The Source link opens the provider's record
+            where available.</p>
+        <p>Rate is the provider's estimated methane release in tonnes per
+            hour, with uncertainty where supplied. Nature Trace reports
+            methane enhancement in ppm·m instead of a release rate. Plumes
+            without a rate appear grey. Wind speed and direction are shown
+            where supplied by the provider.</p>
+        <p>Where available, the map shows the plume outline and a probability
+            overlay. Triangles mark nearby infrastructure; a square marks
+            the attributed source.</p>
+        <p>Analysis uses AI research agents to suggest a source for the
+            plume. These attributions are experimental and need independent
+            verification.</p>` },
     title: p => ({ text: p.id || '—' }),
     stats: p => `
             ${row('Source', provider(p))}

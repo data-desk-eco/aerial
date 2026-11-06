@@ -21,16 +21,17 @@ export default {
     instrument: 'VNF',
     passLabel: 'Nights read',
     about: { title: 'VIIRS Nightfire', html: `
-        <p>A flaring site from the Earth Observation Group's VIIRS Nightfire
-            catalogue, built from the VIIRS instrument's night-time
-            detections.</p>
-        <p>Radiant heat is in megawatts. Flared volume, in million cubic
-            metres a day, is estimated from it with JZ-RH (Zhizhin et al.
-            2025). Persistence is the share of cloud-free nights with a
-            detection in the ticked quarters; where too few nights were
-            seen, no rate is given.</p>
-        <p>A selected night draws a halo at the site, sized and coloured by
-            its radiant heat.</p>` },
+        <p>Gas flaring detected at night by VIIRS and recorded in the Earth
+            Observation Group's Nightfire catalogue.</p>
+        <p>Radiant heat measures the energy emitted by the flare, in
+            megawatts. Flared volume is estimated from radiant heat using
+            the JZ-RH method (Zhizhin et al. 2025), in million cubic metres
+            per day.</p>
+        <p>Persistence is the percentage of cloud-free nights with a
+            detection during the selected quarters. It is left blank when
+            observation coverage is insufficient.</p>
+        <p>Select a night to show a circle at the site. Its size and colour
+            indicate radiant heat, not the physical size of the flare.</p>` },
     title: p => siteTitle(p, `Hotspot #${p.id}`),
     fetch: vnfSeries,
     select: footprint,

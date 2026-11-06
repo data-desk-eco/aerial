@@ -51,16 +51,19 @@ export default {
     instrument: 'S2',
     passLabel: 'Passes',
     about: { title: 'Sentinel-2 hotspot', html: `
-        <p>A site where burnoff's detector found heat in Sentinel-2's
-            shortwave infrared on at least two dates. Sentinel-2 passes every
-            two to five days, by day, in 20 m pixels.</p>
-        <p>Intensity is the B12 reflectance of the brightest pixel.
-            Persistence is the share of clear passes (under 60% cloud) with a
-            detection in the ticked quarters, given from 10 clear passes.
-            A site lit only in its hemisphere's summer is not drawn: roofs
-            and solar panels in a high sun can look like a fire.</p>
-        <p>Each date lists what the detector found. Select one to draw its
-            pixels on the map, or open the scene.</p>` },
+        <p>Heat detected in daytime Sentinel-2 imagery by Burnoff. The
+            infrared bands used here have 20 m pixels. Aerial shows sites
+            detected on at least two dates and excludes summer-only
+            detections to reduce false positives from reflected sunlight.</p>
+        <p>Intensity is the brightest pixel's value in the B12 shortwave
+            infrared band. It is not a measurement of gas volume.</p>
+        <p>Persistence is the percentage of clear passes with a detection
+            during the selected quarters. A pass counts as clear when cloud
+            cover is below 60%; at least 10 clear passes are required.</p>
+        <p>Select a date to see the detected pixels on the map. Open image
+            shows the satellite scene in Copernicus Browser.</p>
+        <p><a href="https://github.com/data-desk-eco/burnoff/blob/main/METHOD.md#sentinel-2-day"
+            target="_blank" rel="noopener">Burnoff detection method</a></p>` },
     ...liveBody(s2),
     select: det => det && pixelFootprint(det, MODE.s2),
     actions: `<dd-btn id="open-image-btn">Open image</dd-btn>

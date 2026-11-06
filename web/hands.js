@@ -159,13 +159,16 @@ function track(s, [t, hands], { videoWidth: vw, videoHeight: vh }) {
             H / 2 + (y - .5) * vh * k],
         far = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]),
         was = s.f, next = s.f = {};
-    for (const [side, h] of hands) {
+    for (const [, h] of hands) {
         const p = h.map(px), c = mean(p, GRIP),
-            [key = side in next ? side + 2 : side, f] = Object.entries(was)
+            [matched, f] = Object.entries(was)
                 .filter(([k, f]) => !(k in next)
                     && far(f.x[0], p[0]) < 2 * far(p[0], p[9]))
                 .sort(([, a], [, b]) => far(a.x[0], p[0]) - far(b.x[0], p[0]))
                 [0] ?? [],
+            // A new hand must not take an existing hand's key before that
+            // hand is processed. Labels can repeat or change between frames.
+            key = matched ?? (s.handId = (s.handId ?? 0) + 1),
             dt = t - f?.t,
             // a hand with its thumb or index tip off the window holds
             // nothing; the rest may be off it, as a wrist low in the frame is

@@ -18,15 +18,19 @@ export default {
     instrument: 'S3',
     passLabel: 'Nights read',
     about: { title: 'Sentinel-3 hotspot', html: `
-        <p>A site where burnoff found heat in Sentinel-3's night-time
-            infrared (SLSTR) on at least two nights. Sentinel-3 passes at
-            about 22:00 local time, in 500 m pixels.</p>
-        <p>Radiant heat is in megawatts, on the scale VIIRS Nightfire uses;
-            temperature is from a Planck fit. Persistence is the share of
-            clear nights with a detection in the ticked quarters.</p>
-        <p>A flare is tens of metres across, so a selected night draws one
-            pixel at the hotspot's corrected place, coloured by its radiant
-            heat.</p>` },
+        <p>Heat detected in night-time Sentinel-3 imagery by Burnoff,
+            using the SLSTR instrument. Aerial shows sites detected on at
+            least two nights. The infrared pixels are 500 m across, so a
+            hotspot's position does not identify an individual flare stack.</p>
+        <p>Radiant heat is measured in megawatts. Temperature is estimated
+            from the infrared signal using Planck's law.</p>
+        <p>Persistence is the percentage of clear nights with a detection
+            during the selected quarters. A night counts as clear when
+            cloud cover is below 50%; at least 10 clear nights are required.</p>
+        <p>Select a night to see the hotspot pixels, coloured by radiant
+            heat.</p>
+        <p><a href="https://github.com/data-desk-eco/burnoff/blob/main/METHOD.md#sentinel-3-night"
+            target="_blank" rel="noopener">Burnoff detection method</a></p>` },
     ...liveBody(s3),
     select: det => det?.px && pixelFootprint({ px: det.px.map(([v, ...c]) =>
         [v ?? top, ...c]) }, MODE.s3),
