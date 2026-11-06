@@ -83,8 +83,8 @@ export const ABOUT = `
             specific facility or to browse point source emissions
             globally.</p>
         <p>In addition to ${link('https://github.com/data-desk-eco/burnoff',
-            'hotspot detections')} from Sentinel-2 by day and Sentinel-3 by
-            night, the map aggregates methane plumes and detections
+            'hotspot detections')} from Sentinel-2 and Sentinel-3, the map
+            aggregates methane plumes and detections
             published by ${link('https://methanedata.unep.org/', 'UN IMEO')},
             ${link('https://data.carbonmapper.org/', 'Carbon Mapper')},
             ${link('https://earth.sron.nl/methane-emissions/', 'SRON')} and

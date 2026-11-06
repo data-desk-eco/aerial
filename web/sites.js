@@ -191,8 +191,9 @@ function show() {
     if (!map) return;
     const next = chosen ? light(sitesOf(chosen), [chosen])
         : pinned ? light([pinned]) : hover;
-    const d = chosen || pinned ? next?.sites ?? [] : [];
-    if (String(d) !== dimmed) dimOutside(d), dimmed = String(d);
+    const d = chosen || pinned ? next?.sites ?? [] : [],
+        all = !!chosen && !d.length;
+    if (d + all !== dimmed) dimOutside(d, all), dimmed = d + all;
     if (JSON.stringify(next) === JSON.stringify(lit)) return;
     lit = next;
     shade();
@@ -242,20 +243,23 @@ export function initEmphasis(m) {
 }
 
 // the imagery darkened outside the selected outlines: the world less them,
-// in sql. none, nothing is darkened. a new outline replaces the old in
-// place: taking the layer down while the statement ran flashed the map. a
-// hotspot card dims around its facility, not each date's own point, which
-// lit some dates and darkened others; and a failed statement (the outlines
-// are re-read after a pan) leaves the dim as it was
-const DIM = 'dim';
+// in sql. a card's detection no outline holds dims all of it, its own
+// overlays drawn above, so every card dims alike (most plumes sit off any
+// outline, and lit some cards and not others); no selection, no dim.
+// at 0.65 the dim hid what lay under it, so it is 0.4. a new outline
+// replaces the old in place: taking the layer down while the statement ran
+// flashed the map. a hotspot card dims around its facility, not each date's
+// own point, which lit some dates and darkened others; and a failed
+// statement (the outlines are re-read after a pan) leaves the dim as it was
+const DIM = 'dim', WORLD = JSON.stringify({ type: 'Polygon', coordinates:
+    [[[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]]] });
 let dimEpoch = 0, dimG = null;
-async function dimOutside(ids) {
-    const e = ++dimEpoch;
-    const [{ g } = {}] = !ids.length ? [] : await sql(`SELECT
-        ST_AsGeoJSON(ST_Difference(ST_MakeEnvelope(-180, -85, 180, 85),
-            ST_Union_Agg(geometry))) AS g
-        FROM site_view WHERE id IN (${ids.map(str)})
-        HAVING count(*) > 0`).catch(() => [{ g: dimG }]);
+async function dimOutside(ids, all) {
+    const e = ++dimEpoch, [{ g } = {}] = !ids.length ? [{ g: all && WORLD }]
+        : await sql(`SELECT ST_AsGeoJSON(ST_Difference(
+            ST_MakeEnvelope(-180, -85, 180, 85), ST_Union_Agg(geometry))) AS g
+            FROM site_view WHERE id IN (${ids.map(str)})
+            HAVING count(*) > 0`).catch(() => [{ g: dimG }]);
     if (e !== dimEpoch || g === dimG) return;
     dimG = g;
     if (!g) {
@@ -265,7 +269,7 @@ async function dimOutside(ids) {
     else {
         map.addSource(DIM, { type: 'geojson', data: JSON.parse(g) });
         map.addLayer({ id: DIM, type: 'fill', source: DIM, minzoom: 7.5,
-            paint: { 'fill-color': '#000', 'fill-opacity': 0.65 } },
+            paint: { 'fill-color': '#000', 'fill-opacity': 0.4 } },
             ['sites-hit', 'dd-plume-probability', 'plume-mask-image',
              'plume-mask-fill', 'detection-footprint', 'plumes']
                 .find(l => map.getLayer(l)));
