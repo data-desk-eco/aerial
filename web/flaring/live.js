@@ -210,7 +210,6 @@ export function live(spec) {
                 coordinates: [s.lon, s.lat] }, properties: {
                 id: s.id, kind, lat: s.lat, lon: s.lon,
                 loading: s.fetching > 0,
-                name: `${on.length} detection${on.length === 1 ? '' : 's'}`,
                 ...spec.props(on.map(([, l]) => l.flare)),
                 detection_count: on.length, passes: looks.length,
                 observations: clear.length,

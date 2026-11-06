@@ -8,6 +8,7 @@ import { s2 } from '../flaring/live.js';
 import { map, current, currentDets, selectedDetection, coords, liveBody }
     from './index.js';
 import { pixelFootprint } from './overlays.js';
+import { fmtCoords } from '../shell/util.js';
 
 // the scene itself is one link away, at the day and the place the card is on
 function copernicusUrl(date) {
@@ -21,17 +22,15 @@ function copernicusUrl(date) {
     });
 }
 
-const CSV_COLS = ['site', 'lat', 'lon', 'date', 'max_b12',
+const CSV_COLS = ['lat', 'lon', 'date', 'max_b12',
                   'pixels', 'persistence', 'passes', 'observations'];
 
 // the rows the card is listing: a site carries no dates of its own
 function downloadCSV() {
     if (!current) return;
     const p = current, [lon, lat] = coords(p);
-    const quote = s => `"${String(s ?? '').replace(/"/g, '""')}"`;
     const fixed = (v, d) => v == null ? '' : Number(v).toFixed(d);
     const rows = currentDets.map(det => [
-        quote(p.name),
         fixed(det.raw_lat ?? lat, 6), fixed(det.raw_lon ?? lon, 6),
         det.date, fixed(det.max_b12, 4), det.pixels ?? '',
         fixed(p.persistence, 4), p.passes ?? '', p.observations ?? '',
@@ -39,8 +38,9 @@ function downloadCSV() {
     const csv = [CSV_COLS, ...rows].map(r => r.join(',')).join('\n');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-    // the site's id, its colon (no filename takes one) as _
-    a.download = `${p.id.replace(/[:/\\]/g, '_')}.csv`;
+    // the site's place, as the card's title gives it
+    a.download = `${fmtCoords(lat, lon).replace(/°|,/g, '')
+        .replace(' ', '_')}.csv`;
     a.click();
     URL.revokeObjectURL(a.href);
 }

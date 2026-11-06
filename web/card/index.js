@@ -5,7 +5,8 @@
 // here" is the kind it names.
 
 import { showDetail, closeDetail } from '../shell/detail.js';
-import { dateInQuarters, formatDate } from '../shell/util.js';
+import { dateInQuarters, formatDate, fmtCoords }
+    from '../shell/util.js';
 import { renderChart } from './chart.js';
 import { initOverlays, clearOverlays } from './overlays.js';
 import { greyMarkings, choose } from '../sites.js';
@@ -62,8 +63,7 @@ export const siteTitle = (p, fallback) => ({ text: p.name || fallback });
 // rows' end. hoisted, as the bodies call it while this module is loading
 export function liveBody(x) {
     return {
-        title: p => ({ ...siteTitle(p, 'Unknown site'),
-                       note: p.loading && 'Loading…' }),
+        title: p => ({ text: fmtCoords(p.lat, p.lon), note: p.loading && 'Loading…' }),
         fetch: p => (x.deepen(p.id), Promise.resolve(x.series(p.id))),
         more: p => x.older(p.id),
     };

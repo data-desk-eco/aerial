@@ -265,11 +265,11 @@ mount({
                  'observations', 'persistence', 'lat', 'lon'] },
         { label: 'Hotspots (S2)', rows: props('s2'),
           empty: () => s2.busy() && 'Detections loading',
-          cols: ['id', 'name', 'max_b12', 'detection_count', 'observations',
+          cols: ['id', 'max_b12', 'detection_count', 'observations',
                  'persistence', 'lat', 'lon'] },
         { label: 'Hotspots (S3)', rows: props('s3'),
           empty: () => s3.busy() && 'Detections loading',
-          cols: ['id', 'name', 'max_rh', 'detection_count', 'observations',
+          cols: ['id', 'max_rh', 'detection_count', 'observations',
                  'persistence', 'lat', 'lon'] },
     ],
 
