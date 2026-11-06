@@ -36,9 +36,13 @@ dd-dot[unavailable] { pointer-events: auto; }
 .events-list { overflow-y: auto; display: flex; flex-direction: column;
     gap: var(--dd-row-gap); scrollbar-width: thin;
     scrollbar-color: var(--dd-ui-inactive) transparent; }
-/* the day right-aligned in a column, so the months read down evenly */
+/* day, month and year in columns a space apart: the day right-aligned,
+   the month as wide as may, inter's widest, whatever the font's size */
 .ymd { font-variant-numeric: tabular-nums; }
-.ymd > span { display: inline-block; width: 2ch; text-align: right; }
+.ymd > * { display: inline-block; font: inherit; }
+.ymd > b { width: 2ch; text-align: right; }
+.ymd > i::before { content: 'May'; display: block; height: 0;
+    visibility: hidden; }
 
 .events-empty { color: var(--dd-ui-text-secondary);
     padding: 0 var(--dd-button-pad-x); }

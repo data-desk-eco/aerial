@@ -212,8 +212,8 @@ function renderEvents(el, detections, b, keep) {
         item.className = 'event-item';
         item.toggleAttribute('selectable', true);
         item.dataset.date = det.date;
-        item.innerHTML = `<span class="ymd"><span>${formatDate(det.date)
-            .replace(' ', '</span> ')}</span>`
+        item.innerHTML = `<span class="ymd">${formatDate(det.date)
+            .replace(/(\d+) (\w+)/, '<b>$1</b> <i>$2</i>')}</span>`
             + `<span>${b.cfg.formatVal(det)}</span>`
             + `<span>${b.cfg.formatCount(det)}</span>`;
         item.onclick = () => selectDetection(det, item, b);
