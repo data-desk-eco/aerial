@@ -59,6 +59,10 @@ dd-dot[unavailable] { pointer-events: auto; }
 /* the heading at datadesk.eco's title weight, 600, not the guidelines' 750,
    which read heavy at 32px on a phone (ruling 2026-10-11; AUDIT skips it) */
 .fx-modal-content [slot=title] { font-weight: 600; }
+/* a card's ⓘ is a note on one marking, not the map's title: its heading
+   at the 14px intro body, the 32px kept for aerial's own */
+#about-card [slot=title] { font-size: 14px;
+    font-variation-settings: "opsz" 26; }
 
 /* fine print, 11px under the 14px body (pdf:77) */
 .fx-fine { font-size: 11px; font-variation-settings: "opsz" 22; }
