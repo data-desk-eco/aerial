@@ -250,7 +250,8 @@ export function initEmphasis(m) {
 // replaces the old in place: taking the layer down while the statement ran
 // flashed the map. a hotspot card dims around its facility, not each date's
 // own point, which lit some dates and darkened others; and a failed
-// statement (the outlines are re-read after a pan) leaves the dim as it was
+// statement (the outlines are re-read after a pan) leaves the dim as it was.
+// it fades in and out over 300 ms, the layer kept at 0 when not dimming
 const DIM = 'dim', WORLD = JSON.stringify({ type: 'Polygon', coordinates:
     [[[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]]] });
 let dimEpoch = 0, dimG = null;
@@ -262,16 +263,17 @@ async function dimOutside(ids, all) {
             HAVING count(*) > 0`).catch(() => [{ g: dimG }]);
     if (e !== dimEpoch || g === dimG) return;
     dimG = g;
-    if (!g) {
-        if (map.getLayer(DIM)) map.removeLayer(DIM);
-        if (map.getSource(DIM)) map.removeSource(DIM);
-    } else if (map.getSource(DIM)) map.getSource(DIM).setData(JSON.parse(g));
-    else {
+    if (g && map.getSource(DIM)) map.getSource(DIM).setData(JSON.parse(g));
+    else if (g) {
         map.addSource(DIM, { type: 'geojson', data: JSON.parse(g) });
         map.addLayer({ id: DIM, type: 'fill', source: DIM, minzoom: 7.5,
-            paint: { 'fill-color': '#000', 'fill-opacity': 0.4 } },
+            paint: { 'fill-color': '#000', 'fill-opacity': 0,
+                     'fill-opacity-transition': { duration: 300 } } },
             ['sites-hit', 'dd-plume-probability', 'plume-mask-image',
              'plume-mask-fill', 'detection-footprint', 'plumes']
                 .find(l => map.getLayer(l)));
     }
+    // a frame on, so a layer just added fades in from its 0
+    requestAnimationFrame(() => map.getLayer(DIM) && map.setPaintProperty(
+        DIM, 'fill-opacity', g ? 0.4 : 0));
 }
