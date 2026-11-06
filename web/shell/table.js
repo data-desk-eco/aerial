@@ -51,7 +51,7 @@ export function initTable(ctx) {
         document.querySelectorAll('.fx-drawer, .fx-drawer-handle');
     const el = sel => drawer.querySelector(sel);
 
-    // only the drag sets the width, never the rows. the map keeps its width
+    // Dragging or double-clicking sets the width, never the rows. The map keeps its width
     // and is padded; the detail panel slides over
     const setWidth = w => {
         width = w;
@@ -138,7 +138,24 @@ export function initTable(ctx) {
     addEventListener('fx-filters', render);
     addEventListener('fx-rows', render);
 
+    let animation;
+    handle.addEventListener('dblclick', () => {
+        cancelAnimationFrame(animation);
+        const start = performance.now(), from = width,
+            to = width >= MIN ? 0 : innerWidth / 2,
+            duration = matchMedia('(prefers-reduced-motion: reduce)').matches
+                ? 0 : 250;
+        const step = now => {
+            const t = duration
+                ? Math.max(0, Math.min(1, (now - start) / duration)) : 1;
+            setWidth(from + (to - from) * (1 - (1 - t) ** 3));
+            if (t < 1) animation = requestAnimationFrame(step);
+            else { render(); ctx.map.fire('moveend'); }
+        };
+        animation = requestAnimationFrame(step);
+    });
     handle.addEventListener('pointerdown', e => {
+        cancelAnimationFrame(animation);
         e.preventDefault();
         // a synthetic event has no active pointer to capture
         try { handle.setPointerCapture(e.pointerId); } catch {}
@@ -160,5 +177,7 @@ export function initTable(ctx) {
     // a phone has no drawer: one left open would hold the card and the
     // status line in from the right, and pad the map, by its width
     const phone = matchMedia('(max-width: 768px)');
-    phone.addEventListener('change', () => phone.matches && setWidth(0));
+    phone.addEventListener('change', () => {
+        if (phone.matches) { cancelAnimationFrame(animation); setWidth(0); }
+    });
 }

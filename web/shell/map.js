@@ -55,13 +55,37 @@ export function viewportBbox(map) {
     return [sw.lng, sw.lat, ne.lng, ne.lat];
 }
 
+// Bounds of the uncovered map, including rotated views. Fall back to the
+// globe's bounds if a corner is in space rather than on its surface.
+export function worldmapBounds(map) {
+    const { top, right, bottom, left } = map.getPadding();
+    if (top || right || bottom || left) {
+        const c = map.getContainer(), center = map.getCenter().lng,
+            corners = [[left, top], [c.clientWidth - right, top],
+                [c.clientWidth - right, c.clientHeight - bottom],
+                [left, c.clientHeight - bottom]],
+            points = corners.map(p => map.unproject(p));
+        if (points.every((p, i) => {
+            const q = map.project(p);
+            return Math.hypot(q.x - corners[i][0], q.y - corners[i][1]) < 1;
+        })) {
+            const lons = points.map(p => center
+                + ((p.lng - center + 180) % 360 + 360) % 360 - 180),
+                lats = points.map(p => p.lat);
+            return [[Math.min(...lons), Math.min(...lats)],
+                [Math.max(...lons), Math.max(...lats)]];
+        }
+    }
+    return map.getBounds().toArray();
+}
+
 // the worldmap with the view's true extent as its box (pdf:83): getBounds
 // follows the globe's horizon, where an off-globe corner unprojects to
 // nonsense, and a box across the antimeridian is split in two. no minimum:
 // a deep zoom is a dot
 export function wireWorldmap(map, el) {
     const update = () => {
-        const [[w, s], [e, n]] = map.getBounds().toArray(),
+        const [[w, s], [e, n]] = worldmapBounds(map),
             a = ((w + 180) % 360 + 360) % 360 - 180, b = a + e - w;
         setBoxes(el, e - w >= 360 ? [[-180, s, 180, n]]
             : b > 180 ? [[a, s, 180, n], [-180, s, b - 360, n]]
