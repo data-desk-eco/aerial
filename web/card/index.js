@@ -212,7 +212,8 @@ function renderEvents(el, detections, b, keep) {
         item.className = 'event-item';
         item.toggleAttribute('selectable', true);
         item.dataset.date = det.date;
-        item.innerHTML = `<span>${formatDate(det.date)}</span>`
+        item.innerHTML = `<span class="ymd">${formatDate(det.date)
+            .split(' ').map(x => `<span>${x}</span>`).join('')}</span>`
             + `<span>${b.cfg.formatVal(det)}</span>`
             + `<span>${b.cfg.formatCount(det)}</span>`;
         item.onclick = () => selectDetection(det, item, b);
