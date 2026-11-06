@@ -2,7 +2,7 @@
 // demand, the graded satellite underlay and the mollweide worldmap.
 
 import { style, mark, marks, imagery } from '../vendor/dd/dd.js';
-import { drawWorldmap, setBoxes } from '../vendor/dd/worldmap.js';
+import { drawWorldmap } from '../vendor/dd/worldmap.js';
 
 // any `<name>-<#hex>` a layer names loads when maplibre asks for it, so
 // layers need not wait; ensureMark preloads the ids only expressions name
@@ -56,41 +56,55 @@ export function viewportBbox(map) {
     return [sw.lng, sw.lat, ne.lng, ne.lat];
 }
 
-// Bounds of the uncovered map, including rotated views. Fall back to the
-// globe's bounds if a corner is in space rather than on its surface.
-export function worldmapBounds(map) {
-    const { top, right, bottom, left } = map.getPadding();
-    if (top || right || bottom || left) {
-        const c = map.getContainer(), center = map.getCenter().lng,
-            corners = [[left, top], [c.clientWidth - right, top],
-                [c.clientWidth - right, c.clientHeight - bottom],
-                [left, c.clientHeight - bottom]],
-            points = corners.map(p => map.unproject(p));
-        if (points.every((p, i) => {
-            const q = map.project(p);
-            return Math.hypot(q.x - corners[i][0], q.y - corners[i][1]) < 1;
-        })) {
-            const lons = points.map(p => center
-                + ((p.lng - center + 180) % 360 + 360) % 360 - 180),
-                lats = points.map(p => p.lat);
-            return [[Math.min(...lons), Math.min(...lats)],
-                [Math.max(...lons), Math.max(...lats)]];
-        }
-    }
-    return map.getBounds().toArray();
+// the uncovered view's edge as lon/lat, n points a side: an edge point
+// off the surface (space past the globe's horizon, or past mercator's
+// poles) is pulled toward the middle until it lands, so the ring is the
+// horizon where the view holds it. lons run on unwrapped, never jumping
+export function viewOutline(map, n = 32) {
+    const { top, right, bottom, left } = map.getPadding(),
+        c = map.getContainer(), r = c.clientWidth - right,
+        b = c.clientHeight - bottom, m = [(left + r) / 2, (top + b) / 2],
+        at = ([x, y], t) => [m[0] + (x - m[0]) * t, m[1] + (y - m[1]) * t],
+        on = p => { const q = map.project(map.unproject(p));
+            return Math.hypot(q.x - p[0], q.y - p[1]) < 1; },
+        side = (x0, y0, x1, y1) => Array.from({ length: n }, (_, i) =>
+            [x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n]);
+    let w;
+    return [...side(left, top, r, top), ...side(r, top, r, b),
+        ...side(r, b, left, b), ...side(left, b, left, top)].map(p => {
+        let lo = 0, hi = 1;
+        if (!on(p)) for (let i = 0; i < 16; i++)
+            on(at(p, (lo + hi) / 2)) ? lo = (lo + hi) / 2 : hi = (lo + hi) / 2;
+        const { lng, lat } = map.unproject(on(p) ? p : at(p, lo));
+        w = w === undefined ? lng : w + ((lng - w + 540) % 360) - 180;
+        return [w, lat];
+    });
 }
 
-// the worldmap with the view's true extent as its box (pdf:83): getBounds
-// follows the globe's horizon, where an off-globe corner unprojects to
-// nonsense, and a box across the antimeridian is split in two. no minimum:
-// a deep zoom is a dot
+// mollweide, as vendor/dd/worldmap.js draws it: x in ±2√2, y in ±√2
+const mollweide = (lon, lat) => {
+    const f = Math.max(-89.9, Math.min(89.9, lat)) * Math.PI / 180;
+    let t = f;
+    for (let i = 0; i < 8; i++) t -= (2 * t + Math.sin(2 * t)
+        - Math.PI * Math.sin(f)) / (2 + 2 * Math.cos(2 * t));
+    return [2 * Math.SQRT2 / Math.PI * lon * Math.PI / 180 * Math.cos(t),
+        -Math.SQRT2 * Math.sin(t)];
+};
+
+// the worldmap with the view's own outline on it (pdf:83), not a box: the
+// ring is drawn a turn either way and clipped to the ellipse, so a view
+// across the antimeridian or round a pole closes as the view does
 export function wireWorldmap(map, el) {
     const update = () => {
-        const [[w, s], [e, n]] = worldmapBounds(map),
-            a = ((w + 180) % 360 + 360) % 360 - 180, b = a + e - w;
-        setBoxes(el, e - w >= 360 ? [[-180, s, 180, n]]
-            : b > 180 ? [[a, s, 180, n], [-180, s, b - 360, n]]
-            : [[a, s, b, n]], 0);
+        const g = el.querySelector('.boxes'), o = viewOutline(map),
+            shut = Math.abs(o.at(-1)[0] - o[0][0]) < 180;
+        if (g) g.innerHTML = '<clipPath id="wm-clip"><ellipse rx="'
+            + 2 * Math.SQRT2 + '" ry="' + Math.SQRT2 + '"/></clipPath>'
+            + '<path clip-path="url(#wm-clip)" fill="none" stroke="#FFFFFF"'
+            + ' stroke-width="1.25" vector-effect="non-scaling-stroke" d="'
+            + [-720, -360, 0, 360, 720].map(k => 'M' + o.map(([x, y]) =>
+                mollweide(x + k, y).map(v => v.toFixed(3))).join('L')
+                + (shut ? 'Z' : '')).join('') + '"/>';
     };
     drawWorldmap(el).then(update);
     for (const e of ['move', 'resize']) map.on(e, update);
