@@ -40,7 +40,7 @@ dd-dot[unavailable] { pointer-events: auto; }
    the month as wide as may, inter's widest, whatever the font's size */
 .ymd { font-variant-numeric: tabular-nums; }
 .ymd > * { display: inline-block; font: inherit; }
-.ymd > b { width: 2ch; text-align: right; }
+.ymd > b { width: 2ch; margin-right: 0.15em; text-align: right; }
 .ymd > i::before { content: 'May'; display: block; height: 0;
     visibility: hidden; }
 
