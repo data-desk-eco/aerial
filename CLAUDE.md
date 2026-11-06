@@ -19,8 +19,8 @@ lives in the hook modules it wires in. `web/shell/` is the map shell,
 first-party since 2026-08-17 (it was the cartograph library): change it here,
 and delete what only a second consumer would have wanted.
 
-zero npm dependencies. MapLibre GL and DuckDB-Wasm lite are vendored; everything
-else is browser built-ins.
+zero npm dependencies. MapLibre GL and DuckDB-Wasm lite (quack's client
+linked in) are vendored; everything else is browser built-ins.
 
 **the engine does the work.** aerial's js is a thin layer between maplibre and
 the archive: a reader builds one statement, the engine filters, windows,
@@ -91,13 +91,13 @@ flares. s2 by day and s3 by night are both drawn, in one key group with vnf
 its site (`until`).
 
 both come from burnoff's service (its `serve/` on the jump host, at
-`https://dev.datadesk.eco`, `?api=` on the page naming another) over
+`quack:dev.datadesk.eco:443`, `?api=` on the page naming another) over
 duckdb's quack protocol: `FROM s2_sites(w, s, e, n, 'a', 'b')` for s2 and
-`s3_sites` for s3, each one row of geojson (`flaring/service.js`, the
-`@quack-protocol/sdk` client vendored in `vendor/quack/` with flechette,
-its one dependency, loaded on the first call; a pool of four connections,
-as the client queues a connection's statements; `fetch` passed bound, as
-the client calls it as its own method and a browser refuses that). the
+`s3_sites` for s3, each one row of geojson, asked by the engine itself
+(`flaring/service.js`: `quack_query`, linked into duckdb-wasm-lite since
+lite.1, on four lanes of its own; `columns := {...}`, lite.2's, parks the
+call on its fetch, where without it the call held the engine's worker and
+every lane behind it until the service answered). the
 service reads the scenes off eodata in region and keeps them, so a view it
 has read answers in under a second. `flaring/live.js` is one module for
 both: `live(spec)` makes an instrument (`s2`, `s3`), and the specs hold
@@ -242,7 +242,7 @@ web/
     flares.js        vnf in sql: the reducer, vnf(),
                      availability, the series
     live.js          s2 and s3 off burnoff's service, live(spec) each
-    service.js       the quack pool
+    service.js       quack_query on four lanes
   methane/           plumes.js reader, attribution.js, candidates.js,
                      overlay.js, mask.js
   shell/             app.js mount, map.js, ui.js, detail.js, table.js,

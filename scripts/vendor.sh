@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # vendor the third-party half of web/: maplibre, duckdb-wasm-lite, inter, the
-# data desk design system and the quack sdk. everything else under
-# web/ is first-party.
+# data desk design system and mediapipe. everything else under web/ is
+# first-party.
 set -euo pipefail
 
 VENDOR=web/vendor
 DD_DIST="${DD_DIST:-$HOME/Tools/design/dist}"
-DUCKDB_TAG="v2.0.0-lite.1"   # DuckDB data engine release
+DUCKDB_TAG="v2.0.0-lite.2"   # DuckDB data engine release: 2.0, and quack
 grep -q "DUCKDB_RELEASE = '$DUCKDB_TAG'" web/shell/engine.js
 
 rm -rf "$VENDOR"
@@ -24,7 +24,8 @@ gh release download "$DUCKDB_TAG" -R data-desk-eco/duckdb-wasm-lite \
     -p 'duckdb-browser-eh.worker.js' \
     -D "$VENDOR/duckdb" --clobber
 # the guard is for the category error: a build that linked gdal and proj, or
-# the stock npm wasm (35.96 MB). the lite build is 24.40 MB
+# the stock npm wasm (35.96 MB). the lite build is 28.23 MB, quack's client
+# among it
 [ "$(wc -c < "$VENDOR/duckdb/duckdb-eh.wasm")" -lt 30000000 ] || {
     echo "duckdb-wasm-lite: WASM exceeds 30 MB" >&2
     exit 1
@@ -36,19 +37,7 @@ mkdir -p "$VENDOR/dd"
 cp "$DD_DIST/dd.js" "$DD_DIST/audit.js" "$DD_DIST/style.dark.json" \
    "$DD_DIST/worldmap.js" "$DD_DIST/land.json" "$VENDOR/dd/"
 
-echo "quack sdk 0.3.0 ..."
-# the browser's quack client, for burnoff's service (live.js), and flechette,
-# its one dependency, which it imports by name: pointed at the file here
-mkdir -p "$VENDOR/quack"
 NPM=https://registry.npmjs.org
-curl -sL "$NPM/@quack-protocol/sdk/-/sdk-0.3.0.tgz" |
-    tar xz -C "$VENDOR/quack" --strip-components 2 \
-        package/dist/index.js package/dist/messages-BsNzlNiY.js
-curl -sL "$NPM/@uwdata/flechette/-/flechette-2.7.1.tgz" |
-    tar xz -C "$VENDOR/quack" --strip-components 2 package/dist/flechette.mjs
-sed -i.bak 's#"@uwdata/flechette"#"./flechette.mjs"#' "$VENDOR/quack/index.js"
-rm "$VENDOR/quack/index.js.bak"
-
 echo "mediapipe tasks-vision 1.2.2 ..."
 # the hand landmarker hands.js runs in a worker: the bundle, the wasm built
 # as an es module (a module worker has no importScripts), the float16 model
@@ -61,7 +50,7 @@ curl -sLo "$VENDOR/mediapipe/hand_landmarker.task" \
     https://storage.googleapis.com/mediapipe-models/hand_landmarker/\
 hand_landmarker/float16/1/hand_landmarker.task
 
-echo "inter font ...
+echo "inter font ..."
 # a desktop chrome agent, so google serves woff2
 UA='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
 UA+=' (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
