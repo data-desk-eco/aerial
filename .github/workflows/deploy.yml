@@ -5,6 +5,12 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# one deploy at a time: pages refuses a second while one syncs, and a slow
+# sync (10 min on 2026-11-06) failed the push behind it. the newest waits
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
 jobs:
   deploy-pages:
     runs-on: ubuntu-latest
