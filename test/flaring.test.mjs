@@ -13,11 +13,9 @@ import { vnf } from '../web/flaring/flares.js';
 import { quote } from '../web/shell/util.js';
 
 // the statements run in the duckdb cli, as the engine runs them: spatial
-// loaded, geometry (lon, lat), and no terminal near anything, so names stay
-// derived
+// loaded, geometry (lon, lat)
 const run = q => JSON.parse(execFileSync('duckdb', ['-json', '-c',
-    `LOAD spatial; SET geometry_always_xy = true;
-     CREATE TABLE terminals (name VARCHAR, lat DOUBLE, lon DOUBLE); ${q}`])
+    `LOAD spatial; SET geometry_always_xy = true; ${q}`])
     .toString() || '[]');
 const lit = v => v == null ? 'NULL' : Array.isArray(v) ? `[${v.map(lit)}]`
     : typeof v === 'object' ? `{${Object.entries(v)

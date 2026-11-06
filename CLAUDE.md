@@ -29,7 +29,7 @@ properties (`fc()`). the lite build carries spatial (`ST_Distance_Sphere`,
 `ST_Contains`, `ST_Normalize`) and h3 (`h3_latlng_to_cell_string`,
 `h3_polygon_wkt_to_cells_experimental_string`), so geometry and the archive's
 cells are sql too. what the session holds, the engine holds, as a table, not
-a js array: `terminals`, `plume_index`, `site_view`; and the ranges it read,
+a js array: `plume_index`, `site_view`; and the ranges it read,
 which a repeated read is answered from. js keeps the dom and the map. a loop
 over rows in js is a statement not yet written.
 
@@ -64,10 +64,10 @@ has, as a plume mask is; from z5
 each family draws every point (VNF 21k in 0.4 s; per viewport, flares
 lagged and churned the card).
 
-vnf sites are named after the export LNG terminal they sit on, where one is
-within 7.5 km: `loadTerminals` fills the `terminals` table off `gem/infrastructure`
-on the card lane, and a site drawn before it lands is renamed on the next
-refresh.
+a detection is never named after a facility near it: a vnf site takes
+eog's `detail` or `Flare #<id>`, a live site its place. a detection meets a
+facility only on the map (`sites.js`), or through a ch4id attribution that a
+person has confirmed.
 
 **methane.** `methane/plumes.js` reads every provider's plume detections for
 the ticked window, the wind at the plume among them (`wind_ms`,
@@ -239,7 +239,7 @@ web/
     s2.js s3.js vnf.js plume.js   the bodies
   flaring/
     render.js        MODE: the scale each instrument reads on, the S2 floor
-    flares.js        vnf in sql: the reducer, vnf(), the terminals,
+    flares.js        vnf in sql: the reducer, vnf(),
                      availability, the series
     live.js          s2 and s3 off burnoff's service, live(spec) each
     service.js       the quack pool
@@ -358,9 +358,8 @@ without touching each other's staged ranges. `sql()` and `read()` take a
 `lane`, and `.query()` is called in exactly one place (bar each connection's
 `SET geometry_always_xy`: the setting is per connection, and spatial's sphere
 functions otherwise take (lat, lon)). the map is the default
-lane and card opens (the mask and the attributions among them, and the
-terminal read) are `lane: 'card'`: sharing one
-made a pan wait for a card, 6.1 s against 1.3 s. a held table is shared by
+lane and card opens (the mask and the attributions among them) are
+`lane: 'card'`: sharing one made a pan wait for a card, 6.1 s against 1.3 s. a held table is shared by
 every connection, so a statement that replaces one goes on the lane that reads
 it (`site_view` on the map lane), and a lane is otherwise only a parallelism
 choice. add one when work must not wait behind other work, never one per
@@ -374,7 +373,7 @@ which is also every prefetch's fallback, and the engine keeps every range it
 read (32 MB, least recently used): a reopened card is answered from memory,
 and js holds no copy of its rows. do not put the first paint behind a ranged
 read again (`docs/cold-load.md`). and nothing the first paint does not draw
-shares the line with it: the attributions and the terminals wait for the
+shares the line with it: the attributions wait for the
 first paint, and the plume read leaves out `bounds` (nature trace's 7.6 MB of
 wkt, 6.5 MB as geometry), which a data desk card reads for its one plume. a
 phone on poor signal paid 17.7 MB of archive before its first plume; it pays
@@ -399,8 +398,7 @@ exactly what a reader may rely on.
   false on a retrieval the producer does not trust, and `wind_ms`,
   `wind_from_deg` where the producer gives a wind.
 - `<provider>/infrastructure` — candidate sources, one object per h3 res-1
-  `cell` and Hilbert-clustered on lon/lat inside it; gem's is one object,
-  as its `lng_terminal` rows name the flares the world over.
+  `cell` and Hilbert-clustered on lon/lat inside it; gem's is one object.
 - `data-desk/attributions` — ch4id's plume → source contract.
 - `data-desk/sites` — the osm outline of every industrial facility a flare
   or plume can come from (oil and gas, coal, steel, cement, power, waste),

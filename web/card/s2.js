@@ -21,7 +21,7 @@ function copernicusUrl(date) {
     });
 }
 
-const CSV_COLS = ['facility', 'terminal', 'lat', 'lon', 'date', 'max_b12',
+const CSV_COLS = ['site', 'lat', 'lon', 'date', 'max_b12',
                   'pixels', 'persistence', 'passes', 'observations'];
 
 // the rows the card is listing: a site carries no dates of its own
@@ -31,7 +31,7 @@ function downloadCSV() {
     const quote = s => `"${String(s ?? '').replace(/"/g, '""')}"`;
     const fixed = (v, d) => v == null ? '' : Number(v).toFixed(d);
     const rows = currentDets.map(det => [
-        quote(p.name), quote(p.terminal),
+        quote(p.name),
         fixed(det.raw_lat ?? lat, 6), fixed(det.raw_lon ?? lon, 6),
         det.date, fixed(det.max_b12, 4), det.pixels ?? '',
         fixed(p.persistence, 4), p.passes ?? '', p.observations ?? '',

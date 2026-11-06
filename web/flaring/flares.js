@@ -12,7 +12,7 @@ import { quote, quarterKey } from '../shell/util.js';
 
 // the share of the window's nights the sky was read; below it a platform
 // was grounded, and there is no rate
-const COVERAGE_MIN = 0.8, TERMINAL_M = 7500;
+const COVERAGE_MIN = 0.8;
 
 // no keys is no window, and admits every quarter
 const ticked = (d, keys) => keys.size
@@ -34,17 +34,10 @@ const reduce = keys => `(SELECT count(*) AS n, ${SUMS.map(k => `
     coalesce(max(q.rh_max), 0) AS rh_max
     FROM unnest(f.quarters) AS u(q) WHERE ${ticked('q.quarter', keys)})`;
 
-// a terminal's distance from a site, in metres. the engine reads geometry
-// as (lon, lat) on every connection (engine.js)
-const D = 'ST_Distance_Sphere(ST_Point(t.lon, t.lat), ST_Point(f.lon, f.lat))';
-
-// a site's window, named after the export lng terminal it sits on, where one
-// is within TERMINAL_M. `terminals` is empty until gem's read lands
+// a site's window. a site is named by its provider alone: a detection
+// meets a facility only on the map, or through a ch4id attribution
 const site = (src, keys, where, cols) => `
-    SELECT f.id, f.lat, f.lon, ${cols},
-        (SELECT arg_min(t.name, ${D}) FROM terminals t
-            WHERE abs(t.lat - f.lat) < ${TERMINAL_M / 111320}
-              AND ${D} <= ${TERMINAL_M}) AS terminal, w.*
+    SELECT f.id, f.lat, f.lon, ${cols}, w.*
     FROM ${src} AS f, LATERAL ${reduce(keys)} AS w WHERE ${where}`;
 
 // vnf sites, brightest first. both counts are clear nights, so the ratio is
@@ -53,8 +46,8 @@ const site = (src, keys, where, cols) => `
 // lit on any night, cloudy ones included: a flare caught only under cloud
 // still burned
 export const vnf = (src, keys, where = 'true', lit = false) => `
-    SELECT coalesce(terminal, nullif(detail, ''), 'Flare #' || id) AS name,
-        'vnf' AS kind, terminal, lat, lon, id,
+    SELECT coalesce(nullif(detail, ''), 'Flare #' || id) AS name,
+        'vnf' AS kind, lat, lon, id,
         coalesce(detail, '') AS detail, coalesce(country, '') AS country,
         CASE WHEN detections > 0 THEN rh_sum / detections ELSE 0 END
             AS avg_rh,
@@ -68,14 +61,9 @@ export const vnf = (src, keys, where = 'true', lit = false) => `
 
 // ── reads ──
 
-let terminals;
-const held = () => terminals ??= sql(`CREATE TABLE IF NOT EXISTS terminals
-    (name VARCHAR, lat DOUBLE, lon DOUBLE)`);
-
 // a table partitioned past the prefetch cap names no single object, and that
 // has to be the loud kind of broken rather than a blank map
-const src = provider => Promise.all([held(),
-    objects('flares', { provider })]).then(([, [u]]) => u ? from(u)
+const src = provider => objects('flares', { provider }).then(([u]) => u ? from(u)
     : Promise.reject(new Error(`${provider}/flares names no object: it has `
         + 'partitioned, and this reader must address it by cell')));
 
@@ -100,18 +88,6 @@ export const quarters = async (provider, [w, s, e, n], start, end) =>
         WHERE q.detections > 0 AND q.quarter BETWEEN ${quote(start)}
             AND ${quote(end)} AND f.lon BETWEEN ${+w} AND ${+e}
             AND f.lat BETWEEN ${+s} AND ${+n}`)).map(r => r.k));
-
-// the export lng terminals a flare is named after, off gem's infrastructure
-// table, on the card lane: a ranged read of a big object, which no flare dot
-// waits behind. a site drawn before they land is renamed on the next refresh
-export const loadTerminals = () => Promise.all([held(),
-    objects('infrastructure', { provider: 'gem' })])
-    .then(async ([, [u]]) => sql(`INSERT INTO terminals
-        SELECT name, lat, lon FROM ${await from(u)}
-        WHERE kind = 'lng_terminal' AND detail LIKE 'export%'
-          AND status IN ('operating', 'construction', 'suspended')`,
-        { lane: 'card' }))
-    .catch(err => console.warn('terminals unavailable:', err));
 
 // one site's per-date history, oldest first, off the object its cell
 // names. the cell is the engine's, off the site's position, as the archive's

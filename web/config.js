@@ -17,8 +17,7 @@ import { MARKS, PIN, AUDIT, FLARES, FAMILIES, flareIcon, plumeIcon,
 import { NEAR, HEAT_LAYERS, initHeat } from './heat.js';
 import { ABOUT } from './about.js';
 import { keySections } from './key.js';
-import { readVNF, readSite, quarters, loadTerminals }
-    from './flaring/flares.js';
+import { readVNF, readSite, quarters } from './flaring/flares.js';
 import { initCard, cardTitle, cardStats, cardHtml, cardAbout, onCardShow,
     onCardClose, refreshCard, reselectCurrentFeature } from './card/index.js';
 import { isPlume, label, readPlumes, availableQuartersPlumes,
@@ -317,13 +316,11 @@ mount({
         const first = Promise.allSettled([REFRESH.vnf(), REFRESH.plumes(),
             REFRESH.sites()]);
         // what no first paint draws waits for it, rather than sharing a
-        // phone's line with it. a flare drawn before the terminals land is
-        // renamed by this
+        // phone's line with it
         first.then(() => {
             ctx.loaded();
             quarterDots();
             prefetchData(ATTRIBUTIONS);
-            loadTerminals().then(() => REFRESH.vnf());
         });
         readyResolve();
     },

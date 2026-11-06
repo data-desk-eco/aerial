@@ -54,11 +54,7 @@ export const coords = p => [Number(p.lon), Number(p.lat)];
 const featureOf = p => ({ type: 'Feature', properties: p,
     geometry: { type: 'Point', coordinates: coords(p) } });
 
-// "Near <terminal>" where one is close enough to name the site
-const near = name =>
-    `Near ${String(name).replace(/\s*Terminal\b/gi, '').trim()}`;
-export const siteTitle = (p, fallback) =>
-    ({ text: (p.terminal ? near(p.name) : p.name) || fallback });
+export const siteTitle = (p, fallback) => ({ text: p.name || fallback });
 
 // a live instrument's site (flaring/live.js): its card fills in as reads
 // land, says Loading… until every scene it can has looked at the site,
@@ -66,7 +62,7 @@ export const siteTitle = (p, fallback) =>
 // rows' end. hoisted, as the bodies call it while this module is loading
 export function liveBody(x) {
     return {
-        title: p => ({ ...siteTitle(p, 'Unknown facility'),
+        title: p => ({ ...siteTitle(p, 'Unknown site'),
                        note: p.loading && 'Loading…' }),
         fetch: p => (x.deepen(p.id), Promise.resolve(x.series(p.id))),
         more: p => x.older(p.id),
