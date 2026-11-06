@@ -24,7 +24,8 @@ export function ensureMark(map, id) {
 // pixel ratio, so it is as sharp
 export async function ensureLabel(map, id, { heading = '', text = '',
         color = '#fff', weight = 370 }) {
-    const r = devicePixelRatio || 1, font = `${weight} 11px Inter`, lh = 13.3;
+    const r = devicePixelRatio || 1, lh = 13.3,
+        font = `${weight} 11px Inter, sans-serif`;
     await document.fonts.load(font, heading + text).catch(() => {});
     if (map.hasImage(id)) return;
     const g = document.createElement('canvas').getContext('2d');
