@@ -3,8 +3,10 @@
 // eodata in region, off its store where it holds them: sentinel-2 by day
 // (`s2_sites`) and sentinel-3 by night (`s3_sites`), an instrument each, made
 // by live(spec). the view, from the instrument's zoom in, asks for fixed
-// block degree blocks of sites: the last RECENT days STEP at a time first,
-// then the rest back to DAYS a month at a time, the view's middle first.
+// block degree blocks of sites over windows fixed to the calendar: the
+// 10-day periods of the last RECENT days first, then months back to DAYS,
+// the view's middle first. a past window is the same request any day, which
+// the service answers from the answers it keeps.
 // each site comes with its looks (the cloud of the square under it, a date)
 // and its detections, named by its detections' mean place rounded (the
 // service's sites.sql, s3sites.sql). the mean can cross a rounding edge as
@@ -18,13 +20,21 @@ import { MODE } from './render.js';
 import { viewportBbox } from '../shell/map.js';
 import { call } from './service.js';
 
-const DAYS = 180, RECENT = 30, BACK = 90, STEP = 10, FLY = 4;
+const DAYS = 180, RECENT = 30, BACK = 90, FLY = 4;
 const ago = (d, n) => new Date(Date.parse(d) - n * 864e5).toISOString()
     .slice(0, 10);
 // ?asof= on the page reads as if on that date, for a service that holds
 // only the past (a local one off a mirror that stops short of today)
 const ASOF = new URLSearchParams(location.search).get('asof');
 const today = () => ASOF ?? ago(new Date(), 0);
+const month = d => d.slice(0, 8) + '01';
+// a date's 10-day period: the 1st to the 10th, to the 20th, or the 21st to
+// the month's end
+const period = d => {
+    const k = Math.min(2, (d.slice(8) - 1) / 10 | 0), m = d.slice(0, 8);
+    return [m + ['01', '11', '21'][k], k < 2 ? m + ['10', '20'][k]
+        : ago(new Date(Date.UTC(d.slice(0, 4), d.slice(5, 7))), 1)];
+};
 const metres = (a, b) => Math.hypot((a.lon - b.lon) * Math.cos(a.lat
     * Math.PI / 180), a.lat - b.lat) * 111320;
 const inside = (p, [w, s, e, n]) =>
@@ -162,14 +172,17 @@ export function live(spec) {
     // ── the view: its blocks, the recent window first, then by distance ──
 
     let shown = [0, 0, 0, 0], off = true, blocks = [];
-    // the windows asked for, newest first: RECENT days in STEP days, r 0,
-    // then back to DAYS in months, r 1, each a step of the view's progress
-    const windows = () => Array.from({ length: (DAYS - RECENT) / 30
-        + RECENT / STEP }, (_, k) => {
-        const [x, n] = k < RECENT / STEP ? [k * STEP, STEP]
-            : [RECENT + (k - RECENT / STEP) * 30, 30];
-        return [ago(today(), x + n - 1), ago(today(), x), +(x >= RECENT), k];
-    });
+    // the windows asked for, newest first, each a step of the view's
+    // progress: the periods ending in the last RECENT days, r 0, then back
+    // past DAYS in months, r 1, the newest cut where the periods begin
+    const windows = () => {
+        const w = [], cut = ago(today(), RECENT), stop = ago(today(), DAYS);
+        for (let d = today(); d >= stop; d = ago(w.at(-1)[0], 1)) {
+            const [a, b] = period(d);
+            w.push(b > cut ? [a, b, 0, w.length] : [month(d), d, 1, w.length]);
+        }
+        return w;
+    };
     // the view, or none: an instrument not drawn asks for nothing
     function view(map) {
         shown = map ? viewportBbox(map) : shown;
@@ -228,7 +241,8 @@ export function live(spec) {
             .map(([d]) => quarterOf(d))));
 
     // ── a card: its site's last BACK days, and BACK more on older(), back
-    // to first, a request of a small box around it a window ──
+    // to first, a request of a small box around it a window, from a
+    // month's first ──
 
     let deep;
     function history(s, a, b) {
@@ -239,12 +253,12 @@ export function live(spec) {
     }
     const deepen = id => {
         const s = byId.get(id);
-        if (s && s !== deep) deep = s, history(s, ago(today(), BACK),
+        if (s && s !== deep) deep = s, history(s, month(ago(today(), BACK)),
             today());
     };
     const older = id => deep?.id === id && deep.since > first
-        && !deep.fetching && (history(deep, [ago(deep.since, BACK), first]
-            .sort()[1], ago(deep.since, 1)), true);
+        && !deep.fetching && (history(deep, [month(ago(deep.since, BACK)),
+            first].sort()[1], ago(deep.since, 1)), true);
     // a site's dated detections, oldest first, as the card lists them
     const series = id => [...byId.get(id)?.looks ?? []]
         .filter(([, l]) => l.flare).sort(([a], [b]) => a < b ? -1 : 1)
