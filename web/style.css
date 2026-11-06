@@ -37,8 +37,8 @@ dd-dot[unavailable] { pointer-events: auto; }
     gap: var(--dd-row-gap); scrollbar-width: thin;
     scrollbar-color: var(--dd-ui-inactive) transparent; }
 /* day, month and year each in a column, so the list reads down evenly */
-.ymd { display: inline-grid; grid-template-columns: 2ch 2.2em auto;
-    column-gap: 0.3em; font-variant-numeric: tabular-nums; }
+.ymd { display: inline-grid; grid-template-columns: 2ch 2em auto;
+    column-gap: 0.25em; font-variant-numeric: tabular-nums; }
 .ymd > :first-child { text-align: right; }
 .events-empty { color: var(--dd-ui-text-secondary);
     padding: 0 var(--dd-button-pad-x); }
