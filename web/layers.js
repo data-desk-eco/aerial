@@ -79,7 +79,8 @@ export const MARK = {
 // vendor/dd/audit.js passes everything else (`make audit`): the heat halo, a
 // live detection's pixels and the probability
 // surface, which are data, not imagery; and the intro heading at 600, the
-// title weight of datadesk.eco, where the guidelines' 750 read heavy
+// title weight of datadesk.eco, where the guidelines' 750 read heavy,
+// and a card's ⓘ heading at 24px, under aerial's own 32px title
 export const AUDIT = {
     skip: '.fx-modal-content [slot=title], .fx-modal-content [slot=title] *',
     graded: ['detection-footprint', 'detection-pixels-fill',

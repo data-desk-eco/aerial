@@ -60,9 +60,10 @@ dd-dot[unavailable] { pointer-events: auto; }
    which read heavy at 32px on a phone (ruling 2026-10-11; AUDIT skips it) */
 .fx-modal-content [slot=title] { font-weight: 600; }
 /* a card's ⓘ is a note on one marking, not the map's title: its heading
-   at the 14px intro body, the 32px kept for aerial's own */
-#about-card [slot=title] { font-size: 14px;
-    font-variation-settings: "opsz" 26; }
+   at 24px, off the guidelines' 14/32 (AUDIT skips it), the 32px kept for
+   aerial's own */
+#about-card [slot=title] { font-size: 24px;
+    font-variation-settings: "opsz" 29; }
 
 /* fine print, 11px under the 14px body (pdf:77) */
 .fx-fine { font-size: 11px; font-variation-settings: "opsz" 22; }
