@@ -4,7 +4,8 @@
 
 import { MODE } from '../flaring/render.js';
 import { vnfSeries } from '../flaring/flares.js';
-import { current, coords, siteTitle } from './index.js';
+import { current, coords } from './index.js';
+import { fmtCoords } from '../shell/util.js';
 import { heatFootprint } from './overlays.js';
 
 function footprint(det) {
@@ -32,7 +33,8 @@ export default {
             observation coverage is insufficient.</p>
         <p>Select a night to show a circle at the site. Its size and colour
             indicate radiant heat, not the physical size of the flare.</p>` },
-    title: p => siteTitle(p, `Hotspot #${p.id}`),
+    // the place leads, as a live site's; eog's kind of site under it
+    title: p => ({ text: fmtCoords(p.lat, p.lon), sub: p.detail }),
     fetch: vnfSeries,
     select: footprint,
 };

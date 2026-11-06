@@ -111,8 +111,9 @@ function render(feature, fromPermalink) {
         <span slot="title" title="${escapeHtml(t.text)
             }">${escapeHtml(t.text)}${t.note ? ` <span class="fx-secondary">${
             escapeHtml(t.note)}</span>` : ''}</span>
-        <div slot="subtitle" class="fx-sub"><span>${t.text === fmtCoords(lat, lon)
-            ? '' : fmtCoords(lat, lon)}${nav}</span><div class="fx-status"></div>
+        <div slot="subtitle" class="fx-sub"><span>${t.sub ? escapeHtml(t.sub)
+            : t.text === fmtCoords(lat, lon) ? '' : fmtCoords(lat, lon)
+            }${nav}</span><div class="fx-status"></div>
             <div class="fx-stats">${cfg.stats?.(p) || ''}</div></div>
         ${cfg.html?.(p) || ''}`;
     el.toggleAttribute('info', !!cfg.about?.(p));

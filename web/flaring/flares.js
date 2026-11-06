@@ -47,15 +47,15 @@ const site = (src, keys, where, cols) => `
 // still burned
 export const vnf = (src, keys, where = 'true', lit = false) => `
     SELECT coalesce(nullif(detail, ''), 'Flare #' || id) AS name,
-        'vnf' AS kind, lat, lon, id,
-        coalesce(detail, '') AS detail, coalesce(country, '') AS country,
+        'vnf' AS kind, lat, lon, id, coalesce(detail, '') AS detail, coalesce(country, '') AS country,
         CASE WHEN detections > 0 THEN rh_sum / detections ELSE 0 END
             AS avg_rh,
         rh_max AS max_rh, detections_clear AS detection_count,
         observations AS passes, clear AS observations,
         CASE WHEN observations >= ${COVERAGE_MIN} * days AND clear > 0
             THEN detections_clear / clear END AS persistence
-    FROM (${site(src, keys, where, 'f.detail, f.country')})
+    FROM (${site(src, keys, where,
+        "replace(f.detail, ' · ', ' / ') AS detail, f.country")})
     WHERE n > 0 ${lit ? 'AND detections > 0' : ''}
     ORDER BY rh_max DESC`;
 

@@ -55,8 +55,6 @@ export const coords = p => [Number(p.lon), Number(p.lat)];
 const featureOf = p => ({ type: 'Feature', properties: p,
     geometry: { type: 'Point', coordinates: coords(p) } });
 
-export const siteTitle = (p, fallback) => ({ text: p.name || fallback });
-
 // a live instrument's site (flaring/live.js): its card fills in as reads
 // land, says Loading… until every scene it can has looked at the site,
 // reads the site's last 90 days on open and 90 more on a scroll past the
