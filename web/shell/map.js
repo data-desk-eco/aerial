@@ -91,20 +91,27 @@ const mollweide = (lon, lat) => {
         -Math.SQRT2 * Math.sin(t)];
 };
 
-// the worldmap with the view's own outline on it (pdf:83), not a box: the
-// ring is drawn a turn either way and clipped to the ellipse, so a view
-// across the antimeridian or round a pole closes as the view does
+// the worldmap with the view's own outline on it (pdf:83), not a box, and
+// what it holds lit: drawn a turn either way and clipped to the ellipse,
+// so a view across the antimeridian closes as the view does. a view round
+// a pole runs a whole turn, and its fill closes over the pole it holds
 export function wireWorldmap(map, el) {
     const update = () => {
         const g = el.querySelector('.boxes'), o = viewOutline(map),
-            shut = Math.abs(o.at(-1)[0] - o[0][0]) < 180;
+            [x, y] = o[0], t = o.at(-1)[0] - x,
+            p = o.reduce((s, q) => s + q[1], 0) > 0 ? 90 : -90,
+            ring = Math.abs(t) > 180 ? [...o, [x + Math.sign(t) * 360, y]]
+                : [...o, o[0]],
+            d = r => [-720, -360, 0, 360, 720].map(k => 'M' + r.map(([u, v]) =>
+                mollweide(u + k, v).map(n => n.toFixed(3))).join('L')).join(''),
+            at = (f, s) => '<path clip-path="url(#wm-clip)" fill="' + f
+                + '" fill-opacity="0.2" stroke="' + s + '" stroke-width="1.25"'
+                + ' vector-effect="non-scaling-stroke" d="';
         if (g) g.innerHTML = '<clipPath id="wm-clip"><ellipse rx="'
             + 2 * Math.SQRT2 + '" ry="' + Math.SQRT2 + '"/></clipPath>'
-            + '<path clip-path="url(#wm-clip)" fill="none" stroke="#FFFFFF"'
-            + ' stroke-width="1.25" vector-effect="non-scaling-stroke" d="'
-            + [-720, -360, 0, 360, 720].map(k => 'M' + o.map(([x, y]) =>
-                mollweide(x + k, y).map(v => v.toFixed(3))).join('L')
-                + (shut ? 'Z' : '')).join('') + '"/>';
+            + at('#FFFFFF', 'none') + d(Math.abs(t) > 180 ? [...ring,
+                [ring.at(-1)[0], p], [x, p]] : ring) + '"/>'
+            + at('none', '#FFFFFF') + d(ring) + '"/>';
     };
     drawWorldmap(el).then(update);
     for (const e of ['move', 'resize']) map.on(e, update);
