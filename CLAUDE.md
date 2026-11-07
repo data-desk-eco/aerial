@@ -120,7 +120,9 @@ to the site within 100 m of its place), and a look is clear
 under 0.6 cloud, as in the archive. it is drawn as the archive's are, lit on
 two dates with its mean b12 over MODE.s2.floor, unless lit only in its
 hemisphere's summer (the archive's `seasonal`, april to august in the
-north): roofs and solar panels that catch a high sun, which the detector's
+north) or, outside the tropics, under a noon sun over 60° (riyadh's roofs
+shine until october: 101 sites over may to november, 17 with it; the
+permian's 14 and london's 2 keep every one): roofs and solar panels that catch a high sun, which the detector's
 heat test (b8a against b12, burnoff's AGENTS.md) cannot tell from a fire. in
 a year of scenes the heat test took london from ~2000 drawn sites to 87 and
 the summer rule to 54; madrid 704, 114, 43; the permian's sites by a viirs
@@ -134,11 +136,12 @@ plume mask is drawn. the table's s2 tab says Detections loading, not No rows
 in view, while the view's search is not done (`busy`; a live redraw
 sends `fx-rows`). one line at the map's top right, or in an open card
 under its place, says what is still being read, the newest read's (`status`, `shell/ui.js`; `watch`, `live.js`): the engine at start, each
-layer's read, and the view's live search, Recent S2 hotspots: x%, then Older
-S2 hotspots: x% (each the mean over the view's squares of their scenes read,
-so it moves with every read, never falls while the view is still and is the
-same at every zoom), kept up 3 s once both are done; at z10-11 it says Zoom
-in to detect S2 hotspots. its lines carry no ellipsis. the ground not yet
+layer's read, and the view's live search, one line for both instruments,
+Recent S2/S3 hotspots: x%, then Older S2/S3 hotspots: x% (S3 alone at
+z9-11; each the mean over the instruments in reach of the mean over the
+view's squares of their scenes read, so it moves with every read and never
+falls while the view is still), kept up 3 s once both are done; just out
+of an instrument's reach it says Zoom in to detect S2 (or S3) hotspots. its lines carry no ellipsis. the ground not yet
 read through is hatched (layer `unread`), fainter as its scenes are read. the reads
 for a view ask `viewportBbox` (`shell/map.js`), the canvas less the table
 drawer's padding, and a drag of the drawer reads again as a move does. no

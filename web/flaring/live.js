@@ -44,10 +44,16 @@ const inside = (p, [w, s, e, n]) =>
 
 // s2: a site is drawn as the archive's are: lit on LIT dates, over aerial's
 // floor on its mean b12, and not lit only in its hemisphere's summer, april
-// to august in the north (the archive's `seasonal`): a solar panel or a
-// sawtooth roof that catches a high sun. a look is clear under 0.6 cloud
+// to august in the north (the archive's `seasonal`), or, outside the
+// tropics, while the noon sun stands over 60°: a solar panel or a sawtooth
+// roof that catches a high sun. riyadh's roofs shine until october (101
+// sites drawn over may to november, 17 with the sun's test; the permian's
+// 14 and london's 2 keep every one). a look is clear under 0.6 cloud
 const LIT = 2;
-const summer = (d, lat) => (+d.slice(5, 7) + (lat < 0 ? 2 : 8)) % 12 < 5;
+const sun = (d, lat) => 90 - Math.abs(lat - 23.44 * Math.sin(2 * Math.PI
+    * (Date.parse(d) / 864e5 - 79) / 365.2422));
+const summer = (d, lat) => (+d.slice(5, 7) + (lat < 0 ? 2 : 8)) % 12 < 5
+    || Math.abs(lat) > 23.44 && sun(d, lat) > 60;
 const S2 = {
     fn: 's2_sites', kind: 's2', label: 'S2', zoom: 12, block: 0.1,
     idM: 40, siteM: 100, clear: 0.6, minLooks: 10, first: '2022-01-25',
@@ -265,35 +271,19 @@ export function live(spec) {
         .map(([date, { flare: f }]) => ({ date, ...spec.row(f) }));
 
     // ── the page: redraw() at most once a second while reads land, and
-    // never while the map moves; and the view's search in the status line
-    // as it changes, or a view is new, taken down once it is done, but only
-    // if this view saw it short of done: a view already searched says
-    // nothing. reads further out change nothing it says, and do not hold
-    // it up. just out of reach, a line says to zoom in ──
+    // never while the map moves; and the search in the status line ──
 
     function watch(map, status, redraw) {
-        let soon, said, ran;
         const draw = () => map.isMoving() ? map.once('moveend', draw)
             : (soon = null, redraw());
+        let soon;
         changed = () => soon ??= setTimeout(draw, 1000);
-        read = fresh => {
-            const z = map.getZoom(), p = z >= spec.zoom && progress();
-            status('zoom' + kind, z < spec.zoom && z >= spec.zoom - 2
-                ? `Zoom in to detect ${label} hotspots` : null);
-            if (z < spec.zoom) return said = null, status(kind);
-            if (!p) return;
-            const [a, b] = p, say = a < 1
-                ? `Recent ${label} hotspots: ${pct(a)}%`
-                : `Older ${label} hotspots: ${pct(b)}%`;
-            if (fresh) ran = a < 1 || b < 1;
-            if (!ran || !busy()) return said = null, status(kind);
-            if (fresh || say !== said)
-                said = say, status(kind, say, a < 1 ? a : b);
-        };
+        read = fresh => say(map, status, fresh);
     }
 
-    return { kind, view, busy, hold, watch, features, site, quarters,
-             deepen, older, series, debug: { sites, queue, got } };
+    return { kind, label, zoom: spec.zoom, progress, view, busy, hold,
+             watch, features, site, quarters, deepen, older, series,
+             debug: { sites, queue, got } };
 }
 
 // padded with figure spaces, as wide as a digit in tabular figures
@@ -301,4 +291,27 @@ export function live(spec) {
 const pct = v => String(Math.floor(100 * v)).padStart(3, '\u2007');
 
 export const s2 = live(S2), s3 = live(S3);
+
+// the view's search, s2's and s3's as one line, Recent S2/S3 hotspots then
+// Older, each the mean of the instruments in reach, as it changes or a view
+// is new, taken down once it is done, but only if this view saw it short of
+// done: a view already searched says nothing. reads further out change
+// nothing it says. just out of an instrument's reach, a line says to zoom in
+let said, ran;
+function say(map, status, fresh) {
+    const z = map.getZoom(), on = [s2, s3].filter(x => z >= x.zoom);
+    for (const x of [s2, s3]) status('zoom' + x.kind, z < x.zoom
+        && z >= x.zoom - 2 ? `Zoom in to detect ${x.label} hotspots` : null);
+    const p = on.map(x => x.progress()).filter(Boolean);
+    if (!p.length || p.length < on.length)
+        return said = null, status('live');
+    const [a, b] = [0, 1].map(r => p.reduce((t, v) => t + v[r], 0)
+        / p.length), l = on.map(x => x.label).join('/'), text = a < 1
+        ? `Recent ${l} hotspots: ${pct(a)}%`
+        : `Older ${l} hotspots: ${pct(b)}%`;
+    if (fresh) ran = b < 1 || a < 1;
+    if (!ran || a >= 1 && b >= 1) return said = null, status('live');
+    if (fresh || text !== said)
+        said = text, status('live', text, a < 1 ? a : b);
+}
 globalThis.burnoff = { s2: s2.debug, s3: s3.debug };
