@@ -59,7 +59,7 @@ globe crawl): one statement grids every
 point the key passes into one grid of mercator cells (2^12 to the world,
 4 px at z4) at every zoom, each lighting the 3×3
 around its own at the mean band (`band`, `layers.js`) of what lights it,
-drawn opaque on the ramp with a 1 px white outline, the edges only one cell
+drawn at 0.8 on the ramp with a 1 px white outline, the edges only one cell
 has, as a plume mask is; from z5
 each family draws every point (VNF 21k in 0.4 s; per viewport, flares
 lagged and churned the card).
