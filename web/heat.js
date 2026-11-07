@@ -54,13 +54,16 @@ const feature = ({ b, x0, y0, x1, y1 }) => ({ type: 'Feature',
         : { type: 'Polygon', coordinates: [[[x0, y0], [x1, y0], [x1, y1],
             [x0, y1], [x0, y0]]] } });
 
-// its fill and its outline, on the ramp at 0.8: the land shows through a
-// little, where white at the plume mask's 0.5 read as grey
+// its fill and its outline, on the ramp at 0.6: the land shows through a
+// little, where white at the plume mask's 0.5 read as grey. the fill is a
+// strip per row, and antialiased edges under 1 drew each seam as a line:
+// the outline layer gives the surface its edge
 export const HEAT_LAYERS = [
     { id: 'heat-fill', type: 'fill', source: 'heat', maxzoom: NEAR,
       filter: ['==', ['geometry-type'], 'Polygon'],
-      paint: { 'fill-color': ['step',
-          ['get', 'b'], RAMP[0], 1, RAMP[1], 2, RAMP[2]], 'fill-opacity': 0.8 } },
+      paint: { 'fill-antialias': false, 'fill-opacity': 0.6,
+          'fill-color': ['step', ['get', 'b'],
+              RAMP[0], 1, RAMP[1], 2, RAMP[2]] } },
     { id: 'heat-line', type: 'line', source: 'heat', maxzoom: NEAR,
       filter: ['==', ['geometry-type'], 'LineString'],
       paint: { 'line-color': RAMP[2], 'line-width': 1,
