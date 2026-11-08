@@ -272,6 +272,16 @@ make dist      # the pages artifact, assertions and all
 no `npm install`, and no build step. examine DOM logic in the browser
 (`skills/browser/browse` in `~/data-desk`), not only in the tests.
 
+## commits
+
+conventional commits, not the prose subjects of the history before
+2026-11-08: `type(scope): subject`, one line under 72 columns, lowercase.
+types are `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `chore`; the
+scope is the module or family (`live`, `heat`, `hands`, `card`), left out
+when a change spans them. the why, the numbers and what was checked go in
+the body, wrapped at 72. an experiment undone before a push is squashed or
+dropped, not pushed.
+
 ## invariants
 
 these were arrived at through production incidents. several are one refactor
