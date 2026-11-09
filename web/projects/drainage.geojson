@@ -1,0 +1,29 @@
+{
+"type": "FeatureCollection",
+"name": "drainage",
+"xy_coordinate_resolution": 1e-05,
+"features": [
+{ "type": "Feature", "properties": { "site": "Silesia", "mine": "KWK Silesia", "company": "PG Silesia", "plumes": 4, "drainage_plumes": 1, "score": "High" }, "geometry": { "type": "Point", "coordinates": [ 19.01536, 49.9426 ] } },
+{ "type": "Feature", "properties": { "site": "Silesia", "mine": "KWK Silesia", "company": "PG Silesia", "plumes": 4, "drainage_plumes": 0, "score": null }, "geometry": { "type": "Point", "coordinates": [ 19.01436, 49.94092 ] } },
+{ "type": "Feature", "properties": { "site": "Brzeszcze", "mine": "ZG Brzeszcze", "company": "PKW", "plumes": 14, "drainage_plumes": 0, "score": null }, "geometry": { "type": "Point", "coordinates": [ 19.15617, 49.99024 ] } },
+{ "type": "Feature", "properties": { "site": "Mysłowice-Wesoła", "mine": "KWK Mysłowice-Wesoła", "company": "PGG", "plumes": 13, "drainage_plumes": 0, "score": null }, "geometry": { "type": "Point", "coordinates": [ 19.1049, 50.18235 ] } },
+{ "type": "Feature", "properties": { "site": "Pniówek", "mine": "KWK Pniówek", "company": "JSW", "plumes": 42, "drainage_plumes": 0, "score": null }, "geometry": { "type": "Point", "coordinates": [ 18.69471, 49.96714 ] } },
+{ "type": "Feature", "properties": { "site": "Pniówek", "mine": "KWK Pniówek", "company": "JSW", "plumes": 42, "drainage_plumes": 2, "score": "Medium-High" }, "geometry": { "type": "Point", "coordinates": [ 18.68401, 49.9662 ] } },
+{ "type": "Feature", "properties": { "site": "Halemba", "mine": "KWK Ruda", "company": "PGG", "plumes": 0, "drainage_plumes": 0, "score": null }, "geometry": { "type": "Point", "coordinates": [ 18.86231, 50.2433 ] } },
+{ "type": "Feature", "properties": { "site": "Borynia-Zofiówka", "mine": "KWK Borynia-Zofiówka", "company": "JSW", "plumes": 41, "drainage_plumes": 0, "score": null }, "geometry": { "type": "Point", "coordinates": [ 18.62888, 49.96304 ] } },
+{ "type": "Feature", "properties": { "site": "Borynia", "mine": "KWK Borynia-Zofiówka", "company": "JSW", "plumes": 12, "drainage_plumes": 3, "score": "High?" }, "geometry": { "type": "Point", "coordinates": [ 18.61355, 50.00169 ] } },
+{ "type": "Feature", "properties": { "site": "Jankowice", "mine": "KWK ROW", "company": "PGG", "plumes": 11, "drainage_plumes": 6, "score": "Medium-High" }, "geometry": { "type": "Point", "coordinates": [ 18.573, 50.03083 ] } },
+{ "type": "Feature", "properties": { "site": "Marcel", "mine": "KWK ROW", "company": "PGG", "plumes": 7, "drainage_plumes": 4, "score": "Medium-High" }, "geometry": { "type": "Point", "coordinates": [ 18.50822, 50.01783 ] } },
+{ "type": "Feature", "properties": { "site": "Rydułtowy", "mine": "KWK ROW", "company": "PGG", "plumes": 0, "drainage_plumes": 0, "score": null }, "geometry": { "type": "Point", "coordinates": [ 18.4363, 50.06603 ] } },
+{ "type": "Feature", "properties": { "site": "Budryk", "mine": "KWK Budryk", "company": "JSW", "plumes": 11, "drainage_plumes": 1, "score": "Low" }, "geometry": { "type": "Point", "coordinates": [ 18.75995, 50.17246 ] } },
+{ "type": "Feature", "properties": { "site": "Budryk", "mine": "KWK Budryk", "company": "JSW", "plumes": 11, "drainage_plumes": 1, "score": "High" }, "geometry": { "type": "Point", "coordinates": [ 18.76683, 50.20288 ] } },
+{ "type": "Feature", "properties": { "site": "Budryk", "mine": "KWK Budryk", "company": "JSW", "plumes": 11, "drainage_plumes": 0, "score": null }, "geometry": { "type": "Point", "coordinates": [ 18.76614, 50.20345 ] } },
+{ "type": "Feature", "properties": { "site": "Budryk", "mine": "KWK Budryk", "company": "JSW", "plumes": 11, "drainage_plumes": 0, "score": null }, "geometry": { "type": "Point", "coordinates": [ 18.75321, 50.17322 ] } },
+{ "type": "Feature", "properties": { "site": "Szczygłowice", "mine": "KWK Knurów-Szczygłowice", "company": "JSW", "plumes": 17, "drainage_plumes": 2, "score": "High?" }, "geometry": { "type": "Point", "coordinates": [ 18.63528, 50.18549 ] } },
+{ "type": "Feature", "properties": { "site": "Knurów", "mine": "KWK Knurów-Szczygłowice", "company": "JSW", "plumes": 20, "drainage_plumes": 1, "score": "High" }, "geometry": { "type": "Point", "coordinates": [ 18.67556, 50.2142 ] } },
+{ "type": "Feature", "properties": { "site": "Sośnica", "mine": "KWK Sośnica", "company": "PGG", "plumes": 11, "drainage_plumes": 1, "score": "High" }, "geometry": { "type": "Point", "coordinates": [ 18.71121, 50.2725 ] } },
+{ "type": "Feature", "properties": { "site": "Sośnica", "mine": "KWK Sośnica", "company": "PGG", "plumes": 11, "drainage_plumes": null, "score": null }, "geometry": { "type": "Point", "coordinates": [ 18.71048, 50.27261 ] } },
+{ "type": "Feature", "properties": { "site": "Sośnica", "mine": "KWK Sośnica", "company": "PGG", "plumes": 11, "drainage_plumes": null, "score": null }, "geometry": { "type": "Point", "coordinates": [ 18.70859, 50.27254 ] } },
+{ "type": "Feature", "properties": { "site": "Sośnica", "mine": "KWK Sośnica", "company": "PGG", "plumes": 11, "drainage_plumes": 1, "score": "Medium-Low" }, "geometry": { "type": "Point", "coordinates": [ 18.71333, 50.27487 ] } }
+]
+}

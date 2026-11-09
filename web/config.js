@@ -29,6 +29,7 @@ import { loadAttributions } from './methane/attribution.js';
 import { SITE_LAYERS, SITE_ZOOM, holdSites, drawSites, initEmphasis }
     from './sites.js';
 import { s2, s3 } from './flaring/live.js';
+import { initProject } from './projects.js';
 
 // the bucket every layer reads. index.json names each table's objects, so no
 // module names one
@@ -295,6 +296,7 @@ mount({
         initMask(ctx.map, ARCHIVE);
         addCandidateLayers(ctx.map);
         initEmphasis(ctx.map);
+        initProject(ctx.map);
 
         // no live read starts while the map moves, so its frames keep the
         // cores the workers would take
