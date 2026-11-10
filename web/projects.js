@@ -1,6 +1,7 @@
 // a project's points, drawn over the map behind ?project=<name>: a static
-// geojson in projects/, a white waypoint each, named on hover. a point of
-// kind "shaft" is an upcast shaft, a cyan triangle
+// geojson in projects/ (drainage: coal-mine-drainage scripts/aerial.sql),
+// a white waypoint each, named on hover; an upcast shaft (kind "shaft") is
+// a cyan triangle
 
 import { hover } from './vendor/dd/dd.js';
 import { ensureMark } from './shell/map.js';
@@ -12,9 +13,8 @@ const TEXT = {
         ? [p.company, 'upcast shaft', p.t_h == null
             ? `no per-shaft figure (${p.year})`
             : `${p.t_h} t/h ventilation methane (${p.year})`]
-        : [p.mine, p.company, `${p.plumes ?? '—'} plumes at site`,
-            `${p.drainage_plumes ?? '—'} from drainage`,
-            p.score && `attribution ${p.score}`],
+        : [p.company, 'drainage location', p.basis,
+            `plumes since 2025: ${p.plumes ?? 'none'}`],
 };
 
 export function initProject(map) {
