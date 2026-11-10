@@ -24,7 +24,8 @@ const SECTORS = {
     Power: { power_plant: 'Power plant' },
     Industry: { chemical_plant: 'Chemical plant', coke_plant: 'Coking plant',
         steel_plant: 'Steelworks', cement_plant: 'Cement plant' },
-    Waste: { landfill: 'Landfill', wastewater_plant: 'Wastewater plant' },
+    Waste: { landfill: 'Landfill', spoil_heap: 'Spoil heap',
+        wastewater_plant: 'Wastewater plant' },
 };
 const KIND = Object.fromEntries(Object.entries(SECTORS).flatMap(([s, ks]) =>
     Object.entries(ks).map(([k, label]) => [k, [s, label]])));
