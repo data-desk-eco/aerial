@@ -39,7 +39,7 @@ const overlayUrl = p => p.provider === 'data-desk' && p.overlay
 const row = (k, v, title = '') => `<dd-row class="plume-row" title="${
     title}"><span>${k}</span><span>${v}</span></dd-row>`;
 
-// the rate, or nature trace's ppm·m enhancement where no rate was published
+// the rate, or google's ppm·m enhancement where no rate was published
 function rate(p) {
     const t = rateT(p), e = enhT(p);
     if (t) return row('Rate', `${t}${p.rate_std_kg_h
@@ -70,11 +70,11 @@ export default {
     source: 'plumes',
     init: deps => { archive = deps.archive; },
     about: { title: 'Methane plume', html: `
-        <p>Methane plume data from UN IMEO, Carbon Mapper, SRON, Nature
-            Trace or Data Desk. The Source link opens the provider's record
+        <p>Methane plume data from UN IMEO, Carbon Mapper, SRON, Google
+            or Data Desk. The Source link opens the provider's record
             where available.</p>
         <p>Rate is the provider's estimated methane release in tonnes per
-            hour, with uncertainty where supplied. Nature Trace reports
+            hour, with uncertainty where supplied. Google reports
             methane enhancement in ppm·m instead of a release rate. Plumes
             without a rate appear grey. Wind speed and direction are shown
             where supplied by the provider.</p>
@@ -85,7 +85,7 @@ export default {
             plume. These attributions are experimental and need independent
             verification.</p>` },
     title: p => ({ text: p.id || '—' }),
-    // the rate (or nature trace's enhancement), then when and by what it
+    // the rate (or google's enhancement), then when and by what it
     // was seen, and whose the plume and the picture under it are
     caption: p => ({
         heading: ['Methane plume', rateT(p) ? `${rateT(p)} t/hr`

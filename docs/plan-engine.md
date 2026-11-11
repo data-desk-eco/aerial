@@ -43,7 +43,7 @@ three repos, in this order. each phase ships on its own and leaves aerial green.
    (osm row groups are 51,200 rows spanning ~10° of longitude) for ~600 rows.
 2. **sizes in `index.json`**, per object (per partition where partitioned), so
    aerial picks whole fetch vs ranged read without a probing GET.
-3. **`bounds` as geometry** (geoparquet) rather than wkt text: nature trace's
+3. **`bounds` as geometry** (geoparquet) rather than wkt text: google's
    wkt is 7.6 of its 9.4 MB detections object.
 4. keep each `*.checks.sql` passing, add checks for the partition key and the
    index sizes. say in the commit which consumers outside aerial read these

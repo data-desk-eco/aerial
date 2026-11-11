@@ -8,12 +8,12 @@ import { objects } from '../shell/archive.js';
 import { quote, quarterKey, canon } from '../shell/util.js';
 
 // every column rides into the geojson, so the projection stays narrow.
-// not `bounds`: nature trace's wkt footprints are 7.6 of its 9.4 MB (6.5 as
+// not `bounds`: google's wkt footprints are 7.6 of its 9.4 MB (6.5 as
 // geometry), and only a data desk card's overlay needs one, so plumeBounds
 // reads it on the card
 const COLS = ['id', 'kind', 'provider', 'date', 'lat', 'lon', 'rate_kg_h',
     'rate_std_kg_h', 'satellite', 'sector', 'link', 'overlay'];
-// extension columns: nature trace's ppm·m enhancement (not a mass rate) and
+// extension columns: google's ppm·m enhancement (not a mass rate) and
 // grading, and the producer's wind at the plume. a provider without them
 // omits them, so they are only selected over the union, which fills null
 const EXT = ['observed_enh', 'confidence', 'cluster_size',
@@ -21,20 +21,20 @@ const EXT = ['observed_enh', 'confidence', 'cluster_size',
 // `detections` holds flares too, and an untrusted retrieval rides along
 // with valid = false
 const PLUMES = "kind = 'plume' AND valid";
-// nature trace grades every plume high or medium; only high is shown. on the
+// google grades every plume high or medium; only high is shown. on the
 // union alone, which fills the null of the providers that do not grade
 const CONFIDENT = "coalesce(confidence, 'high') = 'high'";
 export const isPlume = p => p.kind === 'plume';
 
 // colour never means provider here; the label is the only editorial part
 const LABEL = { 'carbon-mapper': 'Carbon Mapper', imeo: 'IMEO / MARS',
-    sron: 'SRON', 'data-desk': 'Data Desk' };
+    sron: 'SRON', 'data-desk': 'Data Desk', 'nature-trace': 'Google' };
 export const label = p => LABEL[p] ?? p;
 
 // t/hr, or null where the provider published no rate
 export const rateT = p => p.rate_kg_h == null ? null
     : (Number(p.rate_kg_h) / 1000).toFixed(1);
-// nature trace's ppm·m enhancement, kept apart so it is never read as t/hr
+// google's ppm·m enhancement, kept apart so it is never read as t/hr
 export const enhT = p => p.observed_enh == null ? null
     : Number(p.observed_enh).toFixed(0);
 

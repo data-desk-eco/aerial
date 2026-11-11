@@ -16,8 +16,8 @@ Four detection layers, all drawn at once, one quarter grid over all of them:
   - VNF: VIIRS Nightfire, from the eog tables in the Data Desk archive, read
     through DuckDB-Wasm, which sees flares at night and measures their
     radiant heat.
-  - Methane: dated plume observations from Carbon Mapper, IMEO, SRON, Nature
-    Trace and Data Desk. Most carry a measured release rate; Nature Trace
+  - Methane: dated plume observations from Carbon Mapper, IMEO, SRON,
+    Google and Data Desk. Most carry a measured release rate; Google
     carries a modeled methane enhancement (ppm·m) and a model confidence, shown
     in place of a rate so it is never read as a mass.
 
