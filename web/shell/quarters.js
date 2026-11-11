@@ -6,15 +6,18 @@ import { quarterRange } from './util.js';
 
 const ACTIVE = 'dd-dot[active]';
 
-export function initQuarters(el, onChange, years = 4) {
+// the grid is the last `years` years, and the quarters from `since` start
+// ticked
+export function initQuarters(el, onChange, years = 4, since) {
     const now = new Date();
     const yr = now.getFullYear(), curQ = Math.floor(now.getMonth() / 3) + 1;
+    since ??= yr - 1;
     const cells = [1, 2, 3, 4].map(q => `<span>Q${q}</span>`)
         .concat('<span></span>');
     for (let y = yr - years + 1; y <= yr; y++) {
         for (let q = 1; q <= 4; q++)
             cells.push(y === yr && q > curQ ? '<span></span>'
-                : `<dd-dot${y >= yr - 1 ? ' active' : ''} data-q="${y}_${q}"`
+                : `<dd-dot${y >= since ? ' active' : ''} data-q="${y}_${q}"`
                 + ` title="Q${q} ${y}"></dd-dot>`);
         cells.push(`<span>${y}</span>`);
     }

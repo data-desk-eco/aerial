@@ -66,6 +66,12 @@ when the link names no view.
   https://aerial.datadesk.eco/?layer=ember/infrastructure,wug/infrastructure
   https://aerial.datadesk.eco/?layer=data-desk/fields
 
+The window starts at last year's first quarter. ?since=<year> ticks every
+quarter from that year, and the grid reaches back to it: GHGSat's
+delivery ends in April 2025, so its plumes need an earlier start.
+
+  https://aerial.datadesk.eco/?layer=ghgsat/detections&since=2022#map=9/50.1/18.8
+
 /private/ needs its read key once, from Secret Manager to the worker:
 gcloud auth login, then make private-key.
 

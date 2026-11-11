@@ -51,8 +51,14 @@ prefetchAll(objects('flares', { provider: 'eog' }));
 prefetchAll(objects('detections'));
 
 // the span the quarter grid covers, which bounds the availability reads
+// ?since=<year> ticks every quarter from that year, and the grid reaches
+// back to it: older data, such as a delivery that stopped, is out of the
+// default window of this year and last
 const YEAR = new Date().getFullYear();
-const GRID_START = `${YEAR - 3}-01-01`, GRID_END = `${YEAR}-12-31`;
+const SINCE = Math.min(+new URLSearchParams(location.search).get('since')
+    || YEAR - 1, YEAR);
+const GRID_START = `${Math.min(SINCE, YEAR - 3)}-01-01`,
+    GRID_END = `${YEAR}-12-31`;
 
 // ?only=plumes draws that family alone, for an embed of a region (README)
 const ONLY = new URLSearchParams(location.search).get('only');
@@ -238,6 +244,7 @@ mount({
     ],
 
     quarters: {
+        since: SINCE, years: YEAR - Math.min(SINCE, YEAR - 3) + 1,
         onChange: () => {
             Object.values(SCHEDULED).forEach(fn => fn());
             scheduleDots();

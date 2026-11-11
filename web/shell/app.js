@@ -81,7 +81,8 @@ export async function mount(config) {
         sources: {} };
     if (config.quarters) ctx.quarters = initQuarters(
         document.getElementById('quarters'),
-        () => config.quarters.onChange?.(ctx), config.quarters.years);
+        () => config.quarters.onChange?.(ctx), config.quarters.years,
+        config.quarters.since);
 
     // style.load, not load: layers need the style, not the first tiles
     await new Promise(r =>
