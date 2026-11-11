@@ -116,6 +116,17 @@ d='M0 0 8 8M8 0 0 8' stroke='%23000' stroke-width='1.4'/%3E%3C/svg%3E")
 
 .fx-logo { right: 0; bottom: 0; }
 
+/* --- embed (?embed, app.js) --- */
+
+/* the map, the selection's caption and the logo, and nothing to press */
+.fx-caption { display: none; }
+.embed :is(.fx-main, .fx-key, .fx-detail, .fx-modal, .fx-drawer,
+    .fx-drawer-handle, #status) { display: none !important; }
+.embed .fx-caption { display: block; position: absolute; top: 0; left: 0;
+    margin: var(--dd-margin); }
+.embed body { cursor: pointer; }
+.embed .fx-logo { display: block; pointer-events: none; }
+
 /* --- data table drawer --- */
 
 /* border-left-width starts 0 (no sliver while shut) — setWidth toggles it */

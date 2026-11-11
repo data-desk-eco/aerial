@@ -85,6 +85,14 @@ export default {
             plume. These attributions are experimental and need independent
             verification.</p>` },
     title: p => ({ text: p.id || '—' }),
+    // the rate (or nature trace's enhancement), then when and by what it
+    // was seen, and whose the plume and the picture under it are
+    caption: p => ({
+        heading: ['Methane plume', rateT(p) ? `${rateT(p)} t/hr`
+            : enhT(p) && `~${enhT(p)} ppm·m`].filter(Boolean).join(' · '),
+        text: [[p.date && formatDate(p.date), p.satellite].filter(Boolean)
+            .join(' · '), `${label(p.provider)} · Imagery: Esri`].join('\n'),
+    }),
     stats: p => `
             ${row('Source', provider(p))}
             ${p.sector ? row('Sector', escapeHtml(SECTOR[p.sector]

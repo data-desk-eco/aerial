@@ -74,6 +74,7 @@ export const cardTitle = p => bodyOf(p).title(p);
 export const cardStats = p => (bodyOf(p).stats ?? seriesStats)(p, bodyOf(p));
 export const cardHtml = p => (bodyOf(p).html ?? seriesHtml)(p, bodyOf(p));
 export const cardAbout = p => bodyOf(p).about;
+export const cardCaption = p => bodyOf(p).caption?.(p);
 
 export function onCardShow(p, el) {
     const b = bodyOf(p);

@@ -18,7 +18,8 @@ import { NEAR, HEAT_LAYERS, initHeat } from './heat.js';
 import { ABOUT } from './about.js';
 import { keySections } from './key.js';
 import { readVNF, readSite, quarters } from './flaring/flares.js';
-import { initCard, cardTitle, cardStats, cardHtml, cardAbout, onCardShow,
+import { initCard, cardTitle, cardStats, cardHtml, cardAbout, cardCaption,
+    onCardShow,
     onCardClose, refreshCard, reselectCurrentFeature } from './card/index.js';
 import { isPlume, label, readPlumes, availableQuartersPlumes,
     readPlume } from './methane/plumes.js';
@@ -284,6 +285,7 @@ mount({
         stats: cardStats,
         html: cardHtml,
         about: cardAbout,
+        caption: cardCaption,
         onShow: onCardShow,
         onClose: onCardClose,
     },

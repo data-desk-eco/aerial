@@ -51,6 +51,8 @@ export function buildShell(config) {
 
     <dd-panel class="fx-detail" id="detail" collapsible></dd-panel>
 
+    <dd-label class="fx-caption" id="caption"></dd-label>
+
     ${logo}
 
     <div class="fx-modal hidden" id="modal">${config.about ? `

@@ -30,6 +30,16 @@ not comparable, so the key states each one's units and its rows are the
 colour bands: turn a band off to filter it out, turn them all off to take the
 layer off the map.
 
+A link with ?embed before its # draws the map alone under one selection:
+no panels, the selection's caption at the top left, and a click anywhere
+opens the whole app on the same link.
+
+  https://aerial.datadesk.eco/?embed#map=14.69/50.004/18.621&plume=<id>
+
+It is for a figure in an article and for stills: a headless browser
+photographs it once `aerial.selection()` is set, `aerial.map.loaded()`
+is true and #status is empty (coal-scroll src/shot.js).
+
 Where things live:
 
   web/config.js      the whole app declaration

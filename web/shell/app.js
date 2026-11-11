@@ -7,7 +7,7 @@ import { hover } from '../vendor/dd/dd.js';
 import { initData, read, sql, fc } from './data.js';
 import { buildShell, initKey, loaded, status } from './ui.js';
 import { initQuarters } from './quarters.js';
-import { initDetail, restorePermalink } from './detail.js';
+import { initDetail, restorePermalink, selection } from './detail.js';
 import { initTable } from './table.js';
 import { readHashKeys } from './util.js';
 
@@ -49,20 +49,35 @@ function wireFilters(map, sources, keyPreds, ctx) {
     };
 }
 
+// ?embed: the map alone under one selection and its caption, for a figure
+// in an article or a still of it (README). nothing on it answers,
+// and a click anywhere opens the whole app on the same link
+const EMBED = new URLSearchParams(location.search).has('embed');
+function wireEmbed() {
+    document.documentElement.classList.add('embed');
+    addEventListener('click', () => {
+        const u = new URL(location);
+        u.searchParams.delete('embed');
+        open(u);
+    });
+}
+
 export async function mount(config) {
     buildShell(config);
+    if (EMBED) wireEmbed();
     // a card link with no view (one from before views rode with cards)
     // starts on the world, not the default view; any card link jumps to the
     // card once it resolves, never flies
     const cold = !/[#&]map=/.test(location.hash) && readHashKeys(
         location.hash, Object.keys(config.detail?.hashKeys ?? {}))[1];
-    const map = createMap({ hash: 'map', ...config.map,
+    const map = createMap({ hash: 'map', interactive: !EMBED, ...config.map,
         ...cold && { center: [0, 20], zoom: config.map.minZoom } });
     wireWorldmap(map, document.getElementById('worldmap'));
     if (config.search) wireSearch(map);
     if (config.data) initData(config.data);
 
-    const ctx = { map, config, read, sql, fc, loaded, status, sources: {} };
+    const ctx = { map, config, read, sql, fc, loaded, status, selection,
+        sources: {} };
     if (config.quarters) ctx.quarters = initQuarters(
         document.getElementById('quarters'),
         () => config.quarters.onChange?.(ctx), config.quarters.years);

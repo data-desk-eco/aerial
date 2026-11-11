@@ -14,6 +14,8 @@
 //   stats: p => rows html,      under the heading rule, after the coordinates
 //   about: p => ({title, html}), what the card shows, behind its ⓘ
 //   html: p => body html,
+//   caption: p => ({heading, text}), the selection in two lines, which
+//                               an embed shows in place of the card
 //   onShow: (p, el) => {},
 //   onClose: () => {},
 // }
@@ -35,6 +37,9 @@ const flyTo = (center, p) => map.flyTo({ center,
     zoom: Math.max(map.getZoom(), zoomFor(cfg, p)) });
 
 // properties are exact; geometry is quantised by the tile grid at low zoom
+// the feature the card is open on, or none
+export const selection = () => shown?.feature;
+
 export const coordsOf = f => f.properties.lon != null
     ? [Number(f.properties.lon), Number(f.properties.lat)]
     : f.geometry.coordinates;
@@ -116,6 +121,10 @@ function render(feature, fromPermalink) {
             }${nav}</span><div class="fx-status"></div>
             <div class="fx-stats">${cfg.stats?.(p) || ''}</div></div>
         ${cfg.html?.(p) || ''}`;
+    const c = cfg.caption?.(p) ?? { heading: t.text },
+        cap = document.getElementById('caption');
+    cap.setAttribute('heading', c.heading);
+    cap.innerHTML = (c.text ?? '').split('\n').map(escapeHtml).join('<br>');
     el.toggleAttribute('info', !!cfg.about?.(p));
     el.classList.add('visible');
     status();
