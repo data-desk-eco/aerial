@@ -20,6 +20,9 @@ const SOURCES = [
         + 'emissions in 2017 derived from the Sentinel-3A Sea and Land '
         + 'Surface Temperature Radiometer. <i>Earth System Science Data 12, '
         + '2137–2155</i>.', 'https://doi.org/10.5194/essd-12-2137-2020'],
+    ['DeepSeek-AI (2026). DeepSeek-V4: towards highly efficient '
+        + 'million-token context intelligence. <i>arXiv:2606.19348</i>.',
+        'https://arxiv.org/abs/2606.19348'],
     ['Duren, R. M. et al. (2025). The Carbon Mapper emissions monitoring '
         + 'system. <i>Atmospheric Measurement Techniques 18, 6933–6975</i>.',
         'https://doi.org/10.5194/amt-18-6933-2025'],
