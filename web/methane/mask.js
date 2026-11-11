@@ -6,6 +6,7 @@
 import { read } from '../shell/data.js';
 import { objects } from '../shell/archive.js';
 import { DD } from '../layers.js';
+import { EMBED } from '../shell/app.js';
 
 const ID = 'plume-mask';   // the source, and the stem of its two layers
 let map, archive, under, epoch = 0;
@@ -23,6 +24,18 @@ export function clearMask() {
         if (map?.getSource(s)) map.removeSource(s);
 }
 
+// an embed frames the whole outline, centred, a seventh of the view clear
+// on every side
+const xy = g => g.coordinates ?? (g.geometry ? xy(g.geometry)
+    : (g.features ?? g.geometries).map(xy));
+function fit(mask) {
+    const c = [xy(mask)].flat(Infinity), at = (f, i) =>
+        f(...c.filter((_, j) => j % 2 === i)), el = map.getContainer();
+    map.fitBounds([[at(Math.min, 0), at(Math.min, 1)],
+        [at(Math.max, 0), at(Math.max, 1)]], { animate: false, maxZoom: 17,
+        padding: Math.min(el.clientWidth, el.clientHeight) / 7 });
+}
+
 // id alone would scan every row group; the position is what prunes them, and
 // it is the same rounded pair the detection carries
 export async function showMask(p) {
@@ -36,7 +49,9 @@ export async function showMask(p) {
         // its own provider's object, on the card lane, so no pan holds it
         const [row] = await read(objs, { where, lane: 'card' });
         if (!row || now !== epoch) return;
-        map.addSource(ID, { type: 'geojson', data: JSON.parse(row.mask) });
+        const mask = JSON.parse(row.mask);
+        map.addSource(ID, { type: 'geojson', data: mask });
+        if (EMBED) fit(mask);
         const below = map.getLayer(under) ? under : undefined;
         if (row.image && row.corners) {
             map.addSource(`${ID}-image`, { type: 'image',

@@ -51,15 +51,16 @@ function wireFilters(map, sources, keyPreds, ctx) {
 
 // ?embed: the map alone under one selection and its caption, for a figure
 // in an article or a still of it (README). nothing on it answers,
-// and a click anywhere opens the whole app on the same link
-const EMBED = new URLSearchParams(location.search).has('embed');
+// and a click anywhere opens the whole app on the same link. the imagery
+// is lifted, as a still has no panels to stand out from it, and the logo
+// is left off unless &logo asks for it (a still that travels alone)
+const QUERY = new URLSearchParams(location.search);
+export const EMBED = QUERY.has('embed');
 function wireEmbed() {
-    document.documentElement.classList.add('embed');
-    addEventListener('click', () => {
-        const u = new URL(location);
-        u.searchParams.delete('embed');
-        open(u);
-    });
+    const c = document.documentElement.classList;
+    c.add('embed');
+    c.toggle('logo', QUERY.has('logo'));
+    addEventListener('click', () => open(location.pathname + location.hash));
 }
 
 export async function mount(config) {
@@ -85,7 +86,9 @@ export async function mount(config) {
     // style.load, not load: layers need the style, not the first tiles
     await new Promise(r =>
         map.isStyleLoaded() ? r() : map.once('style.load', r));
-    if (config.map?.satellite !== false) addSatellite(map);
+    const sat = config.map?.satellite !== false ? addSatellite(map) : [];
+    if (EMBED) for (const l of sat)
+        map.setPaintProperty(l, 'raster-brightness-min', 0.14);
 
     // an entry is a FeatureCollection or {data, ...source options};
     // ctx.sources always holds the plain collection
