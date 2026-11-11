@@ -10,26 +10,35 @@
 // the fetch overlaps the engine download. its `sizes` member is what each
 // object weighs, by partition value where there are partitions.
 
-let base, doc;
+// more than one archive can be open: the public bucket, and the private
+// tables behind the access login (/private/), of which only the
+// <provider>/<table> names `only` lists are read. each is fetched once,
+// and a failure clears its memo, so one that does not answer costs its own
+// tables alone
+const archives = new Map();   // canonical base -> { only, doc }
+const canonical = url =>
+    new URL(url, globalThis.location?.href).href.replace(/\/+$/, '');
 
-// fetch the index once; safe at module parse. a failure clears the memo.
-// the base is canonical, as every url a reader holds is (shell/data.js)
-export function initArchive(url) {
-    base = new URL(url, globalThis.location?.href).href.replace(/\/+$/, '');
-    return doc ??= fetch(`${base}/index.json`)
+// the index of `url`; safe at module parse
+export function initArchive(url, only) {
+    const base = canonical(url);
+    const a = archives.get(base) ?? archives.set(base, { only }).get(base);
+    return a.doc ??= fetch(`${base}/index.json`)
         .then(r => r.ok ? r.json()
             : Promise.reject(new Error(`archive index: HTTP ${r.status}`)))
-        .catch(err => { doc = null; throw err; });
+        .catch(err => { a.doc = null; throw err; });
 }
 
-// an object's bytes, off the index: 0 for a partition the table does not
-// hold, undefined where the index says nothing. a hint, listed as the
-// archive publishes, so a reader may act on it and must not rely on it
+// an object's bytes, off its archive's index: 0 for a partition the table
+// does not hold, undefined where the index says nothing. a hint, listed as
+// the archive publishes, so a reader may act on it and must not rely on it
 const PATH = /^([^/]+\/[^/]+)\/(?:[^/=]+=([^/]+)\/)?data\.parquet$/;
 export async function bytes(url) {
-    const [, table, value] = url.startsWith(`${base}/`)
-        && PATH.exec(url.slice(base.length + 1)) || [];
-    const s = table && (await initArchive(base)).sizes?.[table];
+    const base = [...archives.keys()].find(b => url.startsWith(`${b}/`));
+    const [, table, value] = base && PATH.exec(url.slice(base.length + 1))
+        || [];
+    const s = table && (await initArchive(base).catch(() => ({}))).sizes
+        ?.[table];
     return value && s ? s[value] ?? 0 : s;
 }
 
@@ -38,14 +47,18 @@ export async function bytes(url) {
 // is left out with no key, as a url cannot expand a glob. urls, not rows, so
 // a provider that has not published costs the caller its own rows alone.
 export async function objects(table, { key, provider } = {}) {
-    // through initArchive, not the memo, so a failed fetch retries and says
-    // what went wrong rather than "call initArchive first"
-    if (!base) throw new Error('archive: call initArchive(base) first');
-    const urls = Object.entries((await initArchive(base))[table] ?? {})
-        .filter(([p, part]) =>
-            (!provider || p === provider) && (!part || key != null))
-        .map(([p, part]) => `${base}/${p}/${table}/`
-            + `${part ? `${part}=${key}/` : ''}data.parquet`);
-    const held = await Promise.all(urls.map(bytes));
+    if (!archives.size) throw new Error('archive: call initArchive(base) first');
+    const each = await Promise.all([...archives].map(async ([base, a]) => {
+        // the public index's failure is the caller's to report; a private
+        // one's is the login's, said once where it is opened
+        const doc = await (a.only ? initArchive(base).catch(() => ({}))
+            : initArchive(base));
+        return Object.entries(doc[table] ?? {}).filter(([p, part]) =>
+            (!provider || p === provider) && (!part || key != null)
+            && (!a.only || a.only.includes(`${p}/${table}`)))
+            .map(([p, part]) => `${base}/${p}/${table}/`
+                + `${part ? `${part}=${key}/` : ''}data.parquet`);
+    }));
+    const urls = each.flat(), held = await Promise.all(urls.map(bytes));
     return urls.filter((_, i) => held[i] !== 0);
 }

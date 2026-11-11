@@ -6,6 +6,9 @@
     <!-- the archive every layer reads; its index.json names each object -->
     <meta name="data-bucket"
           content="https://s3.WAW3-2.cloudferro.com/data-desk-archive">
+    <!-- the private tables, behind the data desk login (worker/private.js),
+         read only for the tables ?layer= names (layer.js) -->
+    <meta name="data-private" content="/private">
     <!-- the two hosts every load talks to, warmed before modules ask -->
     <link rel="preconnect" crossorigin
           href="https://s3.waw3-2.cloudferro.com">

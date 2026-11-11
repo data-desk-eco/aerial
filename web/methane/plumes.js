@@ -28,7 +28,8 @@ export const isPlume = p => p.kind === 'plume';
 
 // colour never means provider here; the label is the only editorial part
 const LABEL = { 'carbon-mapper': 'Carbon Mapper', imeo: 'IMEO / MARS',
-    sron: 'SRON', 'data-desk': 'Data Desk', google: 'Google' };
+    sron: 'SRON', 'data-desk': 'Data Desk', google: 'Google',
+    ghgsat: 'GHGSat', planet: 'Planet' };
 export const label = p => LABEL[p] ?? p;
 
 // t/hr, or null where the provider published no rate

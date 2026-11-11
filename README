@@ -55,6 +55,20 @@ a still of a region whose points appear one by one, `aerial.points.at()`
 gives where each drawn point sits in the view ([x, y] in px, oldest
 first) and `await aerial.points.show(false)` takes the points off.
 
+?layer=<provider>/<table> draws a table of the archive on request, more
+than one separated by commas. A private table (data-desk-raw tables/,
+which its own index.json lists) is read through /private/, behind the
+Data Desk login: a page that names one goes through the login first, and
+nobody else can read it. A detections table joins the plumes; any other
+table draws its geometry, named on hover. The map opens on the layers
+when the link names no view.
+
+  https://aerial.datadesk.eco/?layer=ghgsat/detections,data-desk/drainage
+  https://aerial.datadesk.eco/?layer=data-desk/fields
+
+/private/ needs its read key once, from Secret Manager to the worker:
+gcloud auth login, then make private-key.
+
 Where things live:
 
   web/config.js      the whole app declaration
@@ -63,6 +77,7 @@ Where things live:
   web/layers.js      marking, ramp and colour policy for every layer
   web/key.js         the key: a group of colour bands per family
   web/sites.js       facility outlines, and what a selection lights
+  web/layer.js       ?layer=: archive tables on request, the private ones too
   web/shell/         the map shell: mount, panels, key, quarters, card, drawer
   web/card/          one card header, one body per feature kind
   web/flaring/       the live S2 and S3 reads, the VNF reader, the scales

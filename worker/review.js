@@ -6,6 +6,10 @@
 // bearer instead, and its verdicts are signed `agent`. reads are open: a
 // verdict is public within the quarter hour anyway, and the host reads with
 // no credential at all.
+// private.js serves /private/, the archive's private tables, on the same
+// login.
+import { serve } from './private.js'
+
 const TEAM = 'https://datadesk.cloudflareaccess.com'
 // `open` takes a verdict back: the claim awaits review again
 const VERDICTS = ['confirmed', 'refuted', 'unclear', 'open']
@@ -32,6 +36,8 @@ async function who(req) {
 
 export default {
   async fetch(req, env) {
+    if (new URL(req.url).pathname.startsWith('/private/'))
+      return serve(req, env, who)
     if (req.method === 'GET') {
       const { results } = await env.DB.prepare('select * from decision').all()
       return Response.json(results)

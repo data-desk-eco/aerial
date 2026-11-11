@@ -1,7 +1,8 @@
 name: Review gate
 
-# the cloudflare access application over aerial.datadesk.eco/review, gated by
-# the shared "Data Desk" policy. wrangler's login cannot manage access, and
+# the cloudflare access applications over aerial.datadesk.eco/review and
+# /private (the archive's private tables), gated by the shared "Data Desk"
+# policy. wrangler's login cannot manage access, and
 # the org token this reads can; it creates the application once and then
 # finds it there.
 on:
@@ -16,19 +17,20 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       API: https://api.cloudflare.com/client/v4/accounts/6bf7022757e7f54cfc2ad145de0632b7/access
-      DOMAIN: aerial.datadesk.eco/review
     steps:
       - run: |
           cf() { curl -sf -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
             -H 'Content-Type: application/json' "$@"; }
-          if cf "$API/apps" | jq -e --arg d "$DOMAIN" \
-              'any(.result[]; .domain == $d)' >/dev/null; then
-            echo "$DOMAIN is gated"; exit 0
-          fi
           p=$(cf "$API/policies" |
             jq -r '.result[] | select(.name == "Data Desk") | .id')
-          cf -X POST "$API/apps" -d "$(jq -n --arg d "$DOMAIN" --arg p "$p" \
-            '{name: "aerial review", domain: $d, type: "self_hosted",
-              session_duration: "168h", policies: [{id: $p, precedence: 1}]}')" \
-            >/dev/null
-          echo "$DOMAIN gated"
+          for n in review private; do d=aerial.datadesk.eco/$n
+            if cf "$API/apps" | jq -e --arg d "$d" \
+                'any(.result[]; .domain == $d)' >/dev/null; then
+              echo "$d is gated"; continue
+            fi
+            cf -X POST "$API/apps" -d "$(jq -n --arg d "$d" --arg p "$p" \
+              --arg n "aerial $n" '{name: $n, domain: $d, type: "self_hosted",
+                session_duration: "168h",
+                policies: [{id: $p, precedence: 1}]}')" >/dev/null
+            echo "$d gated"
+          done

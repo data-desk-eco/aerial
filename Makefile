@@ -1,4 +1,4 @@
-.PHONY: serve test audit dist review-deploy vendor help
+.PHONY: serve test audit dist review-deploy private-key vendor help
 
 vendor: web/vendor/.ok
 
@@ -18,6 +18,12 @@ review-deploy:
 	cd worker && npx wrangler d1 execute flux-review --remote \
 	  --file schema.sql && npx wrangler deploy
 
+# /private/'s read key, the archive's raw-read-env lines, from secret
+# manager to the worker and to no file (needs gcloud auth login)
+private-key:
+	gcloud secrets versions access latest --project=data-desk-web \
+	  --secret=raw-read-env | (cd worker && npx wrangler secret put RAW)
+
 # the reducer and vnf's statement, where every persistence
 # incident this repo records has happened, run in the duckdb cli
 test:
@@ -34,3 +40,4 @@ help:
 	@echo "make audit          - the ui against the dd brand, headless"
 	@echo "make vendor         - re-vendor maplibre, duckdb, dd and inter"
 	@echo "make dist           - the public artifact in dist/, as Actions"
+	@echo "make private-key    - give /private/ its read key, once"

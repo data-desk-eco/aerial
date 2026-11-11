@@ -8,6 +8,9 @@ Aerial reads data and draws it. It does not publish data or detect
 hotspots. The Data Desk archive and the burnoff service supply the data.
 The one exception is `/review`. On that page, a reviewer accepts or rejects
 each new methane attribution, and `worker/review.js` keeps the result.
+`worker/private.js` serves the archive's private tables at `/private/` to a
+Data Desk login. A page reads them only for the tables that `?layer=`
+names.
 
 ## Commands
 
@@ -56,6 +59,7 @@ web/
   layers.js     markers, color ramp and the bands of the key
   key.js        the key
   sites.js      facility outlines
+  layer.js      ?layer=: archive tables on request, private ones included
   hands.js      map control with hand gestures (type "hands")
   card/         a header and one body for each feature type
   flaring/      VNF reads, live S2 and S3 reads, the scales
@@ -63,7 +67,7 @@ web/
   shell/        the map shell, the DuckDB worker and archive reads
   review/       the /review page
   vendor/       vendored libraries
-worker/         the review API and its D1 schema
+worker/         the review API, /private/ and the D1 schema
 scripts/        vendor, dist and serve scripts
 test/           node tests
 docs/           design notes and measurements
