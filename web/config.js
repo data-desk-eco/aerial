@@ -301,6 +301,29 @@ mount({
         drawWorldmap(document.getElementById('modal-worldmap'));
         initMask(ctx.map, ARCHIVE);
         ctx.mask = mask;
+        // what a still of a region that fills with its points asks (README):
+        // at() is where each drawn point sits in the view, [x, y] in px,
+        // oldest first; show(on) takes the points and their surface off
+        // the map or puts them back, and resolves once that is drawn
+        ctx.points = {
+            at() {
+                const { clientWidth: w, clientHeight: h } =
+                    ctx.map.getContainer(), t = f => new Date(
+                    f.properties.date ?? 0);
+                return FAMILIES.flatMap(shown).sort((a, b) => t(a) - t(b))
+                    .map(f => ctx.map.project(f.geometry.coordinates))
+                    .filter(p => p.x >= 0 && p.x <= w && p.y >= 0 && p.y <= h)
+                    .map(p => [p.x, p.y]);
+            },
+            show(on) {
+                for (const l of [...FAMILIES, ...FLARES.map(id => `${id}-tag`),
+                    ...HEAT_LAYERS.map(l => l.id)])
+                    ctx.map.setLayoutProperty(l, 'visibility',
+                        on ? 'visible' : 'none');
+                ctx.map.triggerRepaint();
+                return new Promise(r => ctx.map.once('idle', r));
+            },
+        };
         addCandidateLayers(ctx.map);
         initEmphasis(ctx.map);
         initProject(ctx.map);

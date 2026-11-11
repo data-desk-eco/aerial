@@ -50,7 +50,10 @@ photographs it once `aerial.selection()` is set (a region has none),
 src/shot.js). For a still whose plume grows, `aerial.mask.grid()` gives
 the plume image's top left and the size of one of its pixels in the view
 ([x, y, w, h] in px, nothing for a bare outline), and
-`await aerial.mask.show(false)` takes the plume's mask off the map.
+`await aerial.mask.show(false)` takes the plume's mask off the map. For
+a still of a region whose points appear one by one, `aerial.points.at()`
+gives where each drawn point sits in the view ([x, y] in px, oldest
+first) and `await aerial.points.show(false)` takes the points off.
 
 Where things live:
 
