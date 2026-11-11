@@ -63,7 +63,7 @@ nobody else can read it. A detections table joins the plumes; any other
 table draws its geometry, named on hover. The map opens on the layers
 when the link names no view.
 
-  https://aerial.datadesk.eco/?layer=ghgsat/detections,data-desk/drainage
+  https://aerial.datadesk.eco/?layer=ember/infrastructure,wug/infrastructure
   https://aerial.datadesk.eco/?layer=data-desk/fields
 
 /private/ needs its read key once, from Secret Manager to the worker:
