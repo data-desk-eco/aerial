@@ -38,9 +38,16 @@ whole app on the same link. ?embed&logo adds the Data Desk mark.
 
   https://aerial.datadesk.eco/?embed#map=14.69/50.004/18.621&plume=<id>
 
+With no selection it draws a region, and ?only=plumes (or vnf, s2, s3)
+reads and draws that family alone. A region of plumes is captioned with
+the start of its window and the providers it holds.
+
+  https://aerial.datadesk.eco/?embed&only=plumes#map=3.3/53/14
+
 It is for a figure in an article and for stills: a headless browser
-photographs it once `aerial.selection()` is set, `aerial.map.loaded()`
-is true and #status is empty (coal-scroll src/shot.js).
+photographs it once `aerial.selection()` is set (a region has none),
+`aerial.map.loaded()` is true and #status is empty (coal-scroll
+src/shot.js).
 
 Where things live:
 

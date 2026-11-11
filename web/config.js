@@ -54,6 +54,10 @@ prefetchAll(objects('detections'));
 const YEAR = new Date().getFullYear();
 const GRID_START = `${YEAR - 3}-01-01`, GRID_END = `${YEAR}-12-31`;
 
+// ?only=plumes draws that family alone, for an embed of a region (README)
+const ONLY = new URLSearchParams(location.search).get('only');
+const on = id => !ONLY || id === ONLY || id === 'sites';
+
 let CTX, readyResolve;
 const whenReady = new Promise(r => readyResolve = r);
 
@@ -61,7 +65,7 @@ const whenReady = new Promise(r => readyResolve = r);
 
 // the sentinels are live layers, off burnoff's service (flaring/live.js):
 // s2 by day and s3 by night
-const each = f => [s2, s3].forEach(f);
+const each = f => [s2, s3].filter(x => on(x.kind)).forEach(f);
 
 // a source this app re-reads has to pass the key's live predicates itself:
 // the shell applies them when a row is toggled, not when the data changes.
@@ -132,7 +136,7 @@ const refresh = id => {
     };
 };
 const REFRESH = Object.fromEntries(Object.keys(READS)
-    .map(id => [id, refresh(id)]));
+    .map(id => [id, on(id) ? refresh(id) : () => {}]));
 // scheduled, never run on the event: a quarter click can come in bursts
 const SCHEDULED = Object.fromEntries(Object.entries(REFRESH)
     .map(([id, fn]) => [id, debounce(fn, 200)]));
@@ -323,6 +327,14 @@ mount({
         // phone's line with it
         first.then(() => {
             ctx.loaded();
+            // a region of plumes under no selection says what it holds
+            if (ONLY === 'plumes' && !ctx.selection())
+                document.getElementById('caption').innerHTML = [
+                    '<b>Methane plumes</b>', 'Since ' + formatDate(
+                        ctx.quarters.range().startDate),
+                    [...new Set(shown('plumes').map(f =>
+                        label(f.properties.provider)))].sort().join(' / '),
+                ].join('<br>');
             quarterDots();
             prefetchData(ATTRIBUTIONS);
         });
