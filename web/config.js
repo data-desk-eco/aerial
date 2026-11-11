@@ -25,7 +25,7 @@ import { isPlume, label, readPlumes, availableQuartersPlumes,
     readPlume } from './methane/plumes.js';
 import { addCandidateLayers } from './methane/candidates.js';
 import { initProbabilityOverlay } from './methane/overlay.js';
-import { initMask } from './methane/mask.js';
+import { initMask, mask } from './methane/mask.js';
 import { loadAttributions } from './methane/attribution.js';
 import { SITE_LAYERS, SITE_ZOOM, holdSites, drawSites, initEmphasis }
     from './sites.js';
@@ -300,6 +300,7 @@ mount({
         initProbabilityOverlay(ctx.map);
         drawWorldmap(document.getElementById('modal-worldmap'));
         initMask(ctx.map, ARCHIVE);
+        ctx.mask = mask;
         addCandidateLayers(ctx.map);
         initEmphasis(ctx.map);
         initProject(ctx.map);

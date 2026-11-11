@@ -47,7 +47,10 @@ the start of its window and the providers it holds.
 It is for a figure in an article and for stills: a headless browser
 photographs it once `aerial.selection()` is set (a region has none),
 `aerial.map.loaded()` is true and #status is empty (coal-scroll
-src/shot.js).
+src/shot.js). For a still whose plume grows, `aerial.mask.grid()` gives
+the plume image's top left and the size of one of its pixels in the view
+([x, y, w, h] in px, nothing for a bare outline), and
+`await aerial.mask.show(false)` takes the plume's mask off the map.
 
 Where things live:
 

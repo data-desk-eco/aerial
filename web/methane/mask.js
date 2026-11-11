@@ -8,7 +8,8 @@ import { objects } from '../shell/archive.js';
 import { DD } from '../layers.js';
 import { EMBED } from '../shell/app.js';
 
-const ID = 'plume-mask';   // the source, and the stem of its two layers
+const ID = 'plume-mask';   // the source, and the stem of its layers
+const LAYERS = ['image', 'fill', 'line'].map(l => `${ID}-${l}`);
 let map, archive, under, epoch = 0;
 
 // `below` is the layer the mask sits under: the plumes on the main map
@@ -18,11 +19,30 @@ export const initMask = (m, a, below = 'plumes') => {
 
 export function clearMask() {
     epoch++;
-    for (const l of [`${ID}-image`, `${ID}-fill`, `${ID}-line`])
-        if (map?.getLayer(l)) map.removeLayer(l);
+    for (const l of LAYERS) if (map?.getLayer(l)) map.removeLayer(l);
     for (const s of [ID, `${ID}-image`])
         if (map?.getSource(s)) map.removeSource(s);
 }
+
+// what a still that grows its plume asks (README), as aerial.mask:
+// grid() is the draped image's top left and one pixel of it in the view,
+// [x, y, w, h] in px, and nothing under a bare outline; show(on) takes the
+// mask off the map or puts it back, and resolves once that is drawn
+export const mask = {
+    grid() {
+        const s = map.getSource(`${ID}-image`);
+        if (!s?.image) return;
+        const [a, , b] = s.coordinates.map(c => map.project(c));
+        return [a.x, a.y, (b.x - a.x) / s.image.width,
+            (b.y - a.y) / s.image.height];
+    },
+    show(on) {
+        for (const l of LAYERS) if (map.getLayer(l))
+            map.setLayoutProperty(l, 'visibility', on ? 'visible' : 'none');
+        map.triggerRepaint();
+        return new Promise(r => map.once('idle', r));
+    },
+};
 
 // an embed frames the whole outline, centred, a seventh of the view clear
 // on every side
