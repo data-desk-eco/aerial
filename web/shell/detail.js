@@ -14,7 +14,7 @@
 //   stats: p => rows html,      under the heading rule, after the coordinates
 //   about: p => ({title, html}), what the card shows, behind its ⓘ
 //   html: p => body html,
-//   caption: p => ({heading, text}), the selection in two lines, which
+//   caption: p => ({heading, text}), the selection in a few lines, which
 //                               an embed shows in place of the card
 //   onShow: (p, el) => {},
 //   onClose: () => {},
@@ -123,8 +123,8 @@ function render(feature, fromPermalink) {
         ${cfg.html?.(p) || ''}`;
     const c = cfg.caption?.(p) ?? { heading: t.text },
         cap = document.getElementById('caption');
-    cap.setAttribute('heading', c.heading);
-    cap.innerHTML = (c.text ?? '').split('\n').map(escapeHtml).join('<br>');
+    cap.innerHTML = [`<b>${escapeHtml(c.heading)}</b>`,
+        ...(c.text ?? '').split('\n').map(escapeHtml)].join('<br>');
     el.toggleAttribute('info', !!cfg.about?.(p));
     el.classList.add('visible');
     status();

@@ -123,7 +123,11 @@ d='M0 0 8 8M8 0 0 8' stroke='%23000' stroke-width='1.4'/%3E%3C/svg%3E")
 .embed :is(.fx-main, .fx-key, .fx-detail, .fx-modal, .fx-drawer,
     .fx-drawer-handle, #status) { display: none !important; }
 .embed .fx-caption { display: block; position: absolute; top: 0; left: 0;
-    margin: var(--dd-margin); }
+    margin: var(--dd-margin); color: var(--dd-ui-text); white-space: nowrap; }
+/* the heading over a rule, as a dd-label's, with room for a still to be
+   read small: 4px either side of the rule */
+.fx-caption b { display: inline-block; font-weight: inherit;
+    padding-bottom: 4px; margin-bottom: 4px; border-bottom: 1px solid; }
 .embed body { cursor: pointer; }
 .embed .fx-logo { display: none; pointer-events: none; }
 .embed.logo .fx-logo { display: block; }

@@ -89,9 +89,9 @@ export default {
     // was seen, and whose the plume and the picture under it are
     caption: p => ({
         heading: ['Methane plume', rateT(p) ? `${rateT(p)} t/hr`
-            : enhT(p) && `~${enhT(p)} ppm·m`].filter(Boolean).join(' · '),
+            : enhT(p) && `~${enhT(p)} ppm·m`].filter(Boolean).join(' / '),
         text: [[p.date && formatDate(p.date), p.satellite].filter(Boolean)
-            .join(' · '), `${label(p.provider)} · Imagery: Esri`].join('\n'),
+            .join(' / '), `${label(p.provider)} / Imagery: Esri`].join('\n'),
     }),
     stats: p => `
             ${row('Source', provider(p))}
