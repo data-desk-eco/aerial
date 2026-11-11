@@ -8,6 +8,7 @@ import { objects } from '../shell/archive.js';
 import { sql, from, fc, prefetchData } from '../shell/data.js';
 import { quote, fmtMetres } from '../shell/util.js';
 import { MARK, PIN } from '../layers.js';
+import { EMBED } from '../shell/app.js';
 
 const MAX_SHOW = 300;
 const AREAS = ['pipeline', 'field', 'oilfield', 'gas_field', 'offshore_field',
@@ -82,9 +83,11 @@ export function addCandidateLayers(m, before = 'plumes') {
         paint: { 'circle-radius': 22, 'circle-opacity': 0,
                  'circle-stroke-width': 0 },
     }, before);
-    // the attributed one is told apart by shape and size, not a tint
+    // the attributed one is told apart by shape and size, not a tint. an
+    // embed draws it alone: a still cannot say what a triangle is
     map.addLayer({
         id: 'candidates', type: 'symbol', source: 'candidates',
+        ...EMBED && { filter: ['==', ['get', 'hl'], true] },
         layout: {
             ...PIN,
             'icon-image': ['case', ['get', 'hl'], MARK.attributed,

@@ -32,7 +32,8 @@ layer off the map.
 
 A link with ?embed before its # draws the map alone under one selection:
 no panels, the selection's caption at the top left, the imagery lifted, a
-plume's whole outline centred in the view, and a click anywhere opens the
+plume's whole outline centred in the view, no candidate sources (an
+attributed one stays), and a click anywhere opens the
 whole app on the same link. ?embed&logo adds the Data Desk mark.
 
   https://aerial.datadesk.eco/?embed#map=14.69/50.004/18.621&plume=<id>
