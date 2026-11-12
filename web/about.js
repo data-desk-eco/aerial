@@ -29,6 +29,9 @@ const SOURCES = [
     ['Elvidge, C. D. et al. (2013). VIIRS Nightfire: satellite pyrometry at '
         + 'night. <i>Remote Sensing 5, 4423–4449</i>.',
         'https://doi.org/10.3390/rs5094423'],
+    ['Global Energy Monitor (2026). Coal mine boundaries and methane '
+        + 'sources, version 1.0.2. <i>Dataset</i>.',
+        'https://globalenergymonitor.org/projects/global-coal-mine-tracker/'],
     ['Global Energy Monitor (2026). Global Energy Monitor trackers: oil and '
         + 'gas, LNG, pipelines, coal, steel, cement and power. '
         + '<i>Datasets</i>.', 'https://globalenergymonitor.org'],
