@@ -18,7 +18,7 @@ const SECTORS = {
         processing_plant: 'Gas processing plant', gas_terminal: 'Gas terminal',
         oil_terminal: 'Oil terminal', compressor_station: 'Compressor station',
         gas_storage: 'Gas storage', well_pad: 'Well pad',
-        pump_station: 'Pump station',
+        pump_station: 'Pump station', field_station: 'Field station',
         oil_gas_facility: 'Oil and gas facility' },
     Coal: { coal_mine: 'Coal mine', coal_terminal: 'Coal terminal' },
     Power: { power_plant: 'Power plant' },
